@@ -1,0 +1,55 @@
+<template>
+  <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+    <!-- Recherche -->
+    <div class="relative w-96">
+      <Search
+        :size="18"
+        class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
+      />
+
+      <input
+        type="text"
+        placeholder="Rechercher projet, zone, ONG..."
+        class="w-full h-10 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-sm placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-700"
+      />
+    </div>
+
+    <!-- Profil -->
+    <div class="flex items-center gap-6">
+      <!-- Notification -->
+      <button class="relative text-zinc-700 hover:text-amber-700 transition">
+        <Bell :size="22" />
+
+        <span
+          class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-600 rounded-full"
+        ></span>
+      </button>
+
+      <!-- Séparateur -->
+      <div class="w-px h-8 bg-neutral-300"></div>
+
+      <!-- Utilisateur -->
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center"
+        >
+          <User :size="20" class="text-amber-800" />
+        </div>
+
+        <div class="text-right">
+          <p class="text-sm font-semibold text-slate-900">
+            Amine Diop
+          </p>
+
+          <p class="text-[11px] uppercase tracking-wide font-bold text-zinc-600">
+            Super Administrateur
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup>
+import { Search, Bell, User } from "lucide-vue-next"
+</script>
