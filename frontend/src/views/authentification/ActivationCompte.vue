@@ -1,128 +1,135 @@
 <template>
-  <div class="min-h-screen flex bg-slate-100">
-    <!-- ===== Colonne gauche ===== -->
-    <div class="hidden lg:flex lg:w-1/2 bg-[#021427] relative items-center justify-center overflow-hidden">
-      <div class="relative z-10 flex flex-col items-center text-center px-10">
-        <!-- Logo -->
-        <img src="@/assets/images/image.png" alt="Logo BarakaGive" class="w-36 h-36 object-contain mb-8" />
+  <div class="min-h-screen bg-slate-100">
+    <div class="grid min-h-screen lg:grid-cols-2">
+      <!-- ===== Partie gauche ===== -->
+      <div class="relative hidden lg:flex items-end justify-center bg-slate-900 overflow-hidden pb-20">
+        <!-- Image de fond -->
+        <img
+          src="@/assets/images/imagelogo.png"
+          alt="Fond"
+          class="absolute inset-0 w-full h-full object-cover opacity-70"
+        />
 
-        <h1 class="text-3xl font-bold text-white mb-6">
-          Nous sommes là pour vous aider
-        </h1>
+        <div class="absolute inset-0 bg-slate-900/40"></div>
+        <div class="relative z-10 flex flex-col items-center text-center px-10">
+          <p class="text-xl text-white font-semibold leading-8 max-w-sm">
+            Activez votre compte pour accéder à la plateforme.
+          </p>
 
-        <!-- Progress -->
-        <div class="flex items-center mb-6">
-          <div class="w-10 h-[2px] bg-sky-700"></div>
-          <div class="w-2 h-2 bg-emerald-400 rounded-full mx-3"></div>
-          <div class="w-10 h-[2px] bg-sky-700"></div>
+          
         </div>
-
-        <p class="text-white/90 font-medium leading-7">
-          Choisissez un nouveau mot de passe sécurisé
-          pour votre compte.
-        </p>
       </div>
-    </div>
 
-    <!-- ===== Colonne droite ===== -->
-    <div class="w-full lg:w-1/2 bg-white flex items-center justify-center px-6 py-10">
-      <div class="w-full max-w-md">
-        <h2 class="text-4xl font-bold text-amber-800 mb-3">
-          Activer mon compte
-        </h2>
+      <!-- ===== Partie droite ===== -->
+      <div class="flex flex-col justify-between bg-white px-8 py-10 lg:px-20">
+        <div></div>
 
-        <p class="text-slate-700 font-medium leading-6 mb-8">
-          Complétez les informations ci-dessous pour activer votre compte.
-        </p>
-
-        <form @submit.prevent="activateAccount" class="space-y-6">
-          <!-- Nouveau mot de passe -->
-          <div>
-            <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-2">
-              Nouveau mot de passe
-            </label>
-
-            <div class="relative">
-              <input
-                :type="showPassword ? 'text' : 'password'"
-                v-model="form.password"
-                placeholder="••••••••••••"
-                class="w-full h-12 rounded-md border border-slate-300 bg-slate-50 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-amber-700"
-                required
-              />
-
-              <button
-                type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                @click="showPassword = !showPassword"
-              >
-                {{ showPassword ? "🙈" : "👁" }}
-              </button>
-            </div>
+        <div class="mx-auto w-full max-w-md">
+          <!-- Logo -->
+          <div class="flex items-center justify-center gap-3 mb-10">
+            <img
+              src="@/assets/images/logologin.png"
+              alt="Logo"
+              class="w-14 h-14 object-contain"
+            />
+            <h1 class="text-2xl font-bold text-yellow-800">
+              BarakaGive
+            </h1>
           </div>
 
-          <!-- Confirmation du mot de passe -->
-          <div>
-            <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-2">
-              Confirmation du mot de passe
-            </label>
-
-            <div class="relative">
-              <input
-                :type="showConfirm ? 'text' : 'password'"
-                v-model="form.confirmPassword"
-                placeholder="••••••••••••"
-                class="w-full h-12 rounded-md border border-slate-300 bg-slate-50 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-amber-700"
-                required
-              />
-
-              <button
-                type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                @click="showConfirm = !showConfirm"
-              >
-                {{ showConfirm ? "🙈" : "👁" }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Info -->
-          <div class="flex items-start gap-3 text-sm text-slate-600 leading-6">
-            <input type="checkbox" checked disabled class="mt-1" />
-            <span>
-              Utilisez un mot de passe suffisamment long et difficile à deviner.
-            </span>
-          </div>
-
-          <!-- Bouton -->
-          <button
-            type="submit"
-            class="w-full h-12 rounded-md bg-amber-800 hover:bg-amber-900 text-white font-semibold uppercase tracking-wide transition"
-          >
+          <!-- Titre -->
+          <h2 class="text-3xl font-bold text-yellow-800 mb-2">
             Activer mon compte
-          </button>
-        </form>
+          </h2>
 
-        <!-- Retour -->
-        <div class="border-t border-slate-200 mt-8 pt-6 text-center">
-          <span class="text-sm text-slate-600">
-            Vous disposez déjà d'un compte actif ?
-          </span>
-          <RouterLink
-            to="/connexion"
-            class="block text-sm font-bold text-slate-800 hover:text-amber-800 mt-1"
-          >
-            Se connecter
-          </RouterLink>
+          <p class="text-slate-700 font-medium mb-8">
+            Complétez les informations ci-dessous pour activer votre compte.
+          </p>
+
+          <!-- Formulaire -->
+          <form @submit.prevent="activateAccount" class="space-y-6">
+            <!-- Nouveau mot de passe -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
+                Nouveau mot de passe
+              </label>
+
+              <div class="relative">
+                <input
+                  :type="showPassword ? 'text' : 'password'"
+                  v-model="form.password"
+                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-yellow-700"
+                  placeholder="••••••••••••"
+                />
+
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {{ showPassword ? "🙈" : "👁" }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirmation -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
+                Confirmation du mot de passe
+              </label>
+
+              <div class="relative">
+                <input
+                  :type="showConfirm ? 'text' : 'password'"
+                  v-model="form.confirmPassword"
+                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-yellow-700"
+                  placeholder="••••••••••••"
+                />
+
+                <button
+                  type="button"
+                  @click="showConfirm = !showConfirm"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {{ showConfirm ? "🙈" : "👁" }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Information -->
+            <div class="flex items-start gap-2 text-xs text-gray-700">
+              <input type="checkbox" checked disabled class="mt-1" />
+              <p>
+                Utilisez un mot de passe suffisamment long et difficile à deviner.
+              </p>
+            </div>
+
+            <!-- Bouton -->
+            <button
+              class="w-full h-12 rounded-md bg-yellow-800 hover:bg-yellow-900 text-white font-semibold uppercase transition"
+            >
+              Activer mon compte
+            </button>
+
+            <!-- Retour -->
+            <RouterLink
+              to="/connexion"
+              class="flex h-12 items-center justify-center rounded-md border border-yellow-800 text-yellow-800 font-bold text-sm hover:bg-yellow-50 transition"
+            >
+              ← Retour à la connexion
+            </RouterLink>
+          </form>
         </div>
 
         <!-- Footer -->
-        <div class="mt-10 flex items-start gap-3 text-xs text-slate-600 leading-5">
-          <span>🔒</span>
-          <p>
-            Transmission chiffrée de bout en bout • Assistance HQ :
-            <span class="font-semibold">support@barakagive.org</span>
-          </p>
+        <div class="border-t border-slate-200 pt-5 flex flex-col gap-3 text-xs text-gray-600 lg:flex-row lg:justify-between">
+          <div class="flex items-center gap-2">
+            🔒 Transmission chiffrée de bout en bout
+          </div>
+
+          <div>
+            Assistance : support@barakagive.org
+          </div>
         </div>
       </div>
     </div>

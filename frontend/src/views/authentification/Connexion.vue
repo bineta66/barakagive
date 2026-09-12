@@ -1,123 +1,137 @@
 <template>
-  <div class="min-h-screen flex bg-slate-100">
-    <!-- ===== Colonne gauche ===== -->
-    <div class="hidden lg:flex lg:w-1/2 bg-[#021427] relative items-center justify-center overflow-hidden">
-      <div class="relative z-10 flex flex-col items-center text-center px-10">
-        <!-- Logo -->
-        <img src="@/assets/images/image.png" alt="Logo BarakaGive" class="w-36 h-36 object-contain mb-8" />
+  <div class="min-h-screen bg-slate-100">
+    <div class="grid min-h-screen lg:grid-cols-2">
+      <!-- ===== Partie gauche ===== -->
+      <div class="relative hidden lg:flex items-end justify-center bg-slate-900 overflow-hidden pb-20">
+        <!-- Image de fond -->
+        <img
+          src="@/assets/images/imagelogo.png"
+          alt="Fond"
+          class="absolute inset-0 w-full h-full object-cover opacity-70"
+        />
 
-        <h1 class="text-3xl font-bold text-white mb-6">
-          Nous sommes là pour vous aider
-        </h1>
+        <div class="absolute inset-0 bg-slate-900/40"></div>
 
-        <!-- Progress -->
-        <div class="flex items-center mb-6">
-          <div class="w-10 h-[2px] bg-sky-700"></div>
-          <div class="w-2 h-2 bg-emerald-400 rounded-full mx-3"></div>
-          <div class="w-10 h-[2px] bg-sky-700"></div>
+        <div class="relative z-10 flex flex-col items-center text-center px-10">
+          <p class="text-xl text-white font-semibold leading-8 max-w-sm">
+            Connectez-vous à votre compte BarakaGive.
+          </p>
+
+          
         </div>
-
-        <p class="text-white/90 font-medium leading-7">
-          Connectez-vous à votre compte BarakaGive
-        </p>
       </div>
-    </div>
 
-    <!-- ===== Colonne droite ===== -->
-    <div class="w-full lg:w-1/2 bg-white flex items-center justify-center px-6 py-10">
-      <div class="w-full max-w-md">
-        <h2 class="text-4xl font-bold text-amber-800 mb-3">
-          Connexion
-        </h2>
+      <!-- ===== Partie droite ===== -->
+      <div class="flex flex-col justify-between bg-white px-8 py-10 lg:px-20">
+        <div></div>
 
-        <p class="text-slate-700 font-medium leading-6 mb-8">
-          Connectez-vous à votre compte BarakaGive
-        </p>
-
-        <form @submit.prevent="login" class="space-y-6">
-          <!-- Email -->
-          <div>
-            <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-2">
-              Email professionnel
-            </label>
-
-            <div class="relative">
-              <input
-                v-model="form.email"
-                type="email"
-                placeholder="coordination@barakagive.org"
-                class="w-full h-12 rounded-md border border-slate-300 bg-slate-50 pl-4 pr-4 focus:outline-none focus:ring-2 focus:ring-amber-700"
-                required
-              />
-            </div>
+        <div class="mx-auto w-full max-w-md">
+          <!-- Logo -->
+          <div class="flex items-center justify-center gap-3 mb-10">
+            <img
+              src="@/assets/images/logologin.png"
+              alt="Logo"
+              class="w-14 h-14 object-contain"
+            />
+            <h1 class="text-2xl font-bold text-yellow-800">
+              BarakaGive
+            </h1>
           </div>
 
-          <!-- Mot de passe -->
-          <div>
-            <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-2">
-              Mot de passe
-            </label>
+          <!-- Titre -->
+          <h2 class="text-3xl font-bold text-yellow-800 mb-2">
+            Connexion
+          </h2>
 
-            <div class="relative">
-              <input
-                :type="showPassword ? 'text' : 'password'"
-                v-model="form.password"
-                placeholder="••••••••••••"
-                class="w-full h-12 rounded-md border border-slate-300 bg-slate-50 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-amber-700"
-                required
-              />
+          <p class="text-slate-700 font-medium mb-8">
+            Connectez-vous à votre compte BarakaGive.
+          </p>
 
-              <button
-                type="button"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                @click="showPassword = !showPassword"
-              >
-                {{ showPassword ? "🙈" : "👁" }}
-              </button>
+          <!-- Formulaire -->
+          <form @submit.prevent="login" class="space-y-6">
+            <!-- Email -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
+                Email professionnel
+              </label>
+
+              <div class="relative">
+                <input
+                  v-model="form.email"
+                  type="email"
+                  class="w-full h-12 rounded-md border border-slate-300 px-4 focus:outline-none focus:ring-2 focus:ring-yellow-700"
+                  placeholder="coordination@barakagive.org"
+                />
+              </div>
             </div>
-          </div>
 
-          <!-- Options -->
-          <div class="flex items-center justify-between">
-            <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-              <input type="checkbox" v-model="form.remember" class="rounded border-slate-300" />
-              Se souvenir de moi sur cet appareil sécurisé
-            </label>
+            <!-- Mot de passe -->
+            <div>
+              <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
+                Mot de passe
+              </label>
 
-            <RouterLink to="/mot-de-passe-oublie" class="text-sm font-semibold text-amber-800 hover:text-amber-900">
-              Mot de passe oublié ?
+              <div class="relative">
+                <input
+                  :type="showPassword ? 'text' : 'password'"
+                  v-model="form.password"
+                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-yellow-700"
+                  placeholder="••••••••••••"
+                />
+
+                <button
+                  type="button"
+                  @click="showPassword = !showPassword"
+                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+                >
+                  {{ showPassword ? "🙈" : "👁" }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Options -->
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                <input type="checkbox" v-model="form.remember" class="rounded border-slate-300" />
+                Se souvenir de moi
+              </label>
+
+              <RouterLink to="/mot-de-passe-oublie" class="text-sm font-semibold text-yellow-800 hover:text-yellow-900">
+                Mot de passe oublié ?
+              </RouterLink>
+            </div>
+
+            <!-- Bouton -->
+            <button
+              class="w-full h-12 rounded-md bg-yellow-800 hover:bg-yellow-900 text-white font-semibold uppercase transition"
+            >
+              Se connecter
+            </button>
+          </form>
+
+          <!-- Lien activation -->
+          <div class="mt-8 text-center">
+            <span class="text-sm text-gray-600">
+              Première connexion ou compte non activé ?
+            </span>
+            <RouterLink
+              to="/activation-compte"
+              class="block text-sm font-bold text-yellow-800 hover:text-yellow-900 mt-1"
+            >
+              Activer votre compte
             </RouterLink>
           </div>
-
-          <!-- Bouton -->
-          <button
-            type="submit"
-            class="w-full h-12 rounded-md bg-amber-800 hover:bg-amber-900 text-white font-semibold uppercase tracking-wide transition"
-          >
-            Se connecter
-          </button>
-        </form>
-
-        <!-- Lien activation -->
-        <div class="mt-8 text-center">
-          <span class="text-sm text-slate-600">
-            Première connexion ou compte non activé ?
-          </span>
-          <RouterLink
-            to="/activation-compte"
-            class="block text-sm font-bold text-amber-800 hover:text-amber-900 mt-1"
-          >
-            Activer votre compte
-          </RouterLink>
         </div>
 
         <!-- Footer -->
-        <div class="mt-10 flex items-start gap-3 text-xs text-slate-600 leading-5">
-          <span>🔒</span>
-          <p>
-            Connexion sécurisée • Assistance HQ :
-            <span class="font-semibold">support@barakagive.org</span>
-          </p>
+        <div class="border-t border-slate-200 pt-5 flex flex-col gap-3 text-xs text-gray-600 lg:flex-row lg:justify-between">
+          <div class="flex items-center gap-2">
+            🔒 Connexion sécurisée
+          </div>
+
+          <div>
+            Assistance : support@barakagive.org
+          </div>
         </div>
       </div>
     </div>
