@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <button :class="allClasses" v-bind="filteredAttrs">
     <slot />
   </button>
@@ -16,7 +16,8 @@ const filteredAttrs = computed(() => {
 })
 
 const allClasses = computed(() => [
-  "border border-slate-300 text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
+  "border border-slate-300 text-bleu-nuit hover:bg-bleu-nuit hover:text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors",
   attrs.class,
 ].filter(Boolean))
 </script>
+

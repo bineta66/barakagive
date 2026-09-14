@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <!-- En-tÃªte -->
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-amber-800">Détail de la campagne</h1>
+        <h1 class="text-3xl font-bold text-or">DÃ©tail de la campagne</h1>
         <p class="text-sm text-gray-600 mt-1">
-          Informations complètes de la campagne.
+          Informations complÃ¨tes de la campagne.
         </p>
       </div>
 
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <!-- Détails -->
+    <!-- DÃ©tails -->
     <div class="max-w-2xl bg-white border border-slate-200/60 rounded-xl p-6" v-if="campagne">
       <div class="grid grid-cols-2 gap-6">
         <div>
@@ -46,7 +46,7 @@
         </div>
 
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Date de début</p>
+          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Date de dÃ©but</p>
           <p class="text-gray-700">{{ campagne.dateDebut }}</p>
         </div>
 
@@ -57,16 +57,7 @@
 
         <div>
           <p class="text-xs font-bold uppercase text-slate-900 mb-1">Statut</p>
-          <span
-            class="px-2 py-1 rounded text-xs font-semibold"
-            :class="{
-              'bg-emerald-100 text-emerald-700': campagne.statut === 'En cours',
-              'bg-gray-100 text-gray-600': campagne.statut === 'Planifiée',
-              'bg-sky-100 text-sky-700': campagne.statut === 'Terminée',
-            }"
-          >
-            {{ campagne.statut }}
-          </span>
+           <StatusBadge :statut="campagne.statut">{{ campagne.statut }}</StatusBadge>
         </div>
 
         <div class="col-span-2">
@@ -79,6 +70,7 @@
 </template>
 
 <script setup>
+import StatusBadge from "@/components/ui/StatusBadge.vue"
 import { ref, onMounted } from "vue"
 import { useRoute, RouterLink } from "vue-router"
 import { List, FileText } from "lucide-vue-next"
@@ -98,3 +90,4 @@ onMounted(() => {
   }
 })
 </script>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <span
     class="px-3 py-1 rounded text-xs font-semibold uppercase"
     :class="badgeClass"
@@ -13,20 +13,21 @@ import { computed } from "vue"
 const props = defineProps({
   status: {
     type: String,
-    default: "Planifié",
+    default: "PlanifiÃ©",
   },
 })
 
 const badgeClass = computed(() => {
   switch (props.status) {
     case "En cours":
-      return "bg-amber-700 text-white"
-    case "Planifié":
-      return "bg-sky-900 text-white"
-    case "Terminé":
+      return "bg-or text-white"
+    case "PlanifiÃ©":
+      return "bg-bleu-nuit text-white"
+    case "TerminÃ©":
       return "bg-gray-500 text-white"
     default:
       return "bg-gray-500 text-white"
   }
 })
 </script>
+

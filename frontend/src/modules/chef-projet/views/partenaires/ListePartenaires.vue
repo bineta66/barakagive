@@ -1,22 +1,22 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <!-- En-tÃªte -->
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-amber-800">Partenaires</h1>
+        <h1 class="text-4xl font-bold text-or">Partenaires</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Suivez les organisations partenaires opérationnelles et locales des missions humanitaires.
+          Suivez les organisations partenaires opÃ©rationnelles et locales des missions humanitaires.
         </p>
       </div>
 
-      <BoutonPrimary @click="alert('Fonctionnalité à venir')">
+      <BoutonPrimary @click="alert('FonctionnalitÃ© Ã  venir')">
         <Plus :size="18" />
         Ajouter
       </BoutonPrimary>
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -35,31 +35,31 @@
 
       <select class="border rounded-lg px-3 py-2 text-sm">
         <option>Tous les domaines</option>
-        <option>Secours d'Urgence & Santé</option>
-        <option>Cliniques Mobiles & Pédiatrie</option>
+        <option>Secours d'Urgence & SantÃ©</option>
+        <option>Cliniques Mobiles & PÃ©diatrie</option>
         <option>Forages Solaires & Assainissement</option>
       </select>
 
       <BoutonTertiary @click="reinitialiserFiltres">
-        Réinitialiser
+        RÃ©initialiser
       </BoutonTertiary>
     </div>
 
-    <!-- Section : Partenaires Opérationnels & Locaux -->
+    <!-- Section : Partenaires OpÃ©rationnels & Locaux -->
     <div class="space-y-4">
-      <div class="bg-white px-4 py-3 border-b border-slate-200 inline-flex items-center gap-3">
-        <Users :size="20" class="text-sky-900" />
-        <span class="text-base font-semibold text-slate-900">Partenaires Opérationnels & Locaux</span>
+      <div class="bg-white px-4 py-3  inline-flex items-center gap-3">
+        <Users :size="20" class="text-bleu-nuit" />
+        <span class="text-base font-semibold text-slate-900">Partenaires OpÃ©rationnels & Locaux</span>
       </div>
 
-      <div class="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
         <table class="w-full">
-          <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+          <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
             <tr>
               <th class="text-left px-4 py-3">ORGANISATION</th>
               <th class="text-left px-4 py-3">DOMAINE D'INTERVENTION</th>
-              <th class="text-left px-4 py-3">ZONE DE DÉPLOIEMENT</th>
-              <th class="text-center px-4 py-3">STATUT OPÉRATIONNEL</th>
+              <th class="text-left px-4 py-3">ZONE DE DÃ‰PLOIEMENT</th>
+              <th class="text-center px-4 py-3">STATUT OPÃ‰RATIONNEL</th>
               <th class="text-center px-4 py-3">ACTIONS</th>
             </tr>
           </thead>
@@ -75,22 +75,15 @@
                 <p class="text-slate-900 text-xs">{{ partenaire.zone }}</p>
               </td>
               <td class="px-4 py-3 text-center">
-                <span
-                  class="px-2.5 py-1 rounded text-xs font-bold uppercase"
-                  :class="{
-                    'bg-indigo-100 text-sky-900': partenaire.statut === 'ACTIF',
-                  }"
-                >
-                  {{ partenaire.statut }}
-                </span>
+                <StatusBadge :statut="partenaire.statut">{{ partenaire.statut }}</StatusBadge>
               </td>
               <td class="px-4 py-3">
                 <div class="flex justify-center gap-1.5">
                   <div class="size-7 bg-indigo-50 flex justify-center items-center">
-                    <Pencil :size="14" class="text-sky-900" />
+                    <Pencil :size="14" class="text-bleu-nuit" />
                   </div>
                   <div class="size-7 bg-indigo-50 flex justify-center items-center">
-                    <Trash2 :size="14" class="text-sky-900" />
+                    <Trash2 :size="14" class="text-bleu-nuit" />
                   </div>
                 </div>
               </td>
@@ -100,7 +93,7 @@
 
         <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
           <p class="text-slate-500">
-            Affichage de 1 à {{ partenairesFiltres.length }} sur 6 partenaires
+            Affichage de 1 Ã  {{ partenairesFiltres.length }} sur 6 partenaires
           </p>
         </div>
       </div>
@@ -109,6 +102,7 @@
 </template>
 
 <script setup>
+import StatusBadge from "@/components/ui/StatusBadge.vue"
 import { ref, computed } from "vue"
 import { Plus, Search, Users, Pencil, Trash2 } from "lucide-vue-next"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
@@ -131,3 +125,4 @@ function reinitialiserFiltres() {
   filtreStatut.value = "Tous les statuts"
 }
 </script>
+

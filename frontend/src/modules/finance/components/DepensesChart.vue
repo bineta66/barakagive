@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl p-6">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-sm font-bold uppercase text-slate-900">Répartition des dépenses</h3>
+      <h3 class="text-sm font-bold uppercase text-slate-900">RÃ©partition des dÃ©penses</h3>
       <span class="text-xs text-slate-500">{{ formatMontant(totalDepenses) }} FCFA total</span>
     </div>
 
@@ -42,3 +42,4 @@ const totalDepenses = computed(() => {
   return depenses.value.reduce((sum, d) => sum + d.montant, 0)
 })
 </script>
+

@@ -1,7 +1,7 @@
-<template>
-  <div class="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+﻿<template>
+  <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
     <table class="w-full">
-      <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+      <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
         <tr>
           <th class="text-left px-4 py-4">Campagne</th>
           <th class="text-left px-4">Projet</th>
@@ -45,3 +45,4 @@ defineProps({
   },
 })
 </script>
+

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <RouterLink v-if="to" :to="to" :class="allClasses" v-bind="filteredAttrs" @click="handleClick">
     <slot />
   </RouterLink>
@@ -28,7 +28,7 @@ const filteredAttrs = computed(() => {
 })
 
 const allClasses = computed(() => [
-  "border border-sky-900 text-sky-900 hover:bg-sky-900 hover:text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+  "border border-slate-300 text-bleu-nuit hover:bg-bleu-nuit hover:text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
   attrs.class,
 ].filter(Boolean))
 
@@ -36,3 +36,4 @@ const handleClick = (event) => {
   emit("click", event)
 }
 </script>
+

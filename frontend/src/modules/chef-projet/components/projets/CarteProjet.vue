@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
     <div class="p-8">
       <div class="flex justify-between items-start mb-6">
         <div>
-          <h2 class="text-2xl font-bold text-amber-800 mb-1">
+          <h2 class="text-2xl font-bold text-or mb-1">
             {{ projet.nom }}
           </h2>
           <p class="text-sm text-gray-500">{{ projet.code }}</p>
@@ -66,9 +66,10 @@ defineProps({
       budget: "",
       debut: "",
       fin: "",
-      statut: "Planifié",
+      statut: "PlanifiÃ©",
       description: "",
     }),
   },
 })
 </script>
+

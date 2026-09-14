@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="w-full h-full relative">
     <LMap
       ref="mapRef"
@@ -14,7 +14,7 @@
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      <!-- Cercles rouges foncés des zones enregistrées -->
+      <!-- Cercles rouges foncÃ©s des zones enregistrÃ©es -->
       <LCircle
         v-for="zone in zones"
         :key="zone.id"
@@ -28,7 +28,7 @@
         <LTooltip permanent class="zone-tooltip">
           <div class="text-center">
             <strong>{{ zone.nom }}</strong><br />
-            <span class="text-xs">{{ zone.region }} • {{ zone.rayon }} m</span>
+            <span class="text-xs">{{ zone.region }} â€¢ {{ zone.rayon }} m</span>
           </div>
         </LTooltip>
         <LPopup>
@@ -39,11 +39,11 @@
             </div>
             <div class="space-y-1 text-sm">
               <div class="flex justify-between">
-                <span class="text-gray-500">Région</span>
+                <span class="text-gray-500">RÃ©gion</span>
                 <span class="font-semibold text-gray-900">{{ zone.region }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500">Département</span>
+                <span class="text-gray-500">DÃ©partement</span>
                 <span class="font-semibold text-gray-900">{{ zone.departement }}</span>
               </div>
               <div class="flex justify-between">
@@ -54,7 +54,7 @@
                 <span class="text-gray-500">Statut</span>
                 <span
                   class="px-2 py-0.5 rounded text-xs font-bold"
-                  :class="zone.statut === 'Actif' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'"
+                  :class="zone.statut === 'Actif' ? 'bg-bleu-nuit/10 text-bleu-nuit' : 'bg-gray-100 text-gray-600'"
                 >
                   {{ zone.statut }}
                 </span>
@@ -78,7 +78,7 @@
         <LPopup>
           <div class="text-center">
             <strong>Nouvelle zone</strong><br />
-            <span class="text-xs">{{ form.region || "Région" }}</span>
+            <span class="text-xs">{{ form.region || "RÃ©gion" }}</span>
           </div>
         </LPopup>
       </LMarker>
@@ -169,7 +169,7 @@ const onMapClick = (event) => {
   const { lat, lng } = event.latlng
 
   if (!selectedLayer) {
-    alert("Veuillez d'abord sélectionner une région sur la carte.")
+    alert("Veuillez d'abord sÃ©lectionner une rÃ©gion sur la carte.")
     return
   }
 
@@ -304,3 +304,4 @@ onUnmounted(() => {
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 </style>
+

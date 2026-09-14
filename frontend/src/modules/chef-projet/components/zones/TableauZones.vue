@@ -1,11 +1,11 @@
-<template>
-  <div class="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+﻿<template>
+  <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
     <table class="w-full">
-      <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+      <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
         <tr>
           <th class="text-left px-4 py-3">Nom</th>
-          <th class="text-left px-4">Région</th>
-          <th class="text-left px-4">Département</th>
+          <th class="text-left px-4">RÃ©gion</th>
+          <th class="text-left px-4">DÃ©partement</th>
           <th class="text-right px-4">Rayon</th>
           <th class="text-left px-4">Statut</th>
           <th class="text-right px-4">Actions</th>
@@ -28,7 +28,7 @@
           <td class="px-4">
             <span
               class="px-2 py-1 rounded text-xs font-semibold"
-              :class="zone.statut === 'Actif' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'"
+              :class="zone.statut === 'Actif' ? 'bg-bleu-nuit/10 text-bleu-nuit' : 'bg-gray-100 text-gray-600'"
             >
               {{ zone.statut }}
             </span>
@@ -38,14 +38,14 @@
             <div class="flex justify-end gap-2">
               <RouterLink
                 :to="`/chef-projet/zones/${zone.id}`"
-                class="text-slate-500 hover:text-sky-700"
+                class="text-slate-500 hover:text-bleu-nuit"
               >
                 <Eye :size="16" />
               </RouterLink>
 
               <RouterLink
                 :to="`/chef-projet/zones/modifier/${zone.id}`"
-                class="text-slate-500 hover:text-amber-700"
+                class="text-slate-500 hover:text-or"
               >
                 <Pencil :size="16" />
               </RouterLink>
@@ -62,7 +62,7 @@
 
         <tr v-if="!zones || zones.length === 0">
           <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">
-            Aucune zone enregistrée.
+            Aucune zone enregistrÃ©e.
           </td>
         </tr>
       </tbody>
@@ -89,3 +89,4 @@ const onDelete = (zone) => {
   }
 }
 </script>
+

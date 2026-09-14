@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div
     v-if="ouvert"
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden">
-      <div class="p-6 border-b border-gray-100">
+      <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
             Type de question
@@ -20,7 +20,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-2">
-          Sélectionnez le type de champ à ajouter au formulaire
+          SÃ©lectionnez le type de champ Ã  ajouter au formulaire
         </p>
       </div>
 

@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl p-6">
-    <!-- En-tête -->
+    <!-- En-tÃªte -->
     <div class="flex justify-between items-center mb-4">
       <div>
-        <h3 class="text-sm font-bold uppercase text-slate-900">Mes projets assignés</h3>
-        <p class="text-xs text-gray-500 mt-1">Budget alloué par projet</p>
+        <h3 class="text-sm font-bold uppercase text-slate-900">Mes projets assignÃ©s</h3>
+        <p class="text-xs text-gray-500 mt-1">Budget allouÃ© par projet</p>
       </div>
       <span class="text-xs text-slate-500">{{ projets.length }} projet(s)</span>
     </div>
@@ -37,12 +37,9 @@
 
         <!-- Statut -->
         <div class="w-32 flex-shrink-0 text-center">
-          <span
-            class="px-2 py-1 rounded text-xs font-semibold"
-            :class="badgeClass(projet.statut)"
-          >
+          <StatusBadge :statut="projet.statut">
             {{ projet.statut }}
-          </span>
+          </StatusBadge>
         </div>
       </div>
     </div>
@@ -52,6 +49,7 @@
 <script setup>
 import { computed } from "vue"
 import { useFinanceStore } from "@/modules/finance/stores/financeStore.js"
+import StatusBadge from "@/components/ui/StatusBadge.vue"
 
 const store = useFinanceStore()
 
@@ -66,9 +64,9 @@ const couleurStatut = (statut) => {
   switch (statut) {
     case "En cours":
       return "#F59E0B"
-    case "Budgétisé":
+    case "BudgÃ©tisÃ©":
       return "#10B981"
-    case "À budgétiser":
+    case "Ã€ budgÃ©tiser":
       return "#6B7280"
     default:
       return "#9CA3AF"
@@ -78,13 +76,14 @@ const couleurStatut = (statut) => {
 const badgeClass = (statut) => {
   switch (statut) {
     case "En cours":
-      return "bg-emerald-100 text-emerald-700"
-    case "Budgétisé":
-      return "bg-sky-100 text-sky-700"
-    case "À budgétiser":
-      return "bg-amber-100 text-amber-700"
+      return "bg-bleu-nuit/10 text-bleu-nuit"
+    case "BudgÃ©tisÃ©":
+      return "bg-or/10 text-bleu-nuit"
+    case "Ã€ budgÃ©tiser":
+      return "bg-or/10 text-or"
     default:
       return "bg-gray-100 text-gray-600"
   }
 }
 </script>
+

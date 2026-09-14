@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <tr class="border-t hover:bg-slate-50">
     <td class="px-4 py-4">
       <h3 class="font-semibold text-sm text-slate-800">
@@ -16,25 +16,16 @@
     </td>
 
     <td class="px-4">
-      <span
-        class="px-2 py-1 rounded text-xs font-semibold"
-        :class="{
-          'bg-emerald-100 text-emerald-700': campagne.statut === 'En cours',
-          'bg-gray-100 text-gray-600': campagne.statut === 'Planifiée',
-          'bg-sky-100 text-sky-700': campagne.statut === 'Terminée',
-        }"
-      >
-        {{ campagne.statut }}
-      </span>
+       <StatusBadge :statut="campagne.statut">{{ campagne.statut }}</StatusBadge>
     </td>
 
     <td class="px-4">
       <div class="flex justify-end gap-2">
-        <RouterLink :to="`/chef-projet/campagnes/${campagne.id}`" class="text-slate-500 hover:text-sky-700">
+        <RouterLink :to="`/chef-projet/campagnes/${campagne.id}`" class="text-slate-500 hover:text-bleu-nuit">
           <Eye :size="18" />
         </RouterLink>
 
-        <RouterLink :to="`/chef-projet/campagnes/modifier/${campagne.id}`" class="text-slate-500 hover:text-amber-700">
+        <RouterLink :to="`/chef-projet/campagnes/modifier/${campagne.id}`" class="text-slate-500 hover:text-or">
           <Pencil :size="18" />
         </RouterLink>
 
@@ -47,6 +38,7 @@
 </template>
 
 <script setup>
+import StatusBadge from "@/components/ui/StatusBadge.vue"
 import { Eye, Pencil, Archive } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
 
@@ -57,3 +49,4 @@ defineProps({
   },
 })
 </script>
+

@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="flex justify-between items-center mb-6">
     <div>
-      <h2 class="text-3xl font-bold text-amber-800">Bénéficiaires</h2>
+      <h2 class="text-3xl font-bold text-or">BÃ©nÃ©ficiaires</h2>
       <p class="text-sm text-gray-600 mt-1">
-        Tableau de bord géographique des bénéficiaires par région et zone d'intervention.
+        Tableau de bord gÃ©ographique des bÃ©nÃ©ficiaires par rÃ©gion et zone d'intervention.
       </p>
     </div>
   </div>
@@ -11,3 +11,4 @@
 
 <script setup>
 </script>
+

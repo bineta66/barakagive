@@ -1,10 +1,10 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <div class="flex justify-between items-center">
       <div>
-        <h1 class="text-3xl font-bold text-amber-800">Zones d'intervention</h1>
+        <h1 class="text-3xl font-bold text-or">Zones d'intervention</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Liste des zones géographiques d'intervention humanitaire.
+          Liste des zones gÃ©ographiques d'intervention humanitaire.
         </p>
       </div>
 
@@ -23,17 +23,17 @@
             v-model="recherche"
             type="text"
             placeholder="Rechercher une zone..."
-            class="w-full h-10 pl-4 pr-4 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+            class="w-full h-10 pl-4 pr-4 border border-gray-400 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
           />
         </div>
         <div class="w-64">
-          <select v-model="regionFiltre" class="w-full h-10 px-3 border border-gray-400 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-slate-900">
-            <option value="">Toutes les régions</option>
+          <select v-model="regionFiltre" class="w-full h-10 px-3 border border-gray-400 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-or/30">
+            <option value="">Toutes les rÃ©gions</option>
             <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
           </select>
         </div>
         <div class="w-56">
-          <select v-model="statutFiltre" class="w-full h-10 px-3 border border-gray-400 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-slate-900">
+          <select v-model="statutFiltre" class="w-full h-10 px-3 border border-gray-400 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-or/30">
             <option value="">Tous les statuts</option>
             <option value="Actif">Actif</option>
             <option value="Inactif">Inactif</option>
@@ -73,3 +73,4 @@ const onDelete = (id) => {
   zones.value = zones.value.filter((z) => z.id !== id)
 }
 </script>
+

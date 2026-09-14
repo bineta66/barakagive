@@ -1,9 +1,9 @@
 <template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-amber-800">Projets assignés</h1>
+        <h1 class="text-4xl font-bold text-or">Projets assignés</h1>
         <p class="text-xs text-gray-500 mt-1">
           Vue détaillée des projets alloués au module Finance
         </p>
@@ -16,7 +16,7 @@
       <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total projets</p>
-          <h3 class="text-xl font-bold text-slate-900 mt-2">{{ totalProjets }}</h3>
+          <h3 class="text-xl font-bold text-or mt-2">{{ totalProjets }}</h3>
         </div>
         <FolderKanban class="text-slate-400" :size="28" />
       </div>
@@ -24,7 +24,7 @@
       <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Budget total alloué</p>
-          <h3 class="text-xl font-bold text-yellow-800 mt-2">{{ formatCurrency(totalBudget) }} FCFA</h3>
+          <h3 class="text-xl font-bold text-or mt-2">{{ formatCurrency(totalBudget) }} FCFA</h3>
         </div>
         <PiggyBank class="text-slate-400" :size="28" />
       </div>
@@ -32,7 +32,7 @@
       <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Projets en cours</p>
-          <h3 class="text-xl font-bold text-blue-700 mt-2">{{ projetsEnCours }}</h3>
+          <h3 class="text-xl font-bold text-or mt-2">{{ projetsEnCours }}</h3>
         </div>
         <Activity class="text-slate-400" :size="28" />
       </div>
@@ -40,7 +40,7 @@
       <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">À budgétiser</p>
-          <h3 class="text-xl font-bold text-orange-700 mt-2">{{ projetsABudgétiser }}</h3>
+          <h3 class="text-xl font-bold text-or mt-2">{{ projetsABudgétiser }}</h3>
         </div>
         <Receipt class="text-slate-400" :size="28" />
       </div>

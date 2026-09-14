@@ -5,6 +5,9 @@ import ActivationCompte from "@/views/authentification/ActivationCompte.vue";
 import Connexion from "@/views/authentification/Connexion.vue";
 import chefProjectRoutes from "@/modules/chef-projet/router.js";
 import financeRoutes from "@/modules/finance/router.js";
+import gerantRoutes from "@/modules/gerant/router.js";
+import superAdminRoutes from "@/modules/super-admin/router.js";
+import agentRoutes from "@/modules/agent/router.js";
 
 const routes = [
   {
@@ -33,6 +36,9 @@ const routes = [
   },
   ...chefProjectRoutes,
   ...financeRoutes,
+  ...gerantRoutes,
+  ...superAdminRoutes,
+  ...agentRoutes,
   {
     path: "/:pathMatch(.*)*",
     redirect: "/chef-projet/dashboard",

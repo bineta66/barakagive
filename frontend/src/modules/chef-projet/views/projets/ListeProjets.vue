@@ -1,54 +1,49 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-amber-800">Projets</h1>
+        <h1 class="text-4xl font-bold text-or">Projets</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Gérez et suivez les projets humanitaires sur le terrain et en phase de déploiement.
+          GÃ©rez et suivez les projets humanitaires sur le terrain et en phase de dÃ©ploiement.
         </p>
       </div>
-
-      <BoutonPrimary to="/chef-projet/projets/creer">
-        <Plus :size="18" />
-        Nouveau projet
-      </BoutonPrimary>
     </div>
 
     <!-- Cartes statistiques -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Volume budgétaire alloué</p>
-          <h3 class="text-xl font-bold text-sky-900 mt-2">2 525 000 €</h3>
+          <p class="text-xs font-bold uppercase text-slate-900">Volume budgÃ©taire allouÃ©</p>
+          <h3 class="text-xl font-bold text-or mt-2">2 525 000 â‚¬</h3>
         </div>
-        <Wallet class="text-slate-400" :size="28" />
+        <Wallet class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exécution terrain</p>
-          <h3 class="text-xl font-bold text-amber-800 mt-2">78.4 %</h3>
+          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exÃ©cution terrain</p>
+          <h3 class="text-xl font-bold text-or mt-2">78.4 %</h3>
         </div>
-        <Activity class="text-slate-400" :size="28" />
+        <Activity class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Zones d'intervention</p>
           <h3 class="text-xl font-bold text-slate-800 mt-2">14 secteurs</h3>
         </div>
-        <MapPinned class="text-slate-400" :size="28" />
+        <MapPinned class="text-bleu-nuit" :size="28" />
       </div>
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
         <option>Tous les statuts</option>
         <option>En cours</option>
-        <option>Planifié</option>
-        <option>Terminé</option>
+        <option>PlanifiÃ©</option>
+        <option>TerminÃ©</option>
       </select>
 
       <select class="border rounded-lg px-3 py-2 text-sm">
@@ -78,13 +73,11 @@
 <script setup>
 import { ref, computed } from "vue"
 import {
-  Plus,
   Wallet,
   Activity,
   MapPinned,
   Search,
 } from "lucide-vue-next"
-import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import TableauProjets from "@/modules/chef-projet/components/projets/TableauProjets.vue"
 
 const recherche = ref("")
@@ -94,34 +87,34 @@ const projets = ref([
   {
     nom: "Secours Alimentaire & Nutrition d'Urgence",
     code: "PRJ-2025-089",
-    budget: "340 000 €",
+    budget: "340 000 â‚¬",
     debut: "15 Jan 2025",
     fin: "30 Nov 2025",
     statut: "En cours",
   },
   {
-    nom: "Accès Eau Potable & Forages Solaires",
+    nom: "AccÃ¨s Eau Potable & Forages Solaires",
     code: "PRJ-2025-072",
-    budget: "520 000 €",
-    debut: "01 Fév 2025",
-    fin: "31 Déc 2025",
+    budget: "520 000 â‚¬",
+    debut: "01 FÃ©v 2025",
+    fin: "31 DÃ©c 2025",
     statut: "En cours",
   },
   {
-    nom: "Cliniques Mobiles & Soins Pédiatriques",
+    nom: "Cliniques Mobiles & Soins PÃ©diatriques",
     code: "PRJ-2025-104",
-    budget: "280 000 €",
+    budget: "280 000 â‚¬",
     debut: "01 Juil 2025",
     fin: "30 Juin 2026",
-    statut: "Planifié",
+    statut: "PlanifiÃ©",
   },
   {
-    nom: "Appui Agricole & Résilience Maraîchère",
+    nom: "Appui Agricole & RÃ©silience MaraÃ®chÃ¨re",
     code: "PRJ-2024-045",
-    budget: "195 000 €",
+    budget: "195 000 â‚¬",
     debut: "10 Mar 2024",
     fin: "15 Mai 2025",
-    statut: "Terminé",
+    statut: "TerminÃ©",
   },
 ])
 
@@ -139,3 +132,4 @@ const projetsFiltres = computed(() => {
   })
 })
 </script>
+

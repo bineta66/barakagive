@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <form @submit.prevent="submit" class="space-y-4">
-    <!-- Région -->
+    <!-- RÃ©gion -->
     <div>
       <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        Région
+        RÃ©gion
       </label>
       <input
         :value="form.region"
@@ -13,10 +13,10 @@
       />
     </div>
 
-    <!-- Département -->
+    <!-- DÃ©partement -->
     <div>
       <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        Département
+        DÃ©partement
       </label>
       <input
         :value="form.departement"
@@ -36,14 +36,14 @@
         type="text"
         required
         placeholder="Ex : Zone Nord Dakar"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-700 outline-none"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
       />
     </div>
 
     <!-- Rayon -->
     <div>
       <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        Rayon (mètres) *
+        Rayon (mÃ¨tres) *
       </label>
       <input
         v-model.number="form.rayon"
@@ -51,7 +51,7 @@
         required
         min="1"
         placeholder="Ex : 2000"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-700 outline-none"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
       />
     </div>
 
@@ -62,14 +62,14 @@
       </label>
       <select
         v-model="form.statut"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-700 outline-none"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
       >
         <option value="Actif">Actif</option>
         <option value="Inactif">Inactif</option>
       </select>
     </div>
 
-    <!-- Coordonnées cachées -->
+    <!-- CoordonnÃ©es cachÃ©es -->
     <input type="hidden" v-model="form.latitude" />
     <input type="hidden" v-model="form.longitude" />
 
@@ -126,9 +126,10 @@ watch(
 
 const submit = () => {
   if (!form.latitude || !form.longitude) {
-    alert("Veuillez sélectionner un point sur la carte.")
+    alert("Veuillez sÃ©lectionner un point sur la carte.")
     return
   }
   emit("submit", { ...form })
 }
 </script>
+

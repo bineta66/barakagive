@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
-    <div class="p-6 border-b border-gray-100">
-      <h3 class="text-lg font-bold text-gray-900">Bénéficiaires les plus urgents</h3>
-      <p class="text-xs text-gray-500 mt-1">Top 5 de la zone sélectionnée</p>
+    <div class="p-6">
+      <h3 class="text-lg font-bold text-gray-900">BÃ©nÃ©ficiaires les plus urgents</h3>
+      <p class="text-xs text-gray-500 mt-1">Top 5 de la zone sÃ©lectionnÃ©e</p>
     </div>
     <div class="p-6">
-      <div v-if="beneficiaires.length === 0" class="text-sm text-gray-500">Aucun bénéficiaire urgent dans cette zone.</div>
+      <div v-if="beneficiaires.length === 0" class="text-sm text-gray-500">Aucun bÃ©nÃ©ficiaire urgent dans cette zone.</div>
       <div v-else class="space-y-3">
         <div
           v-for="beneficiaire in beneficiaires"
@@ -39,3 +39,4 @@ defineProps({
   },
 })
 </script>
+

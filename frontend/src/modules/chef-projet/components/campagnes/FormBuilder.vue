@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="flex-1 inline-flex flex-col justify-start items-start gap-4">
     <div class="self-stretch flex justify-between items-center">
       <h3 class="text-xl font-bold" style="color: #744D03">Questions</h3>
@@ -52,3 +52,4 @@ defineEmits([
   "supprimer-option",
 ])
 </script>
+

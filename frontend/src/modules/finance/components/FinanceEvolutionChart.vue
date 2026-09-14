@@ -1,20 +1,20 @@
-<template>
+﻿<template>
   <div class="self-stretch p-6 bg-white flex flex-col justify-start items-start gap-4">
     <!-- Header -->
     <div class="self-stretch pb-3 inline-flex justify-between items-center">
       <div class="self-stretch flex flex-col justify-start items-start gap-0.5">
         <div class="text-slate-900 text-base font-bold font-['Inter'] leading-6">
-          Trajectoire budgétaire et dépenses (2026)
+          Trajectoire budgÃ©taire et dÃ©penses (2026)
         </div>
         <div class="text-zinc-500 text-xs font-normal font-['Inter'] leading-4">
-          Suivi cumulé mensuel des dépenses et du budget alloués (en millions FCFA)
+          Suivi cumulÃ© mensuel des dÃ©penses et du budget allouÃ©s (en millions FCFA)
         </div>
       </div>
       <div class="flex justify-start items-center gap-2">
-        <div class="px-4 py-2 bg-slate-900 flex justify-start items-center gap-1 rounded-lg">
+        <div class="px-4 py-2 bg-bleu-nuit flex justify-start items-center gap-1 rounded-lg">
           <div class="w-3 h-3 bg-white"></div>
           <div class="text-center text-white text-sm font-semibold font-['Inter'] leading-5">
-            Exporter arrêté
+            Exporter arrÃªtÃ©
           </div>
         </div>
       </div>
@@ -28,20 +28,20 @@
           <div class="self-stretch inline-flex justify-between items-center">
             <div class="self-stretch flex flex-col justify-start items-start gap-0.5">
               <div class="text-slate-700 text-sm font-bold font-['Inter'] uppercase leading-5 tracking-wide">
-                TRAJECTOIRE BUDGÉTAIRE ET DÉPENSES
+                TRAJECTOIRE BUDGÃ‰TAIRE ET DÃ‰PENSES
               </div>
               <div class="text-gray-500 text-xs font-normal font-['Inter'] leading-4">
-                Progression mensuelle cumulée sur les 6 derniers mois (2025)
+                Progression mensuelle cumulÃ©e sur les 6 derniers mois (2025)
               </div>
             </div>
             <div class="flex justify-start items-center">
               <div class="flex items-center gap-2">
-                <div class="w-3 h-3 bg-sky-900"></div>
+                <div class="w-3 h-3 bg-bleu-nuit"></div>
                 <span class="text-slate-600 text-xs font-['Inter']">Budget</span>
               </div>
               <div class="ml-4 flex items-center gap-2">
-                <div class="w-3 h-3 bg-yellow-800"></div>
-                <span class="text-slate-600 text-xs font-['Inter']">Dépenses</span>
+                <div class="w-3 h-3 bg-or"></div>
+                <span class="text-slate-600 text-xs font-['Inter']">DÃ©penses</span>
               </div>
             </div>
           </div>
@@ -65,14 +65,14 @@
                   class="flex items-end gap-1 h-full justify-center flex-1"
                 >
                   <div
-                    class="w-4 bg-sky-900 rounded-t transition-all"
+                    class="w-4 bg-bleu-nuit rounded-t transition-all"
                     :style="{ height: `${item.budget}%` }"
                     :title="`${item.mois} - Budget: ${item.budgetMillions} M FCFA`"
                   ></div>
                   <div
-                    class="w-4 bg-yellow-800 opacity-90 rounded-t transition-all"
+                    class="w-4 bg-or opacity-90 rounded-t transition-all"
                     :style="{ height: `${item.depenses}%` }"
-                    :title="`${item.mois} - Dépenses: ${item.depensesMillions} M FCFA`"
+                    :title="`${item.mois} - DÃ©penses: ${item.depensesMillions} M FCFA`"
                   ></div>
                 </div>
               </div>
@@ -89,7 +89,7 @@
           >
             <div
               class="text-center text-xs font-semibold font-['Inter'] leading-4"
-              :class="item.mois === 'Juin' ? 'text-sky-700 font-bold' : 'text-gray-500'"
+              :class="item.mois === 'Juin' ? 'text-bleu-nuit font-bold' : 'text-gray-500'"
             >
               {{ item.mois }}
             </div>
@@ -105,10 +105,10 @@
         Source : Rapprochements comptables analytiques au 24/10/2026
       </div>
       <div class="flex items-center gap-0.5">
-        <div class="text-sky-700 text-xs font-semibold font-['Inter'] leading-4 tracking-tight">
-          Détail analytique par projet
+        <div class="text-bleu-nuit text-xs font-semibold font-['Inter'] leading-4 tracking-tight">
+          DÃ©tail analytique par projet
         </div>
-        <div class="w-2 h-1.5 bg-sky-700"></div>
+        <div class="w-2 h-1.5 bg-bleu-nuit"></div>
       </div>
     </div>
   </div>
@@ -119,10 +119,11 @@ import { ref } from "vue"
 
 const dataMensuelle = ref([
   { mois: "Janvier", budget: 40, depenses: 33, budgetMillions: 30, depensesMillions: 25 },
-  { mois: "Février", budget: 67, depenses: 51, budgetMillions: 50, depensesMillions: 38 },
+  { mois: "FÃ©vrier", budget: 67, depenses: 51, budgetMillions: 50, depensesMillions: 38 },
   { mois: "Mars", budget: 73, depenses: 56, budgetMillions: 55, depensesMillions: 42 },
   { mois: "Avril", budget: 80, depenses: 69, budgetMillions: 60, depensesMillions: 52 },
   { mois: "Mai", budget: 100, depenses: 77, budgetMillions: 75, depensesMillions: 58 },
   { mois: "Juin", budget: 100, depenses: 12, budgetMillions: 75, depensesMillions: 9.25 },
 ])
 </script>
+

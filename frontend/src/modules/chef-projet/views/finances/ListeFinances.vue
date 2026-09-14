@@ -1,44 +1,44 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-amber-800">Finances</h1>
+        <h1 class="text-4xl font-bold text-or">Finances</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Suivi budgétaire et exécutive des projets humanitaires.
+          Suivi budgÃ©taire et exÃ©cutive des projets humanitaires.
         </p>
       </div>
     </div>
 
     <!-- Cartes statistiques -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Volume budgétaire alloué</p>
-          <h3 class="text-xl font-bold text-sky-900 mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
+          <p class="text-xs font-bold uppercase text-slate-900">Volume budgÃ©taire allouÃ©</p>
+          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
         </div>
-        <Wallet class="text-slate-400" :size="28" />
+        <Wallet class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exécution</p>
-          <h3 class="text-xl font-bold text-amber-800 mt-2">{{ statistiques.tauxExecution }} %</h3>
+          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exÃ©cution</p>
+          <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.tauxExecution }} %</h3>
         </div>
-        <Activity class="text-slate-400" :size="28" />
+        <Activity class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Montant restant</p>
-          <h3 class="text-xl font-bold text-emerald-700 mt-2">{{ formatMontant(statistiques.totalRestant) }} FCFA</h3>
+          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.totalRestant) }} FCFA</h3>
         </div>
-        <PiggyBank class="text-slate-400" :size="28" />
+        <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -52,8 +52,8 @@
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
         <option>Tous les statuts</option>
         <option>En cours</option>
-        <option>Terminée</option>
-        <option>Planifiée</option>
+        <option>TerminÃ©e</option>
+        <option>PlanifiÃ©e</option>
       </select>
 
       <select v-model="filtreProjet" class="border rounded-lg px-3 py-2 text-sm">
@@ -62,19 +62,19 @@
       </select>
 
       <select v-model="filtreRegion" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Toutes les régions</option>
+        <option>Toutes les rÃ©gions</option>
         <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
       </select>
     </div>
 
     <!-- Tableau -->
-    <div class="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+    <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
       <table class="w-full">
-        <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+        <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
           <tr>
             <th class="text-left px-4 py-4">Projet</th>
-            <th class="text-right px-4">Budget alloué</th>
-            <th class="text-right px-4">Engagé</th>
+            <th class="text-right px-4">Budget allouÃ©</th>
+            <th class="text-right px-4">EngagÃ©</th>
             <th class="text-right px-4">Restant</th>
             <th class="text-left px-4">Statut</th>
             <th class="text-right px-4">Actions</th>
@@ -112,7 +112,7 @@
 
             <td class="px-4">
               <div class="flex justify-end gap-2">
-                <RouterLink :to="`/chef-projet/finances/${projet.id}`" class="text-slate-500 hover:text-sky-700">
+                <RouterLink :to="`/chef-projet/finances/${projet.id}`" class="text-slate-500 hover:text-bleu-nuit">
                   <Eye :size="18" />
                 </RouterLink>
               </div>
@@ -124,7 +124,7 @@
       <!-- Pagination -->
       <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
         <p class="text-slate-500">
-          Affichage de 1 à {{ financesPage.length }} sur {{ financesFiltrees.length }} projets
+          Affichage de 1 Ã  {{ financesPage.length }} sur {{ financesFiltrees.length }} projets
         </p>
 
         <div class="flex gap-1">
@@ -133,14 +133,14 @@
             :disabled="pageCourante === 1"
             @click="pageCourante = pageCourante - 1"
           >
-            Précédent
+            PrÃ©cÃ©dent
           </button>
 
           <button
             v-for="page in totalPages"
             :key="page"
             class="w-8 h-8 border rounded"
-            :class="page === pageCourante ? 'bg-green-900 text-white' : ''"
+            :class="page === pageCourante ? 'bg-bleu-nuit text-white' : ''"
             @click="pageCourante = page"
           >
             {{ page }}
@@ -190,3 +190,4 @@ function formatMontant(montant) {
   return montant.toLocaleString("fr-FR")
 }
 </script>
+

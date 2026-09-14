@@ -1,11 +1,11 @@
-<template>
-  <div class="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+﻿<template>
+  <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
     <table class="w-full">
-      <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+      <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
         <tr>
           <th class="text-left px-4 py-4">Projet</th>
           <th class="text-right px-4">Budget</th>
-          <th class="text-left px-4">Début</th>
+          <th class="text-left px-4">DÃ©but</th>
           <th class="text-left px-4">Fin</th>
           <th class="text-left px-4">Statut</th>
           <th class="text-right px-4">Actions</th>
@@ -43,11 +43,11 @@
 
           <td class="px-4">
             <div class="flex justify-end gap-2">
-              <RouterLink :to="`/chef-projet/projets/${projet.code}`" class="text-slate-500 hover:text-sky-700">
+              <RouterLink :to="`/chef-projet/projets/${projet.code}`" class="text-slate-500 hover:text-bleu-nuit">
                 <Eye :size="18" />
               </RouterLink>
 
-              <RouterLink :to="`/chef-projet/projets/modifier/${projet.code}`" class="text-slate-500 hover:text-amber-700">
+              <RouterLink :to="`/chef-projet/projets/modifier/${projet.code}`" class="text-slate-500 hover:text-or">
                 <Pencil :size="18" />
               </RouterLink>
 
@@ -63,15 +63,15 @@
     <!-- Pagination -->
     <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
       <p class="text-slate-500">
-        Affichage de 1 à {{ projects?.length ?? 0 }} sur {{ projects?.length ?? 0 }} projets
+        Affichage de 1 Ã  {{ projects?.length ?? 0 }} sur {{ projects?.length ?? 0 }} projets
       </p>
 
       <div class="flex gap-1">
         <button class="px-3 py-2 border rounded bg-slate-100 text-slate-400">
-          Précédent
+          PrÃ©cÃ©dent
         </button>
 
-        <button class="w-8 h-8 bg-green-900 text-white rounded">1</button>
+        <button class="w-8 h-8 bg-bleu-nuit text-white rounded">1</button>
         <button class="w-8 h-8 border rounded">2</button>
         <button class="w-8 h-8 border rounded">3</button>
 
@@ -93,3 +93,4 @@ defineProps({
   },
 })
 </script>
+

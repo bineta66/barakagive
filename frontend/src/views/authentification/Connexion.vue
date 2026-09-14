@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-slate-100">
     <div class="grid min-h-screen lg:grid-cols-2">
       <!-- ===== Partie gauche ===== -->
-      <div class="relative hidden lg:flex items-end justify-center bg-slate-900 overflow-hidden pb-20">
+      <div class="relative hidden lg:flex items-end justify-center bg-bleu-nuit overflow-hidden pb-20">
         <!-- Image de fond -->
         <img
           src="@/assets/images/imagelogo.png"
@@ -10,11 +10,11 @@
           class="absolute inset-0 w-full h-full object-cover opacity-70"
         />
 
-        <div class="absolute inset-0 bg-slate-900/40"></div>
+        <div class="absolute inset-0 bg-bleu-nuit/40"></div>
 
         <div class="relative z-10 flex flex-col items-center text-center px-10">
           <p class="text-xl text-white font-semibold leading-8 max-w-sm">
-            Connectez-vous à votre compte BarakaGive.
+            Connectez-vous Ã  votre compte BarakaGive.
           </p>
 
           
@@ -33,18 +33,18 @@
               alt="Logo"
               class="w-14 h-14 object-contain"
             />
-            <h1 class="text-2xl font-bold text-yellow-800">
+            <h1 class="text-2xl font-bold text-or">
               BarakaGive
             </h1>
           </div>
 
           <!-- Titre -->
-          <h2 class="text-3xl font-bold text-yellow-800 mb-2">
+          <h2 class="text-3xl font-bold text-or mb-2">
             Connexion
           </h2>
 
           <p class="text-slate-700 font-medium mb-8">
-            Connectez-vous à votre compte BarakaGive.
+            Connectez-vous Ã  votre compte BarakaGive.
           </p>
 
           <!-- Formulaire -->
@@ -59,7 +59,7 @@
                 <input
                   v-model="form.email"
                   type="email"
-                  class="w-full h-12 rounded-md border border-slate-300 px-4 focus:outline-none focus:ring-2 focus:ring-yellow-700"
+                  class="w-full h-12 rounded-md border border-slate-300 px-4 focus:outline-none focus:ring-2 focus:ring-or/30"
                   placeholder="coordination@barakagive.org"
                 />
               </div>
@@ -75,8 +75,8 @@
                 <input
                   :type="showPassword ? 'text' : 'password'"
                   v-model="form.password"
-                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-yellow-700"
-                  placeholder="••••••••••••"
+                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-or/30"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                 />
 
                 <button
@@ -84,7 +84,7 @@
                   @click="showPassword = !showPassword"
                   class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
                 >
-                  {{ showPassword ? "🙈" : "👁" }}
+                  {{ showPassword ? "ðŸ™ˆ" : "ðŸ‘" }}
                 </button>
               </div>
             </div>
@@ -96,14 +96,14 @@
                 Se souvenir de moi
               </label>
 
-              <RouterLink to="/mot-de-passe-oublie" class="text-sm font-semibold text-yellow-800 hover:text-yellow-900">
-                Mot de passe oublié ?
+              <RouterLink to="/mot-de-passe-oublie" class="text-sm font-semibold text-bleu-nuit hover:text-or">
+                Mot de passe oubliÃ© ?
               </RouterLink>
             </div>
 
             <!-- Bouton -->
             <button
-              class="w-full h-12 rounded-md bg-yellow-800 hover:bg-yellow-900 text-white font-semibold uppercase transition"
+              class="w-full h-12 rounded-md bg-or hover:bg-[#6b4203] text-white font-semibold uppercase transition"
             >
               Se connecter
             </button>
@@ -112,11 +112,11 @@
           <!-- Lien activation -->
           <div class="mt-8 text-center">
             <span class="text-sm text-gray-600">
-              Première connexion ou compte non activé ?
+              PremiÃ¨re connexion ou compte non activÃ© ?
             </span>
             <RouterLink
               to="/activation-compte"
-              class="block text-sm font-bold text-yellow-800 hover:text-yellow-900 mt-1"
+              class="block text-sm font-bold text-bleu-nuit hover:text-or mt-1"
             >
               Activer votre compte
             </RouterLink>
@@ -126,7 +126,7 @@
         <!-- Footer -->
         <div class="border-t border-slate-200 pt-5 flex flex-col gap-3 text-xs text-gray-600 lg:flex-row lg:justify-between">
           <div class="flex items-center gap-2">
-            🔒 Connexion sécurisée
+            ðŸ”’ Connexion sÃ©curisÃ©e
           </div>
 
           <div>
@@ -150,6 +150,7 @@ const form = reactive({
 })
 
 const login = () => {
-  alert(`Connexion simulée pour ${form.email}`)
+  alert(`Connexion simulÃ©e pour ${form.email}`)
 }
 </script>
+

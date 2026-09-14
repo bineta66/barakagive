@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
     <p class="text-slate-500">
-      Affichage de 1 à {{ campagnes?.length ?? 0 }} sur {{ campagnes?.length ?? 0 }} campagnes
+      Affichage de 1 Ã  {{ campagnes?.length ?? 0 }} sur {{ campagnes?.length ?? 0 }} campagnes
     </p>
 
     <div class="flex gap-1">
@@ -10,14 +10,14 @@
         :disabled="pageCourante === 1"
         @click="$emit('change-page', pageCourante - 1)"
       >
-        Précédent
+        PrÃ©cÃ©dent
       </button>
 
       <button
         v-for="page in totalPages"
         :key="page"
         class="w-8 h-8 border rounded"
-        :class="page === pageCourante ? 'bg-green-900 text-white' : ''"
+          :class="page === pageCourante ? 'bg-bleu-nuit text-white' : ''"
         @click="$emit('change-page', page)"
       >
         {{ page }}
@@ -48,3 +48,4 @@ defineProps({
 
 defineEmits(["change-page"])
 </script>
+

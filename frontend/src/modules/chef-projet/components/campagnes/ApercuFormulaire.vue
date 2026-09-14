@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="w-80 flex flex-col justify-start items-start gap-4">
     <div class="self-stretch bg-white rounded-xl border p-6" style="border-color: #744D03">
       <div class="flex items-center gap-2 mb-4">
@@ -8,12 +8,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
           </svg>
         </div>
-        <h3 class="text-lg font-bold" style="color: #744D03">Aperçu</h3>
+        <h3 class="text-lg font-bold" style="color: #744D03">AperÃ§u</h3>
       </div>
 
       <div class="self-stretch flex flex-col justify-start items-start gap-1 mb-4">
-        <div class="self-stretch justify-center text-gray-900 text-sm font-bold">Enrôlement et dotation</div>
-        <div class="self-stretch justify-center text-gray-500 text-xs">Aperçu du formulaire terrain</div>
+        <div class="self-stretch justify-center text-gray-900 text-sm font-bold">EnrÃ´lement et dotation</div>
+        <div class="self-stretch justify-center text-gray-500 text-xs">AperÃ§u du formulaire terrain</div>
       </div>
 
       <div class="self-stretch flex flex-col justify-start items-start gap-3">
@@ -29,7 +29,7 @@
           </div>
 
           <div v-if="question.type === 'texte'" class="self-stretch p-2 bg-white border border-gray-300 rounded">
-            <div class="text-xs text-gray-400">Texte de réponse...</div>
+            <div class="text-xs text-gray-400">Texte de rÃ©ponse...</div>
           </div>
 
           <div v-else-if="question.type === 'nombre'" class="self-stretch p-2 bg-white border border-gray-300 rounded">
@@ -63,14 +63,14 @@
             <div class="text-xs text-gray-400">Ajouter une photo</div>
           </div>
 
-          <div v-else-if="question.type === 'gps'" class="self-stretch p-3 bg-sky-50 border border-sky-200 rounded">
+          <div v-else-if="question.type === 'gps'" class="self-stretch p-3 bg-or/10 border border-or/30 rounded">
             <div class="flex items-center gap-2">
               <svg class="w-4 h-4" style="color: #021427" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
               </svg>
-              <div class="text-xs font-semibold" style="color: #021427">14.1386° N, 16.0743° W</div>
+              <div class="text-xs font-semibold" style="color: #021427">14.1386Â° N, 16.0743Â° W</div>
             </div>
-            <div class="text-[10px] text-gray-500 mt-1">Généré automatiquement</div>
+            <div class="text-[10px] text-gray-500 mt-1">GÃ©nÃ©rÃ© automatiquement</div>
           </div>
         </div>
       </div>
@@ -86,3 +86,4 @@ defineProps({
   },
 })
 </script>
+

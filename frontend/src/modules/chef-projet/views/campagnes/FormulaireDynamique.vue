@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="w-full max-w-[1152px] border-slate-200/60 inline-flex flex-col justify-start items-start p-8">
     <div class="self-stretch mb-8">
       <div class="flex justify-between items-center">
@@ -83,7 +83,8 @@ const fermerModal = () => {
 }
 
 const publier = () => {
-  alert("Formulaire publié avec succès !")
+  alert("Formulaire publiÃ© avec succÃ¨s !")
   router.push("/chef-projet/campagnes")
 }
 </script>
+

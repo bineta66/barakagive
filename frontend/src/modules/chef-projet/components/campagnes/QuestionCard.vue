@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="self-stretch border-b last:border-b-0" style="border-color: #744D03">
     <div class="self-stretch p-6 flex justify-between items-start gap-4">
       <div class="flex-1 inline-flex flex-col justify-start items-start gap-3">
@@ -19,7 +19,7 @@
 
         <div class="self-stretch mt-2">
           <div v-if="question.type === 'texte'" class="self-stretch p-3 border border-gray-300 rounded bg-white hover:border-gray-400 transition">
-            <span class="text-sm text-gray-400">Réponse texte</span>
+            <span class="text-sm text-gray-400">RÃ©ponse texte</span>
           </div>
 
           <div v-else-if="question.type === 'nombre'" class="self-stretch p-3 border border-gray-300 rounded bg-white hover:border-gray-400 transition">
@@ -67,14 +67,14 @@
             <span class="text-sm text-gray-500">Ajouter une photo</span>
           </div>
 
-          <div v-else-if="question.type === 'gps'" class="self-stretch p-3 bg-blue-50 border border-blue-200 rounded">
+          <div v-else-if="question.type === 'gps'" class="self-stretch p-3 bg-or/10 border border-or/30 rounded">
             <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-bleu-nuit" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
               </svg>
-              <span class="text-sm font-medium text-blue-900">14.1386° N, 16.0743° W</span>
+              <span class="text-sm font-medium text-bleu-nuit">14.1386Â° N, 16.0743Â° W</span>
             </div>
-            <p class="text-xs text-gray-500 mt-1">Coordonnées GPS générées automatiquement</p>
+            <p class="text-xs text-gray-500 mt-1">CoordonnÃ©es GPS gÃ©nÃ©rÃ©es automatiquement</p>
           </div>
         </div>
 
@@ -84,7 +84,7 @@
             @keyup.enter="ajouterOptionLocale"
             type="text"
             placeholder="Ajouter une option..."
-            class="flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-amber-700 outline-none"
+            class="flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
             style="border-color: #744D03; background-color: #fff"
           />
           <button
@@ -161,10 +161,10 @@ const optionTemp = ref("")
 const typeLabels = {
   texte: "Texte",
   nombre: "Nombre",
-  liste: "Liste déroulante",
+  liste: "Liste dÃ©roulante",
   "oui-non": "Oui/Non",
   date: "Date",
-  telephone: "Téléphone",
+  telephone: "TÃ©lÃ©phone",
   photo: "Photo",
   gps: "GPS",
 }
@@ -199,3 +199,4 @@ const supprimer = () => {
   emit("supprimer", props.question.id)
 }
 </script>
+

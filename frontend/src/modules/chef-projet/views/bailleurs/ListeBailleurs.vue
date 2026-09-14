@@ -1,22 +1,22 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <!-- En-tÃªte -->
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-amber-800">Bailleurs</h1>
+        <h1 class="text-4xl font-bold text-or">Bailleurs</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Gérez les bailleurs de fonds des missions humanitaires.
+          GÃ©rez les bailleurs de fonds des missions humanitaires.
         </p>
       </div>
 
-      <BoutonPrimary @click="alert('Fonctionnalité à venir')">
+      <BoutonPrimary @click="alert('FonctionnalitÃ© Ã  venir')">
         <Plus :size="18" />
         Ajouter
       </BoutonPrimary>
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -29,7 +29,7 @@
 
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
         <option>Tous les statuts</option>
-        <option>Reçu</option>
+        <option>ReÃ§u</option>
         <option>En attente</option>
       </select>
 
@@ -40,25 +40,25 @@
       </select>
 
       <BoutonTertiary @click="reinitialiserFiltres">
-        Réinitialiser
+        RÃ©initialiser
       </BoutonTertiary>
     </div>
 
     <!-- Section : Bailleurs de fonds -->
     <div class="space-y-4">
-      <div class="bg-white px-4 py-3 border-b border-slate-200 inline-flex items-center gap-3">
-        <Landmark :size="20" class="text-sky-900" />
+      <div class="bg-white px-4 py-3  inline-flex items-center gap-3">
+        <Landmark :size="20" class="text-bleu-nuit" />
         <span class="text-base font-semibold text-slate-900">Bailleurs de fonds</span>
       </div>
 
-      <div class="bg-white rounded-xl border border-slate-200/60 overflow-hidden">
+      <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
         <table class="w-full">
-          <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+          <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
             <tr>
               <th class="text-left px-4 py-3">ORGANISATION</th>
               <th class="text-left px-4 py-3">CONTACT INSTITUTIONNEL</th>
-              <th class="text-center px-4 py-3">PROJETS ASSOCIÉS</th>
-              <th class="text-right px-4 py-3">FINANCEMENT ENGAGÉ</th>
+              <th class="text-center px-4 py-3">PROJETS ASSOCIÃ‰S</th>
+              <th class="text-right px-4 py-3">FINANCEMENT ENGAGÃ‰</th>
               <th class="text-center px-4 py-3">ACTIONS</th>
             </tr>
           </thead>
@@ -79,17 +79,9 @@
               <td class="px-4 py-3">
                 <div class="flex justify-center gap-1.5">
                   <div class="size-7 bg-white flex justify-center items-center">
-                    <Eye :size="14" class="text-sky-900" />
+                    <Eye :size="14" class="text-bleu-nuit" />
                   </div>
-                  <span
-                    class="px-2 py-1 rounded text-xs font-semibold"
-                    :class="{
-                      'bg-emerald-100 text-emerald-700': bailleur.statut === 'Reçu',
-                      'bg-amber-100 text-amber-700': bailleur.statut === 'En attente',
-                    }"
-                  >
-                    {{ bailleur.statut }}
-                  </span>
+                   <StatusBadge :statut="bailleur.statut">{{ bailleur.statut }}</StatusBadge>
                 </div>
               </td>
             </tr>
@@ -98,7 +90,7 @@
 
         <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
           <p class="text-slate-500">
-            Affichage de 1 à {{ bailleursFiltres.length }} sur 6 bailleurs
+            Affichage de 1 Ã  {{ bailleursFiltres.length }} sur 6 bailleurs
           </p>
         </div>
       </div>
@@ -107,6 +99,7 @@
 </template>
 
 <script setup>
+import StatusBadge from "@/components/ui/StatusBadge.vue"
 import { ref, computed } from "vue"
 import { Plus, Search, Eye, Landmark } from "lucide-vue-next"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
@@ -130,3 +123,4 @@ function reinitialiserFiltres() {
   filtreStatut.value = "Tous les statuts"
 }
 </script>
+

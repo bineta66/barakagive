@@ -1,5 +1,5 @@
-<template>
-  <div class="bg-white border border-slate-200/60 rounded-xl p-4 grid md:grid-cols-4 gap-3">
+﻿<template>
+  <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
     <div class="relative">
       <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
       <input
@@ -30,7 +30,7 @@
     </select>
 
     <BoutonTertiary @click="$emit('reset')">
-      Réinitialiser
+      RÃ©initialiser
     </BoutonTertiary>
   </div>
 </template>
@@ -49,3 +49,4 @@ defineProps({
 
 defineEmits(['update:search', 'update:statut', 'update:chef', 'reset'])
 </script>
+

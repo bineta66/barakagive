@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <!-- En-tÃªte -->
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-amber-800">Zones d'intervention</h1>
+        <h1 class="text-3xl font-bold text-or">Zones d'intervention</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Consultez les zones enregistrées sur la carte du Sénégal.
+          Consultez les zones enregistrÃ©es sur la carte du SÃ©nÃ©gal.
         </p>
       </div>
 
@@ -44,3 +44,4 @@ import geoJsonSenegalRaw from "@/data/senegal-regions.geojson?raw"
 const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
 
 </script>
+

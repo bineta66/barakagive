@@ -1,14 +1,14 @@
-<template>
+﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
-    <div class="flex justify-between items-center px-6 py-4 border-b border-slate-200">
-      <h3 class="text-sm font-bold uppercase text-slate-900">Dernières opérations</h3>
+    <div class="flex justify-between items-center px-6 py-4 ">
+      <h3 class="text-sm font-bold uppercase text-slate-900">DerniÃ¨res opÃ©rations</h3>
     </div>
 
     <table class="w-full">
-      <thead class="bg-slate-50 text-xs uppercase text-sky-900">
+      <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
         <tr>
           <th class="text-left px-4 py-3">Date</th>
-          <th class="text-left px-4 py-3">Libellé</th>
+          <th class="text-left px-4 py-3">LibellÃ©</th>
           <th class="text-right px-4 py-3">Montant</th>
         </tr>
       </thead>
@@ -44,3 +44,4 @@ const store = useFinanceStore()
 
 const { dernieresOperations: operations, formatMontant } = store
 </script>
+

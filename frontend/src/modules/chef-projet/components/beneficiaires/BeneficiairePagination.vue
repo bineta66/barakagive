@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
     <p class="text-slate-500">
-      Affichage de 1 à {{ beneficiairesPage.length }} sur {{ total }} bénéficiaires
+      Affichage de 1 Ã  {{ beneficiairesPage.length }} sur {{ total }} bÃ©nÃ©ficiaires
     </p>
 
     <div class="flex gap-1">
@@ -10,14 +10,14 @@
         :disabled="page === 1"
         @click="$emit('update:page', page - 1)"
       >
-        Précédent
+        PrÃ©cÃ©dent
       </button>
 
       <button
         v-for="p in totalPages"
         :key="p"
         class="w-8 h-8 border rounded"
-        :class="p === page ? 'bg-sky-900 text-white' : ''"
+        :class="p === page ? 'bg-bleu-nuit text-white' : ''"
         @click="$emit('update:page', p)"
       >
         {{ p }}
@@ -56,3 +56,4 @@ defineProps({
 
 defineEmits(["update:page"])
 </script>
+

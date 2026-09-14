@@ -1,8 +1,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout.vue";
 import Dashboard from "./views/dashboard/Dashboard.vue";
 import ListeProjets from "./views/projets/ListeProjets.vue";
-import CreerProjet from "./views/projets/CreerProjet.vue";
-import ModifierProjet from "./views/projets/ModifierProjet.vue";
 import DetailProjet from "./views/projets/DetailProjet.vue";
 import CarteZones from "./views/zones/CarteZones.vue";
 import ListeZones from "./views/zones/ListeZones.vue";
@@ -38,16 +36,6 @@ const routes = [
         path: "projets",
         name: "projets",
         component: ListeProjets,
-      },
-      {
-        path: "projets/creer",
-        name: "projets-creer",
-        component: CreerProjet,
-      },
-      {
-        path: "projets/modifier/:id",
-        name: "projets-modifier",
-        component: ModifierProjet,
       },
       {
         path: "projets/:id",
@@ -145,10 +133,6 @@ const routes = [
         component: ListeRapports,
       },
     ],
-  },
-  {
-    path: "/chef-projet/ListeProjets",
-    redirect: "/chef-projet/projets",
   },
 ];
 

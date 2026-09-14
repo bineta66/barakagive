@@ -1,13 +1,13 @@
-<template>
+﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl shadow overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
-        <thead class="bg-slate-50 border-b border-slate-200">
+        <thead class="bg-slate-50 ">
           <tr>
             <th class="text-left px-4 py-3 font-medium text-slate-900">Projet</th>
             <th class="text-left px-4 py-3 font-medium text-slate-900">Chef de projet</th>
-            <th class="text-left px-4 py-3 font-medium text-slate-900">Région</th>
-            <th class="text-left px-4 py-3 font-medium text-slate-900">Budget alloué</th>
+            <th class="text-left px-4 py-3 font-medium text-slate-900">RÃ©gion</th>
+            <th class="text-left px-4 py-3 font-medium text-slate-900">Budget allouÃ©</th>
             <th class="text-left px-4 py-3 font-medium text-slate-900">Statut</th>
             <th class="text-center px-4 py-3 font-medium text-slate-900">Action</th>
           </tr>
@@ -24,17 +24,12 @@
             <td class="px-4 py-3 text-slate-700">{{ project.region }}</td>
             <td class="px-4 py-3 font-semibold text-slate-800">{{ formatCurrency(project.budget) }} FCFA</td>
             <td class="px-4 py-3">
-              <span
-                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium"
-                :class="badgeClass(project.statut)"
-              >
-                {{ project.statut }}
-              </span>
+              <StatusBadge :statut="project.statut">{{ project.statut }}</StatusBadge>
             </td>
             <td class="px-4 py-3 text-center">
               <button
                 @click="$emit('open-project', project)"
-                class="p-1 text-amber-700 hover:bg-amber-100 rounded-lg transition-colors"
+                class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition-colors"
                 title="Ouvrir le projet"
               >
                 <Eye class="w-4 h-4" />
@@ -53,7 +48,7 @@
         <button
           :disabled="currentPage === 1"
           @click="$emit('page-change', currentPage - 1)"
-          class="p-1 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeft class="w-4 h-4" />
         </button>
@@ -65,8 +60,8 @@
             :class="[
               'px-2.5 py-1 rounded text-sm font-medium transition-colors',
               page === currentPage
-                ? 'bg-amber-800 text-white'
-                : 'text-slate-600 hover:bg-slate-100'
+                ? 'bg-or text-white'
+                : 'text-bleu-nuit hover:bg-bleu-nuit/10'
             ]"
           >
             {{ page }}
@@ -75,7 +70,7 @@
         <button
           :disabled="currentPage === totalPages"
           @click="$emit('page-change', currentPage + 1)"
-          class="p-1 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronRight class="w-4 h-4" />
         </button>
@@ -127,14 +122,15 @@ const formatCurrency = (value) =>
 
 const badgeClass = (statut) => {
   switch (statut) {
-    case 'Budgétisé':
-      return 'bg-sky-100 text-sky-700'
+    case 'BudgÃ©tisÃ©':
+      return 'bg-or/10 text-bleu-nuit'
     case 'En cours':
-      return 'bg-emerald-100 text-emerald-700'
-    case 'À budgétiser':
-      return 'bg-amber-100 text-amber-700'
+      return 'bg-bleu-nuit/10 text-bleu-nuit'
+    case 'Ã€ budgÃ©tiser':
+      return 'bg-or/10 text-or'
     default:
       return 'bg-gray-100 text-gray-600'
   }
 }
 </script>
+

@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center border-b border-slate-200 pb-4">
+    <!-- En-tÃªte -->
+    <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-amber-800">Créer une zone</h1>
+        <h1 class="text-3xl font-bold text-or">CrÃ©er une zone</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Sélectionnez une région sur la carte, puis un point pour définir une zone.
+          SÃ©lectionnez une rÃ©gion sur la carte, puis un point pour dÃ©finir une zone.
         </p>
       </div>
 
@@ -33,7 +33,7 @@
       </div>
 
       <div class="w-96 bg-white border-l border-slate-200 p-6 overflow-y-auto rounded-r-xl">
-        <h2 class="text-xl font-bold text-amber-800 mb-1">Formulaire de zone</h2>
+        <h2 class="text-xl font-bold text-or mb-1">Formulaire de zone</h2>
         <p class="text-xs text-gray-500 mb-6">
           Remplissez les informations de la zone.
         </p>
@@ -95,6 +95,7 @@ const onSubmit = (data) => {
   }, 100)
 
   console.log("Nouvelle zone:", nouvelleZone)
-  alert("Zone créée avec succès !")
+  alert("Zone crÃ©Ã©e avec succÃ¨s !")
 }
 </script>
+

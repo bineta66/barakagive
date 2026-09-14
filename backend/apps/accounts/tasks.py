@@ -1,0 +1,62 @@
+from celery import shared_task
+from django.conf import settings
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
+
+
+@shared_task
+def send_invitation_email(recipient_email, first_name, activation_link):
+
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key["api-key"] = settings.BREVO_API_KEY
+
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    html = f"""
+    <h2>Bienvenue sur BarakaGive360</h2>
+
+    <p>Bonjour {first_name},</p>
+
+    <p>Votre compte a été créé avec succès.</p>
+
+    <p>Cliquez sur le lien ci-dessous pour activer votre compte :</p>
+
+    <p>
+        <a href="{activation_link}"
+           style="background:#0F766E; color:white; padding:12px 20px; text-decoration:none; border-radius:6px;">
+           Activer mon compte
+        </a>
+    </p>
+
+    <p>Ce lien est valable pendant 7 jours.</p>
+
+    <p>L'équipe BarakaGive</p>
+    """
+
+    sender = {
+        "name": "BarakaGive360",
+        "email": settings.DEFAULT_FROM_EMAIL,
+    }
+
+    to = [{
+        "email": recipient_email,
+        "name": first_name,
+    }]
+
+    email_data = sib_api_v3_sdk.SendSmtpEmail(
+        sender=sender,
+        to=to,
+        subject="Activation de votre compte BarakaGive360",
+        html_content=html,
+    )
+
+    try:
+        response = api_instance.send_transac_email(email_data)
+        print("BREVO OK :", response)
+        return str(response)
+
+    except ApiException as e:
+        print("BREVO ERROR :", e)
+        raise
