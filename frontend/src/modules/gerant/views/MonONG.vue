@@ -1,171 +1,153 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
-    <div class="flex justify-between items-center  pb-4">
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
       <div>
-        <h1 class="text-4xl font-bold text-or">Mon ONG</h1>
-        <p class="text-xs text-gray-500 mt-1">
-          Gestion des informations, bailleurs et partenaires de votre organisation.
+        <h1 class="text-3xl font-bold text-or">Mon Organisation (ONG)</h1>
+        <p class="text-sm text-slate-500 mt-1">
+          Informations administratives et structurelles de votre organisation.
         </p>
       </div>
+      <button
+        @click="chargerDonnees"
+        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition self-start sm:self-auto"
+      >
+        Actualiser
+      </button>
     </div>
 
-    <!-- Cartes KPI -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Bailleurs</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.bailleursCount }}</h3>
+    <!-- Alert Error -->
+    <AlertMessage v-if="erreur" type="error" :message="erreur" :dismissible="true" @dismiss="erreur = null" />
+
+    <!-- Loading State -->
+    <LoadingSpinner v-if="chargement" message="Chargement des informations de l'ONG..." />
+
+    <div v-else-if="ong" class="space-y-6">
+      <!-- Carte principale ONG -->
+      <div class="bg-white border border-slate-200/60 rounded-2xl p-6 shadow-xs-sm">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-5 pb-6 border-b border-slate-100">
+          <div class="w-16 h-16 rounded-2xl bg-or/10 border border-or/30 text-or font-black text-2xl flex items-center justify-center">
+            {{ ong.acronym ? ong.acronym.slice(0, 3) : (ong.name ? ong.name.slice(0, 2).toUpperCase() : 'ONG') }}
+          </div>
+          <div class="flex-1">
+            <h2 class="text-2xl font-bold text-slate-900">{{ ong.name }}</h2>
+            <p v-if="ong.acronym" class="text-sm font-bold text-or">Sigle officiel : {{ ong.acronym }}</p>
+            <p class="text-xs text-slate-500 mt-1">Domaine : {{ ong.intervention_domain || "Non précisé" }}</p>
+          </div>
+          <div>
+            <span
+              class="inline-block px-3 py-1.5 text-xs font-bold rounded-full"
+              :class="ong.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'"
+            >
+              {{ ong.status === 'ACTIVE' ? 'Organisation Active' : 'En attente de validation' }}
+            </span>
+          </div>
         </div>
-        <PiggyBank class="text-bleu-nuit" :size="28" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6 text-sm">
+          <div>
+            <span class="text-xs text-slate-400 font-semibold uppercase block">Email officiel</span>
+            <span class="font-medium text-slate-800">{{ ong.email }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 font-semibold uppercase block">Téléphone</span>
+            <span class="font-medium text-slate-800">{{ ong.phone }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 font-semibold uppercase block">Pays & Région</span>
+            <span class="font-medium text-slate-800">{{ ong.country }} · {{ ong.region }}</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 font-semibold uppercase block">Adresse</span>
+            <span class="font-medium text-slate-800">{{ ong.address || '-' }}</span>
+          </div>
+        </div>
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Partenaires</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.partenairesCount }}</h3>
+      <!-- Métriques opérationnelles de l'ONG -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
+          <div>
+            <p class="text-xs font-bold uppercase text-slate-500">Projets</p>
+            <h3 class="text-2xl font-bold text-or mt-1">{{ store.statistiques.totalProjets }}</h3>
+          </div>
+          <FolderKanban class="text-bleu-nuit" :size="28" />
         </div>
-        <Users class="text-bleu-nuit" :size="28" />
-      </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Budget total</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
+        <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
+          <div>
+            <p class="text-xs font-bold uppercase text-slate-500">Membres</p>
+            <h3 class="text-2xl font-bold text-or mt-1">{{ store.statistiques.totalUtilisateurs }}</h3>
+          </div>
+          <Users class="text-bleu-nuit" :size="28" />
         </div>
-        <Wallet class="text-bleu-nuit" :size="28" />
-      </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exÃ©cution</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.tauxExecution }}%</h3>
+        <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
+          <div>
+            <p class="text-xs font-bold uppercase text-slate-500">Campagnes</p>
+            <h3 class="text-2xl font-bold text-or mt-1">{{ store.statistiques.totalCampagnes }}</h3>
+          </div>
+          <ClipboardList class="text-bleu-nuit" :size="28" />
         </div>
-        <Activity class="text-bleu-nuit" :size="28" />
+
+        <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
+          <div>
+            <p class="text-xs font-bold uppercase text-slate-500">Bénéficiaires</p>
+            <h3 class="text-2xl font-bold text-or mt-1">{{ store.statistiques.totalBeneficiaires }}</h3>
+          </div>
+          <UserCheck class="text-bleu-nuit" :size="28" />
+        </div>
       </div>
     </div>
 
-    <!-- Bailleurs Table -->
-    <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
-      <div class="px-5 py-4 ">
-        <h2 class="text-lg font-semibold text-slate-900">Bailleurs</h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-slate-50">
-            <tr>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Organisation
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Contact
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Type
-              </th>
-              <th class="text-right px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Projets
-              </th>
-              <th class="text-right px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Financement
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Statut
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="bailleur in bailleurs" :key="bailleur.id">
-              <td class="px-4 py-3 text-sm font-medium text-slate-900">{{ bailleur.nom }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ bailleur.contact }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ bailleur.type }}</td>
-              <td class="px-4 py-3 text-right text-sm text-slate-600">{{ bailleur.projets }}</td>
-              <td class="px-4 py-3 text-right text-sm text-slate-600">{{ bailleur.finance }}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-block px-2 py-1 text-xs font-medium rounded-full"
-                  :class="
-                    bailleur.statut === 'ReÃ§u'
-                      ? 'text-emerald-700 bg-emerald-50'
-                      : 'text-or bg-or/10'
-                  "
-                >
-                  {{ bailleur.statut }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Partenaires Table -->
-    <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
-      <div class="px-5 py-4 ">
-        <h2 class="text-lg font-semibold text-slate-900">Partenaires</h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-slate-50">
-            <tr>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Organisation
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Domaine
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Zone
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Projet
-              </th>
-              <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Statut
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="partenaire in partenaires" :key="partenaire.id">
-              <td class="px-4 py-3 text-sm font-medium text-slate-900">{{ partenaire.nom }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ partenaire.domaine }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ partenaire.zone }}</td>
-              <td class="px-4 py-3 text-sm text-slate-600">{{ partenaire.projet }}</td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-block px-2 py-1 text-xs font-medium rounded-full"
-                  :class="
-                    partenaire.statut === 'ACTIF'
-                      ? 'text-emerald-700 bg-emerald-50'
-                      : 'text-red-700 bg-red-50'
-                  "
-                >
-                  {{ partenaire.statut }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <EmptyState
+      v-else
+      titre="Organisation introuvable"
+      description="Impossible de charger les données de votre organisation."
+    />
   </div>
 </template>
 
 <script setup>
-import { computed } from "vue"
-import {
-  PiggyBank,
-  Users,
-  Wallet,
-  Activity,
-} from "lucide-vue-next"
+import { ref, onMounted } from "vue"
+import { FolderKanban, Users, ClipboardList, UserCheck } from "lucide-vue-next"
+import { useAuthStore } from "@/stores/auth.js"
 import { useGerantStore } from "@/modules/gerant/stores/gerantStore.js"
+import api, { getErrorMessage } from "@/services/api.js"
+import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
+import EmptyState from "@/components/ui/EmptyState.vue"
+import AlertMessage from "@/components/ui/AlertMessage.vue"
 
+const authStore = useAuthStore()
 const store = useGerantStore()
-const { formatMontant } = store
 
-const statistiques = computed(() => store.statistiques)
-const bailleurs = computed(() => store.bailleurs)
-const partenaires = computed(() => store.partenaires)
+const ong = ref(null)
+const chargement = ref(false)
+const erreur = ref(null)
+
+const chargerDonnees = async () => {
+  chargement.value = true
+  erreur.value = null
+
+  try {
+    await store.fetchAll()
+    const res = await api.get("/api/organizations/")
+    const userOrgId = authStore.organizationId
+
+    if (userOrgId) {
+      ong.value = res.data.find((o) => o.id === userOrgId) || res.data[0]
+    } else {
+      ong.value = res.data[0] || null
+    }
+  } catch (err) {
+    erreur.value = getErrorMessage(err)
+  } finally {
+    chargement.value = false
+  }
+}
+
+onMounted(() => {
+  chargerDonnees()
+})
 </script>
 

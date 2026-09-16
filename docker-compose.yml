@@ -43,6 +43,17 @@ services:
       - db
       - redis
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: barakagive_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
   celery:
     build:
       context: ./backend

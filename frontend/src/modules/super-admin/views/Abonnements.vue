@@ -5,7 +5,7 @@
       <div>
         <h1 class="text-2xl font-bold text-slate-900">Abonnements</h1>
         <p class="text-sm text-slate-500 mt-1">
-          GÃ©rer les abonnements des organisations
+          Gérer les abonnements des organisations
         </p>
       </div>
       <select
@@ -14,7 +14,7 @@
       >
         <option value="tous">Tous les statuts</option>
         <option value="Actif">Actifs</option>
-        <option value="ExpirÃ©">ExpirÃ©s</option>
+        <option value="Expiré">Expirés</option>
       </select>
     </div>
 
@@ -33,7 +33,7 @@
         couleur="sky"
       />
       <StatCard
-        titre="Abonnements expirÃ©s"
+        titre="Abonnements expirés"
         :valeur="abonnementStats.expires"
         :icone="CalendarX"
         couleur="red"
@@ -53,7 +53,7 @@
                 Plan
               </th>
               <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                Date dÃ©but
+                Date début
               </th>
               <th class="text-left px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
                 Date fin
@@ -123,14 +123,13 @@
 import StatusBadge from "@/components/ui/StatusBadge.vue"
 import { ref, computed } from "vue"
 import { useSuperAdminStore } from "@/modules/super-admin/stores/superAdminStore.js"
-import { superAdminService } from "@/modules/super-admin/services/superAdminService.js"
 import { PiggyBank, CreditCard, CalendarX } from "lucide-vue-next"
 import StatCard from "@/components/ui/StatCard.vue"
 
 const store = useSuperAdminStore()
 const { abonnements, formatMontant } = store
-const abonnementStats = superAdminService.getAbonnementStatistiques()
-const plans = superAdminService.getPlans()
+const abonnementStats = { revenuTotal: 0, actifs: 0, expires: 0 }
+const plans = []
 
 const filtreStatut = ref("tous")
 
@@ -139,6 +138,7 @@ const abonnementsFiltres = computed(() => {
   return abonnements.value.filter((a) => a.statut === filtreStatut.value)
 })
 </script>
+
 
 
 

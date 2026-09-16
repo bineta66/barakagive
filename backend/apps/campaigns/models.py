@@ -36,6 +36,14 @@ class Campaign(models.Model):
         blank=True,
     )
 
+    agents = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="CampagneAffectation",
+        through_fields=("campagne", "agent"),
+        related_name="campagnes_assignees",
+        blank=True,
+    )
+
     date_debut = models.DateField()
 
     date_fin = models.DateField()
@@ -57,3 +65,50 @@ class Campaign(models.Model):
         verbose_name = "Campagne"
         verbose_name_plural = "Campagnes"
         ordering = ["-created_at"]
+
+
+class CampagneAffectation(models.Model):
+    """Affectation d'un agent terrain à une campagne et à une zone."""
+
+    class Statut(models.TextChoices):
+        EN_ATTENTE = "EN_ATTENTE", "En attente"
+        EN_COURS = "EN_COURS", "En cours"
+        TERMINE = "TERMINE", "Terminé"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    campagne = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="affectations",
+    )
+    agent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="affectations_campagnes",
+    )
+    zone = models.CharField(max_length=150)
+    objectif_beneficiaires = models.PositiveIntegerField(default=0)
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.EN_ATTENTE,
+    )
+    date_affectation = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="affectations_creees",
+    )
+
+    class Meta:
+        verbose_name = "Affectation de campagne"
+        verbose_name_plural = "Affectations de campagnes"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["campagne", "agent"],
+                name="unique_campagne_agent",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.agent} - {self.campagne}"

@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
@@ -18,7 +18,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          {{ utilisateur ? "Modifiez les informations de l'utilisateur" : "CrÃ©ez un nouvel utilisateur" }}
+          {{ utilisateur ? "Modifiez les informations de l'utilisateur" : "Créez un nouvel utilisateur" }}
         </p>
       </div>
 
@@ -28,7 +28,7 @@
           <input
             v-model="form.nom"
             type="text"
-            placeholder="Nom prÃ©nom"
+            placeholder="Nom prénom"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           />
@@ -46,20 +46,20 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">RÃ´le *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Rôle *</label>
           <select
             v-model="form.role"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option>Chef de projet</option>
             <option>Responsable Finance</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">TÃ©lÃ©phone</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Téléphone</label>
           <input
             v-model="form.telephone"
             type="tel"
@@ -86,7 +86,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ utilisateur ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ utilisateur ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -141,6 +141,7 @@ const submit = () => {
   emit('save', { ...form.value })
 }
 </script>
+
 
 
 

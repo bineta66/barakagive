@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
@@ -18,7 +18,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          {{ bailleur ? 'Modifiez les informations du bailleur' : 'CrÃ©ez un nouveau bailleur' }}
+          {{ bailleur ? 'Modifiez les informations du bailleur' : 'Créez un nouveau bailleur' }}
         </p>
       </div>
 
@@ -52,24 +52,26 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option>International</option>
             <option>National</option>
+            <option>Institutionnel</option>
+            <option>Gouvernemental</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Financement engagÃ©</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Financement engagé (FCFA)</label>
           <input
             v-model="form.finance"
             type="text"
-            placeholder="4 500 000 Ã¢â€šÂ¬"
+            placeholder="50 000 000"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Projets associÃ©s</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Projets associés</label>
           <input
             v-model="form.projets"
             type="number"
@@ -85,7 +87,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option>ReÃ§u</option>
+            <option>Reçu</option>
             <option>En attente</option>
           </select>
         </div>
@@ -96,7 +98,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ bailleur ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ bailleur ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -122,7 +124,7 @@ const form = ref({
   type: '',
   finance: '',
   projets: 0,
-  statut: 'ReÃ§u',
+  statut: 'Reçu',
 })
 
 watch(
@@ -138,7 +140,7 @@ watch(
         type: '',
         finance: '',
         projets: 0,
-        statut: 'ReÃ§u',
+        statut: 'Reçu',
       }
     }
   },
@@ -153,6 +155,7 @@ const submit = () => {
   emit('save', { ...form.value })
 }
 </script>
+
 
 
 

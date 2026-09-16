@@ -44,13 +44,16 @@ class CampaignListCreateView(APIView):
     )
     def get(self, request):
         """Liste les campagnes de l'ONG de l'utilisateur connecté."""
-        campaigns = Campaign.objects.filter(
-            organization=request.user.organization
-        ).select_related(
+        campaigns = Campaign.objects.select_related(
             "projet", "created_by"
         ).prefetch_related(
             "zones"
         ).order_by("-created_at")
+
+        if request.user.role != "SUPER_ADMIN":
+            campaigns = campaigns.filter(organization=request.user.organization)
+        if request.user.role == "AGENT":
+            campaigns = campaigns.filter(affectations__agent=request.user).distinct()
 
         serializer = CampaignListSerializer(campaigns, many=True)
         return Response(serializer.data)
@@ -102,11 +105,16 @@ class CampaignDetailView(APIView):
 
     def get_object(self, pk, user):
         try:
-            return Campaign.objects.select_related(
+            queryset = Campaign.objects.select_related(
                 "projet", "created_by", "organization"
             ).prefetch_related(
                 "zones"
-            ).get(pk=pk, organization=user.organization)
+            ).filter(pk=pk)
+            if user.role != "SUPER_ADMIN":
+                queryset = queryset.filter(organization=user.organization)
+            if user.role == "AGENT":
+                queryset = queryset.filter(affectations__agent=user)
+            return queryset.get()
         except Campaign.DoesNotExist:
             return None
 

@@ -10,8 +10,9 @@ import StatusBadge from "@/components/ui/StatusBadge.vue"
 const props = defineProps({
   status: {
     type: String,
-    default: "PlanifiÃ©",
+    default: "Planifié",
   },
 })
 </script>
+
 

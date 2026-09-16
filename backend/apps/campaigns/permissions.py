@@ -5,7 +5,7 @@ from apps.accounts.models import User
 
 class IsChefProjetOrGerant(BasePermission):
     """
-    Accès pour CHEF_PROJET et GERANT.
+    Accès pour CHEF_PROJET, GERANT et AGENT.
     Utilisé pour la liste et le détail des campagnes.
     """
 
@@ -13,9 +13,13 @@ class IsChefProjetOrGerant(BasePermission):
         return (
             request.user.is_authenticated
             and request.user.can_login
-            and request.user.role in [User.Role.CHEF_PROJET, User.Role.GERANT]
+            and request.user.role in [
+                User.Role.SUPER_ADMIN,
+                User.Role.CHEF_PROJET,
+                User.Role.GERANT,
+                User.Role.AGENT,
+            ]
         )
-
 
 class IsChefProjetOnly(BasePermission):
     """
@@ -29,7 +33,7 @@ class IsChefProjetOnly(BasePermission):
         return (
             request.user.is_authenticated
             and request.user.can_login
-            and request.user.role == User.Role.CHEF_PROJET
+            and request.user.role in [User.Role.CHEF_PROJET, User.Role.SUPER_ADMIN]
         )
 
 
@@ -44,6 +48,9 @@ class CanManageCampaign(BasePermission):
     def has_object_permission(self, request, view, obj):
         if not request.user.is_authenticated:
             return False
+
+        if request.user.role == User.Role.SUPER_ADMIN:
+            return True
 
         if request.user.role != User.Role.CHEF_PROJET:
             return False

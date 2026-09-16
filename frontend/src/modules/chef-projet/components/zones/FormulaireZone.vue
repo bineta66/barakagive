@@ -1,9 +1,9 @@
 ﻿<template>
   <form @submit.prevent="submit" class="space-y-4">
-    <!-- RÃ©gion -->
+    <!-- Région (remplie automatiquement par le clic sur la carte) -->
     <div>
       <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        RÃ©gion
+        Région
       </label>
       <input
         :value="form.region"
@@ -13,10 +13,10 @@
       />
     </div>
 
-    <!-- DÃ©partement -->
+    <!-- Département (rempli automatiquement par le clic sur la carte) -->
     <div>
       <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        DÃ©partement
+        Département
       </label>
       <input
         :value="form.departement"
@@ -35,43 +35,38 @@
         v-model="form.nom"
         type="text"
         required
-        placeholder="Ex : Zone Nord Dakar"
+        placeholder="Ex : Zone Nord Pikine"
         class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
       />
+    </div>
+
+    <!-- Description -->
+    <div>
+      <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
+        Description
+      </label>
+      <textarea
+        v-model="form.description"
+        rows="3"
+        placeholder="Ex : Zone d'intervention"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none resize-y"
+      ></textarea>
     </div>
 
     <!-- Rayon -->
     <div>
       <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        Rayon (mÃ¨tres) *
+        Rayon (mètres) *
       </label>
       <input
         v-model.number="form.rayon"
         type="number"
         required
         min="1"
-        placeholder="Ex : 2000"
+        placeholder="Ex : 1000"
         class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
       />
     </div>
-
-    <!-- Statut -->
-    <div>
-      <label class="block text-xs font-bold tracking-wider uppercase text-gray-700 mb-1">
-        Statut
-      </label>
-      <select
-        v-model="form.statut"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
-      >
-        <option value="Actif">Actif</option>
-        <option value="Inactif">Inactif</option>
-      </select>
-    </div>
-
-    <!-- CoordonnÃ©es cachÃ©es -->
-    <input type="hidden" v-model="form.latitude" />
-    <input type="hidden" v-model="form.longitude" />
 
     <!-- Boutons -->
     <div class="flex gap-3 pt-2">
@@ -108,8 +103,9 @@ const form = reactive({
   region: "",
   departement: "",
   nom: "",
-  rayon: "",
-  statut: "Actif",
+  description: "",
+  rayon: 1000,
+  statut: true,
   latitude: null,
   longitude: null,
 })
@@ -126,10 +122,13 @@ watch(
 
 const submit = () => {
   if (!form.latitude || !form.longitude) {
-    alert("Veuillez sÃ©lectionner un point sur la carte.")
+    alert("Veuillez sélectionner un point sur la carte.")
+    return
+  }
+  if (!form.rayon || Number(form.rayon) <= 0) {
+    alert("Veuillez renseigner un rayon valide.")
     return
   }
   emit("submit", { ...form })
 }
 </script>
-

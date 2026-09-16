@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from drf_spectacular.utils import extend_schema
@@ -10,14 +11,22 @@ from .serializers import (
     UserSerializer,
     CreateUserSerializer,
     ActivateAccountSerializer,
+    RegisterAuthSerializer,
+    ChangePasswordSerializer,
+    ResendActivationSerializer,
+    AgentListSerializer,
 )
 from .permissions import (
     IsAccountActive,
     IsGerant,
+    IsChefProjet,
 )
 from .services import (
     create_user_by_manager,
     activate_account,
+    register_organization_and_gerant,
+    change_password,
+    resend_activation,
 )
 
 
@@ -28,6 +37,16 @@ class ActivateAccountView(generics.GenericAPIView):
     """
     serializer_class = ActivateAccountSerializer
     permission_classes = [AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get("token")
+        if not token:
+            return Response({"detail": "Le token est obligatoire."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = activate_account(token=token, password=None)
+        except (ValidationError, ValueError) as exc:
+            return Response({"detail": getattr(exc, "detail", str(exc))}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"message": "Compte activé avec succès.", "user": UserSerializer(user).data})
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -56,6 +75,47 @@ class ActivateAccountView(generics.GenericAPIView):
             {"message": "Compte activé avec succès."},
             status=status.HTTP_200_OK,
         )
+
+
+class RegisterAuthView(generics.GenericAPIView):
+    serializer_class = RegisterAuthSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        organization, user = register_organization_and_gerant(serializer.validated_data)
+        return Response({
+            "message": "Votre inscription a été enregistrée. Consultez votre email pour activer le compte.",
+            "organization": {"id": organization.id, "name": organization.name, "status": organization.status},
+            "gerant": {"email": user.email, "status": user.status},
+        }, status=status.HTTP_201_CREATED)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = change_password(
+            request.user,
+            serializer.validated_data["current_password"],
+            serializer.validated_data["new_password"],
+        )
+        return Response({"message": "Mot de passe modifié avec succès.", "user": UserSerializer(user).data})
+
+
+class ResendActivationView(generics.GenericAPIView):
+    serializer_class = ResendActivationSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        resend_activation(serializer.validated_data["email"])
+        return Response({"message": "Un nouvel email d'activation a été envoyé."})
 
 
 @extend_schema(tags=["Accounts"], summary="Liste des utilisateurs")
@@ -109,3 +169,80 @@ class UserCreateView(generics.CreateAPIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+@extend_schema(tags=["Accounts"], summary="Profil de l'utilisateur connecté")
+class MeView(generics.RetrieveAPIView):
+    """
+    Retourne le profil de l'utilisateur actuellement authentifié.
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+
+@extend_schema(tags=["Accounts"], summary="Détail et mise à jour d'un collaborateur (activation/désactivation)")
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    """
+    Le Gérant consulte le détail d'un utilisateur de son ONG
+    et peut l'activer ou le désactiver (suspendre).
+    """
+    serializer_class = UserSerializer
+    permission_classes = [
+        IsAuthenticated,
+        IsAccountActive,
+        IsGerant,
+    ]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            organization=self.request.user.organization
+        )
+
+    def patch(self, request, *args, **kwargs):
+        user = self.get_object()
+        new_status = request.data.get("status")
+        is_active = request.data.get("is_active")
+
+        if new_status:
+            if new_status not in [User.Status.ACTIVE, User.Status.SUSPENDED, User.Status.INVITED]:
+                return Response(
+                    {"detail": "Statut invalide."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.status = new_status
+            if new_status == User.Status.SUSPENDED:
+                user.is_active = False
+            elif new_status == User.Status.ACTIVE:
+                user.is_active = True
+
+        if is_active is not None:
+            user.is_active = bool(is_active)
+            if not user.is_active:
+                user.status = User.Status.SUSPENDED
+            elif user.status == User.Status.SUSPENDED:
+                user.status = User.Status.ACTIVE
+
+        user.save()
+        return Response(UserSerializer(user).data)
+
+
+@extend_schema(tags=["Accounts"], summary="Liste des agents terrain de l'ONG")
+class AgentListView(generics.ListAPIView):
+    """
+    Liste les agents terrain (et chefs de projet) de la même ONG,
+    pour l'affectation d'une campagne par le chef de projet.
+    """
+
+    serializer_class = AgentListSerializer
+    permission_classes = [IsAuthenticated, IsAccountActive, IsChefProjet]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            organization=self.request.user.organization,
+            role__in=[User.Role.AGENT, User.Role.CHEF_PROJET],
+            is_active=True,
+        ).order_by("last_name", "first_name")
+

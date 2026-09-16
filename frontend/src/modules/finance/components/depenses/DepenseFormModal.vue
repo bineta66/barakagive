@@ -4,11 +4,11 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
-            {{ depense ? 'Modifier la dÃ©pense' : 'Nouvelle dÃ©pense' }}
+            {{ depense ? 'Modifier la dépense' : 'Nouvelle dépense' }}
           </h2>
           <button
             @click="fermer"
@@ -18,7 +18,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          {{ depense ? 'Modifiez les informations de la dÃ©pense' : 'Enregistrez une nouvelle dÃ©pense' }}
+          {{ depense ? 'Modifiez les informations de la dépense' : 'Enregistrez une nouvelle dépense' }}
         </p>
       </div>
 
@@ -30,7 +30,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner un projet</option>
+            <option value="">Sélectionner un projet</option>
             <option v-for="p in projets" :key="p.id" :value="p.id">{{ p.nom }}</option>
           </select>
         </div>
@@ -47,13 +47,13 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">CatÃ©gorie *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Catégorie *</label>
           <select
             v-model="form.categorie"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
@@ -97,17 +97,17 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option v-for="m in modesPaiement" :key="m" :value="m">{{ m }}</option>
           </select>
         </div>
 
         <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-600 mb-1">LibellÃ© *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Libellé *</label>
           <input
             v-model="form.libelle"
             type="text"
-            placeholder="Description de la dÃ©pense"
+            placeholder="Description de la dépense"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           />
@@ -129,7 +129,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ depense ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ depense ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -203,12 +203,13 @@ const submit = () => {
     projetId: Number(form.value.projetId),
     projet: projet?.nom || '',
     montant: Number(form.value.montant) || 0,
-    statut: props.depense?.statut || 'ValidÃ©',
+    statut: props.depense?.statut || 'Validé',
     justificatif: props.depense?.justificatif || null,
   }
   emit('save', depenseData)
 }
 </script>
+
 
 
 

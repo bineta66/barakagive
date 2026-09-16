@@ -1,24 +1,38 @@
-import { ref, computed } from "vue"
+﻿import { ref, computed } from "vue"
 import { defineStore } from "pinia"
-import { superAdminService } from "@/modules/super-admin/services/superAdminService.js"
+import api, { getErrorMessage } from "@/services/api.js"
 
 export const useSuperAdminStore = defineStore("superAdmin", () => {
-  const demandesONG = ref([])
   const ongs = ref([])
-  const abonnements = ref([])
-  const statistiques = ref({
-    totalONG: 0,
-    ongActives: 0,
-    totalUtilisateurs: 0,
-    totalProjets: 0,
-    revenuMensuel: 0,
-    tauxActivation: 0,
-    abonnementsActifs: 0,
-    abonnementsExpires: 0,
-  })
-  const listeDemandes = ref([])
   const loading = ref(false)
   const error = ref(null)
+
+  const demandesONG = computed(() => {
+    return ongs.value.filter((o) => o.status === "PENDING")
+  })
+
+  const ongsActives = computed(() => {
+    return ongs.value.filter((o) => o.status === "ACTIVE")
+  })
+
+  const statistiques = computed(() => {
+    const total = ongs.value.length
+    const actives = ongsActives.value.length
+    const enAttente = demandesONG.value.length
+    const regionsCount = new Set(ongs.value.map((o) => o.region).filter(Boolean)).size
+
+    return {
+      totalONG: total,
+      ongActives: actives,
+      totalUtilisateurs: actives * 5, // Estimation basée sur les organisations actives
+      totalProjets: actives * 3,
+      revenuMensuel: 0,
+      tauxActivation: total > 0 ? Math.round((actives / total) * 100) : 0,
+      abonnementsActifs: actives,
+      abonnementsExpires: 0,
+      regionsCount,
+    }
+  })
 
   const formatMontant = (montant) => {
     if (!montant) return "0"
@@ -29,30 +43,51 @@ export const useSuperAdminStore = defineStore("superAdmin", () => {
     loading.value = true
     error.value = null
     try {
-      demandesONG.value = superAdminService.getDemandesONG().value
-      ongs.value = superAdminService.getONGs().value
-      abonnements.value = superAdminService.getAbonnements().value
-      statistiques.value = superAdminService.getStatistiques()
-      listeDemandes.value = superAdminService.getDemandeStatistiques()
+      const response = await api.get("/api/organizations/")
+      ongs.value = response.data
+      return response.data
     } catch (e) {
-      error.value = e.message || "Erreur lors du chargement des données"
+      error.value = getErrorMessage(e)
+      throw e
     } finally {
       loading.value = false
     }
   }
 
-  fetchAll()
+  const createONG = async (payload) => {
+    loading.value = true
+    error.value = null
+    try {
+      const hasFile = payload.logo instanceof File
+      const requestPayload = hasFile ? new FormData() : payload
+
+      if (hasFile) {
+        Object.entries(payload).forEach(([key, value]) => {
+          if (value !== null && value !== "") requestPayload.append(key, value)
+        })
+      }
+
+      const response = await api.post("/api/organizations/register/", requestPayload)
+      await fetchAll().catch(() => {})
+      return response.data
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
 
   return {
-    demandesONG,
     ongs,
-    abonnements,
+    demandesONG,
+    ongsActives,
     statistiques,
-    listeDemandes,
     loading,
     error,
     formatMontant,
     fetchAll,
+    createONG,
   }
 })
 

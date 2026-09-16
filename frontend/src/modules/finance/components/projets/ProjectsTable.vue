@@ -1,13 +1,13 @@
 ﻿<template>
-  <div class="bg-white border border-slate-200/60 rounded-xl shadow overflow-hidden">
+  <div class="bg-white border border-slate-200/60 rounded-xl shadow-xs overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 ">
           <tr>
             <th class="text-left px-4 py-3 font-medium text-slate-900">Projet</th>
             <th class="text-left px-4 py-3 font-medium text-slate-900">Chef de projet</th>
-            <th class="text-left px-4 py-3 font-medium text-slate-900">RÃ©gion</th>
-            <th class="text-left px-4 py-3 font-medium text-slate-900">Budget allouÃ©</th>
+            <th class="text-left px-4 py-3 font-medium text-slate-900">Région</th>
+            <th class="text-left px-4 py-3 font-medium text-slate-900">Budget alloué</th>
             <th class="text-left px-4 py-3 font-medium text-slate-900">Statut</th>
             <th class="text-center px-4 py-3 font-medium text-slate-900">Action</th>
           </tr>
@@ -122,15 +122,16 @@ const formatCurrency = (value) =>
 
 const badgeClass = (statut) => {
   switch (statut) {
-    case 'BudgÃ©tisÃ©':
+    case 'Budgétisé':
       return 'bg-or/10 text-bleu-nuit'
     case 'En cours':
       return 'bg-bleu-nuit/10 text-bleu-nuit'
-    case 'Ã€ budgÃ©tiser':
+    case 'À budgétiser':
       return 'bg-or/10 text-or'
     default:
       return 'bg-gray-100 text-gray-600'
   }
 }
 </script>
+
 

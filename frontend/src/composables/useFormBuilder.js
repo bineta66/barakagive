@@ -1,9 +1,31 @@
-import { ref, computed } from "vue"
-import { formulaireMock } from "@/data/formulaireMock.js"
+﻿import { ref, computed } from "vue"
 
-export function useFormBuilder(initialFormulaire = formulaireMock) {
+export function useFormBuilder() {
   const questions = ref([])
-  const suivantId = ref(1)
+  const currentFormId = ref(null)
+
+  const typeMapFrontendToBackend = {
+    texte: "TEXT",
+    nombre: "NUMBER",
+    liste: "SELECT",
+    "oui-non": "YES_NO",
+    date: "DATE",
+    telephone: "PHONE",
+    photo: "TEXTAREA",
+    gps: "GPS",
+  }
+
+  const typeMapBackendToFrontend = {
+    TEXT: "texte",
+    NUMBER: "nombre",
+    SELECT: "liste",
+    CHECKBOX: "liste",
+    YES_NO: "oui-non",
+    DATE: "date",
+    PHONE: "telephone",
+    TEXTAREA: "photo",
+    GPS: "gps",
+  }
 
   const typesQuestions = [
     {
@@ -38,7 +60,7 @@ export function useFormBuilder(initialFormulaire = formulaireMock) {
     },
     {
       id: "photo",
-      label: "Photo",
+      label: "Texte long / Photo",
       iconPath: "M3 9a2 2 0 012-2h2.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.504 1.205l-1.996.998A11.25 11.25 0 005.25 19.5a1 1 0 01-1 0v-2.25a1 1 0 01.817-.985A11.25 11.25 0 0013.5 17.25a1 1 0 011 0v2.25a1 1 0 01-1 0A13.25 13.25 0 013 12.5z",
     },
     {
@@ -48,59 +70,40 @@ export function useFormBuilder(initialFormulaire = formulaireMock) {
     },
   ]
 
-  const initialiser = () => {
-    questions.value = JSON.parse(JSON.stringify(initialFormulaire.questions || []))
-    if (questions.value.length > 0) {
-      suivantId.value = Math.max(...questions.value.map((q) => q.id)) + 1
-    }
+  const loadFromBackendFields = (fields = [], formId = null) => {
+    currentFormId.value = formId
+    questions.value = fields.map((f, index) => ({
+      id: f.id,
+      libelle: f.label,
+      label: f.label,
+      type: typeMapBackendToFrontend[f.type] || "texte",
+      backendType: f.type,
+      obligatoire: !!f.obligatoire,
+      ordre: f.ordre !== undefined ? f.ordre : index,
+      placeholder: f.placeholder || "",
+      options: Array.isArray(f.options) ? [...f.options] : [],
+    }))
   }
 
-  const ajouterQuestion = (type) => {
-    const typeConfig = typesQuestions.find((t) => t.id === type)
-    const nouvelleQuestion = {
-      id: suivantId.value++,
-      type: type,
-      libelle: typeConfig ? typeConfig.label : "Nouvelle question",
-      obligatoire: false,
-      options: type === "liste" ? [] : [],
+  const prepareForBackend = (q, index = 0) => {
+    const backendType = typeMapFrontendToBackend[q.type] || "TEXT"
+    const payload = {
+      label: q.libelle || q.label || "Question sans titre",
+      type: backendType,
+      obligatoire: !!q.obligatoire,
+      ordre: index,
+      placeholder: q.placeholder || "",
     }
-    questions.value.push(nouvelleQuestion)
-    return nouvelleQuestion.id
-  }
-
-  const supprimerQuestion = (id) => {
-    const index = questions.value.findIndex((q) => q.id === id)
-    if (index !== -1) {
-      questions.value.splice(index, 1)
+    if (backendType === "SELECT" || backendType === "CHECKBOX") {
+      payload.options = q.options?.length ? q.options : ["Option 1", "Option 2"]
     }
-  }
-
-  const dupliquerQuestion = (id) => {
-    const originale = questions.value.find((q) => q.id === id)
-    if (originale) {
-      const copie = JSON.parse(JSON.stringify(originale))
-      copie.id = suivantId.value++
-      copie.libelle = copie.libelle + " (copie)"
-      const index = questions.value.findIndex((q) => q.id === id)
-      questions.value.splice(index + 1, 0, copie)
-      return copie.id
-    }
-    return null
-  }
-
-  const mettreAJourQuestion = (id, champ, valeur) => {
-    const question = questions.value.find((q) => q.id === id)
-    if (question) {
-      question[champ] = valeur
-    }
+    return payload
   }
 
   const ajouterOption = (idQuestion, option) => {
     const question = questions.value.find((q) => q.id === idQuestion)
-    if (question && question.type === "liste") {
-      if (!question.options) {
-        question.options = []
-      }
+    if (question) {
+      if (!question.options) question.options = []
       question.options.push(option)
     }
   }
@@ -109,13 +112,6 @@ export function useFormBuilder(initialFormulaire = formulaireMock) {
     const question = questions.value.find((q) => q.id === idQuestion)
     if (question && question.options) {
       question.options.splice(indexOption, 1)
-    }
-  }
-
-  const modifierOption = (idQuestion, indexOption, nouvelleValeur) => {
-    const question = questions.value.find((q) => q.id === idQuestion)
-    if (question && question.options) {
-      question.options[indexOption] = nouvelleValeur
     }
   }
 
@@ -130,23 +126,15 @@ export function useFormBuilder(initialFormulaire = formulaireMock) {
     }
   })
 
-  const reinitialiser = () => {
-    initialiser()
-  }
-
-  initialiser()
-
   return {
     questions,
     typesQuestions,
-    ajouterQuestion,
-    supprimerQuestion,
-    dupliquerQuestion,
-    mettreAJourQuestion,
+    statistiques,
+    loadFromBackendFields,
+    prepareForBackend,
+    typeMapFrontendToBackend,
+    typeMapBackendToFrontend,
     ajouterOption,
     supprimerOption,
-    modifierOption,
-    statistiques,
-    reinitialiser,
   }
 }

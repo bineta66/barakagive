@@ -3,7 +3,7 @@
     @click.self="handleClose"
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
   >
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4">
+    <div class="bg-white border border-slate-200 rounded-xl shadow-xs-sm w-full max-w-lg mx-4">
       <!-- Header -->
       <div class="px-6 py-4  flex items-center justify-between">
         <h2 class="text-xl font-bold text-slate-900">Nouvelle collecte terrain</h2>
@@ -39,8 +39,8 @@
               v-model="form.campagne"
               class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-or/30"
             >
-              <option value="">SÃ©lectionner une campagne</option>
-              <option value="Collecte de mÃ©dicaments">Collecte de mÃ©dicaments</option>
+              <option value="">Sélectionner une campagne</option>
+              <option value="Collecte de médicaments">Collecte de médicaments</option>
               <option value="Vaccination">Vaccination</option>
               <option value="Distribution alimentaire">Distribution alimentaire</option>
             </select>
@@ -49,13 +49,13 @@
           <!-- Zone -->
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">
-              Zone gÃ©ographique
+              Zone géographique
             </label>
             <select
               v-model="form.zone"
               class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-or/30"
             >
-              <option value="">SÃ©lectionner une zone</option>
+              <option value="">Sélectionner une zone</option>
               <option value="Dakar Est">Dakar Est</option>
               <option value="Dakar Nord">Dakar Nord</option>
               <option value="Pikine">Pikine</option>
@@ -65,7 +65,7 @@
           <!-- Montant -->
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">
-              Montant collectÃ© (FCFA)
+              Montant collecté (FCFA)
             </label>
             <input
               v-model.number="form.montant"
@@ -118,6 +118,7 @@ const handleSubmit = () => {
   emit("close")
 }
 </script>
+
 
 
 

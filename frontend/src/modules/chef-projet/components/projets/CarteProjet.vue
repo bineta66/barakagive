@@ -66,10 +66,11 @@ defineProps({
       budget: "",
       debut: "",
       fin: "",
-      statut: "PlanifiÃ©",
+      statut: "Planifié",
       description: "",
     }),
   },
 })
 </script>
+
 

@@ -4,20 +4,20 @@
       <h3 class="text-lg font-bold text-or">{{ zone.nom }}</h3>
       <span
         class="px-2 py-1 rounded text-xs font-semibold"
-        :class="zone.statut === 'Actif' ? 'bg-bleu-nuit/10 text-bleu-nuit' : 'bg-gray-100 text-gray-600'"
+        :class="isActive ? 'bg-bleu-nuit/10 text-bleu-nuit' : 'bg-gray-100 text-gray-600'"
       >
-        {{ zone.statut }}
+        {{ isActive ? 'Actif' : 'Inactif' }}
       </span>
     </div>
 
     <div class="grid grid-cols-2 gap-4 text-sm">
       <div>
-        <p class="text-xs font-semibold uppercase text-slate-900 mb-1">RÃ©gion</p>
+        <p class="text-xs font-semibold uppercase text-slate-900 mb-1">Région</p>
         <p class="text-gray-700">{{ zone.region }}</p>
       </div>
 
       <div>
-        <p class="text-xs font-semibold uppercase text-slate-900 mb-1">DÃ©partement</p>
+        <p class="text-xs font-semibold uppercase text-slate-900 mb-1">Département</p>
         <p class="text-gray-700">{{ zone.departement }}</p>
       </div>
 
@@ -37,7 +37,7 @@
       </div>
 
       <div>
-        <p class="text-xs font-semibold uppercase text-slate-900 mb-1">Date de crÃ©ation</p>
+        <p class="text-xs font-semibold uppercase text-slate-900 mb-1">Date de création</p>
         <p class="text-gray-700">{{ zone.dateCreation }}</p>
       </div>
     </div>
@@ -45,11 +45,19 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from "vue"
+
+const props = defineProps({
   zone: {
     type: Object,
     default: () => ({}),
   },
 })
+
+const isActive = computed(() => {
+  const s = props.zone.statut
+  return s === true || s === "Actif" || s === "ACTIF"
+})
 </script>
+
 

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.gis.geos import Point
 
 from .models import Zone, Region, Department
 
@@ -56,28 +57,49 @@ class ZoneSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
-            "latitude",
-            "longitude",
             "location",
-            "region",
-            "departement",
             "created_by",
             "created_at",
             "updated_at",
         ]
 
+    def update(self, instance, validated_data):
+        latitude = validated_data.get("latitude", instance.latitude)
+        longitude = validated_data.get("longitude", instance.longitude)
+        validated_data["location"] = Point(float(longitude), float(latitude), srid=4326)
+        return super().update(instance, validated_data)
+
 
 class ZoneCreateSerializer(serializers.ModelSerializer):
+    region = serializers.CharField(required=False, max_length=100)
+    departement = serializers.CharField(required=False, max_length=100)
 
     class Meta:
         model = Zone
         fields = [
             "nom",
+            "region",
+            "departement",
             "latitude",
             "longitude",
             "rayon",
             "statut",
         ]
+
+    def create(self, validated_data):
+        from django.contrib.gis.geos import Point
+        lat = float(validated_data["latitude"])
+        lng = float(validated_data["longitude"])
+        validated_data["location"] = Point(lng, lat, srid=4326)
+        if not validated_data.get("region") or not validated_data.get("departement"):
+            dept = Department.objects.filter(geometrie__contains=validated_data["location"]).first()
+            if dept:
+                validated_data.setdefault("region", dept.region.nom)
+                validated_data.setdefault("departement", dept.nom)
+            else:
+                validated_data.setdefault("region", "Sénégal")
+                validated_data.setdefault("departement", "Zone")
+        return super().create(validated_data)
 
     def validate_nom(self, value):
         if not value or not value.strip():

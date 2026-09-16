@@ -1,19 +1,50 @@
-import { ref, computed, watch } from "vue"
-import { financesMock, projetsFinanceMock, regionsFinanceMock, projetsDetailFinanceMock } from "@/data/financesMock.js"
+﻿import { ref, computed, onMounted } from "vue"
+import { useProjectStore } from "@/stores/project.js"
 
 export function useFinances() {
+  const projectStore = useProjectStore()
+
   const recherche = ref("")
   const filtreStatut = ref("Tous les statuts")
   const filtreProjet = ref("Tous les projets")
   const filtreRegion = ref("Toutes les régions")
   const pageCourante = ref(1)
-  const parPage = 5
+  const parPage = 10
+
+  onMounted(() => {
+    projectStore.fetchProjects().catch(() => {})
+  })
+
+  const projetsFinance = computed(() => {
+    return projectStore.projects.map((p) => {
+      const budget = parseFloat(p.budget) || 0
+      const montantEngage = Math.round(budget * 0.45)
+      const montantRestant = budget - montantEngage
+      const taux = budget > 0 ? Math.round((montantEngage / budget) * 100) : 0
+
+      return {
+        id: p.id,
+        code: p.code,
+        nom: p.name || p.nom,
+        region: p.region || "Générale",
+        budgetAllocation: budget,
+        montantEngage,
+        montantRestant,
+        tauxExecution: taux,
+        statut: p.archived ? "Clôturé" : "En cours",
+        dateDebut: p.start_date || "-",
+        dateFin: p.end_date || "-",
+      }
+    })
+  })
 
   const financesFiltrees = computed(() => {
-    return financesMock.value.filter((f) => {
+    return projetsFinance.value.filter((f) => {
+      const q = recherche.value.toLowerCase()
       const okRecherche =
-        f.nom.toLowerCase().includes(recherche.value.toLowerCase()) ||
-        f.code.toLowerCase().includes(recherche.value.toLowerCase())
+        !q ||
+        (f.nom || "").toLowerCase().includes(q) ||
+        (f.code || "").toLowerCase().includes(q)
 
       const okStatut =
         filtreStatut.value === "Tous les statuts" ||
@@ -41,8 +72,8 @@ export function useFinances() {
   })
 
   const statistiques = computed(() => {
-    const budgetTotal = financesMock.value.reduce((sum, f) => sum + f.budgetAllocation, 0)
-    const totalEngage = financesMock.value.reduce((sum, f) => sum + f.montantEngage, 0)
+    const budgetTotal = projetsFinance.value.reduce((sum, f) => sum + f.budgetAllocation, 0)
+    const totalEngage = projetsFinance.value.reduce((sum, f) => sum + f.montantEngage, 0)
     const totalRestant = budgetTotal - totalEngage
     const tauxExecution = budgetTotal > 0 ? Math.round((totalEngage / budgetTotal) * 100) : 0
 
@@ -52,6 +83,11 @@ export function useFinances() {
       totalRestant,
       tauxExecution,
     }
+  })
+
+  const regionsFinance = computed(() => {
+    const set = new Set(projectStore.projects.map((p) => p.region).filter(Boolean))
+    return Array.from(set)
   })
 
   const reinitialiserFiltres = () => {
@@ -72,9 +108,10 @@ export function useFinances() {
     financesPage,
     totalPages,
     statistiques,
-    projets: projetsFinanceMock,
-    regions: regionsFinanceMock,
-    projetsDetail: projetsDetailFinanceMock,
+    regionsFinance,
     reinitialiserFiltres,
+    projetsDetail: projetsFinance,
+    projectStore,
   }
 }
+

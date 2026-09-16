@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
@@ -70,8 +70,9 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { FolderKanban, PiggyBank, Activity, Receipt } from 'lucide-vue-next'
-import { projetsAssignesMock } from '../services/financeService'
+import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
 import ProjectFilters from '../components/projets/ProjectFilters.vue'
 import ProjectsTable from '../components/projets/ProjectsTable.vue'
 
@@ -80,16 +81,19 @@ const selectedStatut = ref('')
 const selectedChef = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 5
+const store = useFinanceStore()
+const router = useRouter()
+const projetsAssignes = computed(() => store.projetsAssignes)
 
 const chefsDisponibles = computed(() =>
-  [...new Set(projetsAssignesMock.value.map(p => p.chefProjet))].sort()
+  [...new Set(projetsAssignes.value.map(p => p.chefProjet))].sort()
 )
 const statutsDisponibles = computed(() =>
-  [...new Set(projetsAssignesMock.value.map(p => p.statut))]
+  [...new Set(projetsAssignes.value.map(p => p.statut))]
 )
 
 const filteredProjects = computed(() => {
-  return projetsAssignesMock.value.filter(p => {
+  return projetsAssignes.value.filter(p => {
     const matchesSearch = p.nom.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       p.chefProjet.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       p.code.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -99,18 +103,18 @@ const filteredProjects = computed(() => {
   })
 })
 
-const totalProjets = computed(() => projetsAssignesMock.value.length)
+const totalProjets = computed(() => projetsAssignes.value.length)
 
 const totalBudget = computed(() =>
-  projetsAssignesMock.value.reduce((sum, p) => sum + p.budget, 0)
+  projetsAssignes.value.reduce((sum, p) => sum + p.budget, 0)
 )
 
 const projetsEnCours = computed(() =>
-  projetsAssignesMock.value.filter(p => p.statut === 'En cours').length
+  projetsAssignes.value.filter(p => p.statut === 'En cours').length
 )
 
 const projetsABudgétiser = computed(() =>
-  projetsAssignesMock.value.filter(p => p.statut === 'À budgétiser').length
+  projetsAssignes.value.filter(p => p.statut === 'À budgétiser').length
 )
 
 const paginatedProjects = computed(() => {
@@ -126,7 +130,7 @@ const resetFilters = () => {
 }
 
 const openProject = (project) => {
-  console.log('Opening project:', project.nom)
+  router.push(`/finance/projets/${project.id}`)
 }
 
 const formatCurrency = (value) =>
@@ -136,3 +140,4 @@ watch([searchQuery, selectedStatut, selectedChef], () => {
   currentPage.value = 1
 })
 </script>
+

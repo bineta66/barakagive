@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="min-h-screen bg-slate-100">
+  <div class="min-h-screen bg-white">
     <div class="grid min-h-screen lg:grid-cols-2">
       <!-- ===== Partie gauche ===== -->
       <div class="relative hidden lg:flex items-end justify-center bg-bleu-nuit overflow-hidden pb-20">
@@ -14,7 +14,7 @@
 
         <div class="relative z-10 flex flex-col items-center text-center px-10">
           <p class="text-xl text-white font-semibold leading-8 max-w-sm">
-            RÃ©initialisez votre mot de passe en toute sÃ©curitÃ©.
+            Réinitialisez votre mot de passe en toute sécurité.
           </p>
 
           
@@ -40,11 +40,11 @@
 
           <!-- Titre -->
           <h2 class="text-3xl font-bold text-or mb-2">
-            Mot de passe oubliÃ© ?
+            Mot de passe oublié ?
           </h2>
 
           <p class="text-slate-700 font-medium mb-8">
-            Entrez votre adresse email et nous vous enverrons un lien pour rÃ©initialiser votre mot de passe.
+            Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
           </p>
 
           <!-- Formulaire -->
@@ -79,7 +79,7 @@
               to="/connexion"
               class="text-sm font-bold text-gray-800 hover:text-or flex items-center justify-center gap-2"
             >
-              â† Retour Ã  la connexion
+              Retour à la connexion
             </RouterLink>
           </div>
         </div>
@@ -87,7 +87,7 @@
         <!-- Footer -->
         <div class="border-t border-slate-200 pt-5 flex flex-col gap-3 text-xs text-gray-600 lg:flex-row lg:justify-between">
           <div class="flex items-center gap-2">
-            ðŸ”’ Transmission chiffrÃ©e de bout en bout
+            🔒 Transmission chiffrée de bout en bout
           </div>
 
           <div>
@@ -105,8 +105,9 @@ import { ref } from "vue"
 const email = ref("")
 
 const sendLink = () => {
-  alert(`Un lien de rÃ©initialisation a Ã©tÃ© envoyÃ© Ã  ${email.value}`)
+  alert(`Un lien de réinitialisation a été envoyé à ${email.value}`)
   email.value = ""
 }
 </script>
+
 

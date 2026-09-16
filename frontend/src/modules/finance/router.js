@@ -1,6 +1,7 @@
 import DashboardLayout from "@/components/layout/DashboardLayout.vue";
 import DashboardFinance from "./views/DashboardFinance.vue";
 import AssignedProjects from "./views/AssignedProjects.vue";
+import FinanceProjectDetail from "./views/FinanceProjectDetail.vue";
 import Budgets from "./views/Budgets.vue";
 import DonsFinancements from "./views/DonsFinancements.vue";
 import Depenses from "./views/Depenses.vue";
@@ -19,9 +20,19 @@ const routes = [
         component: DashboardFinance,
       },
       {
+        path: "projets",
+        name: "finance-assigned-projects",
+        component: AssignedProjects,
+      },
+      {
         path: "budgets",
         name: "finance-budgets",
         component: Budgets,
+      },
+      {
+        path: "projets/:id",
+        name: "finance-project-detail",
+        component: FinanceProjectDetail,
       },
       {
         path: "dons",

@@ -5,7 +5,7 @@ from sib_api_v3_sdk.rest import ApiException
 
 
 @shared_task
-def send_invitation_email(recipient_email, first_name, activation_link):
+def send_invitation_email(recipient_email, first_name, activation_link, temporary_password=None):
 
     configuration = sib_api_v3_sdk.Configuration()
     configuration.api_key["api-key"] = settings.BREVO_API_KEY
@@ -15,22 +15,23 @@ def send_invitation_email(recipient_email, first_name, activation_link):
     )
 
     html = f"""
-    <h2>Bienvenue sur BarakaGive360</h2>
+    <h2>Bienvenue sur BarakaGive</h2>
 
     <p>Bonjour {first_name},</p>
 
-    <p>Votre compte a été créé avec succès.</p>
+    <p>Votre demande d'inscription a bien été enregistrée.</p>
+    {f'<p><strong>Mot de passe temporaire :</strong> {temporary_password}</p>' if temporary_password else ''}
 
     <p>Cliquez sur le lien ci-dessous pour activer votre compte :</p>
 
     <p>
         <a href="{activation_link}"
-           style="background:#0F766E; color:white; padding:12px 20px; text-decoration:none; border-radius:6px;">
+           style="background:#744D03; color:white; padding:12px 20px; text-decoration:none; border-radius:6px;">
            Activer mon compte
         </a>
     </p>
 
-    <p>Ce lien est valable pendant 7 jours.</p>
+    <p>Ce lien est valable pendant 24 heures.</p>
 
     <p>L'équipe BarakaGive</p>
     """
@@ -48,7 +49,7 @@ def send_invitation_email(recipient_email, first_name, activation_link):
     email_data = sib_api_v3_sdk.SendSmtpEmail(
         sender=sender,
         to=to,
-        subject="Activation de votre compte BarakaGive360",
+        subject="Activation de votre compte BarakaGive",
         html_content=html,
     )
 

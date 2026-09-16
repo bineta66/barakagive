@@ -1,14 +1,14 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Bailleurs</h1>
         <p class="text-xs text-gray-500 mt-1">
-          GÃ©rez les bailleurs de fonds des missions humanitaires.
+          Gérez les bailleurs de fonds des missions humanitaires.
         </p>
       </div>
-      <BoutonPrimary @click="modalBailleur = true">
+      <BoutonPrimary @click="bailleurSelectionne = null; modalBailleur = true">
         <Plus class="w-5 h-5" />
         Nouveau bailleur
       </BoutonPrimary>
@@ -16,7 +16,7 @@
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total bailleurs</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ bailleurs.length }}</h3>
@@ -24,7 +24,7 @@
         <Landmark class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Financement total</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(bailleursFinance) }} FCFA</h3>
@@ -32,15 +32,15 @@
         <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">ReÃ§us</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Reçus</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ bailleursRecus }}</h3>
         </div>
         <CheckCircle class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">En attente</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ bailleursEnAttente }}</h3>
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -63,7 +63,7 @@
 
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
         <option>Tous les statuts</option>
-        <option>ReÃ§u</option>
+        <option>Reçu</option>
         <option>En attente</option>
       </select>
 
@@ -74,7 +74,7 @@
       </select>
 
       <BoutonTertiary @click="resetFilters">
-        RÃ©initialiser
+        Réinitialiser
       </BoutonTertiary>
     </div>
 
@@ -86,7 +86,7 @@
             <th class="text-left px-4 py-3">ORGANISATION</th>
             <th class="text-left px-4 py-3">CONTACT</th>
             <th class="text-left px-4 py-3">TYPE</th>
-            <th class="text-right px-4 py-3">FINANCEMENT ENGAGÃ‰</th>
+            <th class="text-right px-4 py-3">FINANCEMENT ENGAGÉ</th>
             <th class="text-center px-4 py-3">STATUT</th>
             <th class="text-center px-4 py-3">ACTIONS</th>
           </tr>
@@ -114,6 +114,13 @@
                   title="Modifier"
                 >
                   <Pencil class="w-4 h-4" />
+                </button>
+                <button
+                  @click="supprimerBailleur(bailleur)"
+                  class="p-1 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                  title="Supprimer"
+                >
+                  <Trash2 class="w-4 h-4" />
                 </button>
               </div>
             </td>
@@ -175,7 +182,7 @@
 import { ref, computed, watch } from 'vue'
 import {
   Landmark, PiggyBank, CheckCircle, Clock,
-  Search, ChevronLeft, ChevronRight, Plus, Pencil
+  Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash2
 } from 'lucide-vue-next'
 import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
@@ -193,12 +200,24 @@ const itemsPerPage = 5
 
 const bailleurs = computed(() => store.bailleurs)
 
+const parseEuro = (val) => {
+  if (typeof val === 'number') return val
+  if (!val) return 0
+  const str = String(val)
+  const clean = str.replace(/[^\d.,]/g, '').replace(',', '.')
+  const num = parseFloat(clean) || 0
+  if (str.includes('€') || str.toLowerCase().includes('eur')) {
+    return Math.round(num * 650)
+  }
+  return Math.round(num)
+}
+
 const bailleursFinance = computed(() => {
   return store.bailleurs.reduce((sum, b) => sum + parseEuro(b.finance), 0)
 })
 
 const bailleursRecus = computed(() =>
-  store.bailleurs.filter(b => b.statut === 'ReÃ§u').length
+  store.bailleurs.filter(b => b.statut === 'Reçu' || b.statut === 'Reçu').length
 )
 const bailleursEnAttente = computed(() =>
   store.bailleurs.filter(b => b.statut === 'En attente').length
@@ -211,12 +230,6 @@ const bailleurFinances = computed(() => {
   })
   return map
 })
-
-const parseEuro = (euroStr) => {
-  const num = parseFloat(euroStr.replace(/[^\d,]/g, '').replace(',', '.'))
-  const rate = 650
-  return Math.round(num * rate)
-}
 
 const filteredBailleurs = computed(() => {
   return store.bailleurs.filter(b => {
@@ -271,15 +284,25 @@ const openBailleur = (bailleur) => {
   modalBailleur.value = true
 }
 
-const saveBailleur = (bailleurData) => {
-  console.log('Bailleur saved:', bailleurData)
-  modalBailleur.value = false
-  bailleurSelectionne.value = null
+const saveBailleur = async (bailleurData) => {
+  try {
+    await store.saveBailleurApi(bailleurData, bailleurSelectionne.value?.id)
+    modalBailleur.value = false
+    bailleurSelectionne.value = null
+  } catch (error) {
+    store.error = error.response?.data?.detail || "Impossible d'enregistrer le bailleur."
+  }
+}
+
+const supprimerBailleur = (bailleur) => {
+  if (confirm(`Voulez-vous vraiment supprimer le bailleur "${bailleur.nom}" ?`)) {
+    store.deleteBailleurApi(bailleur.id)
+  }
 }
 
 const badgeClass = (statut) => {
   switch (statut) {
-    case 'ReÃ§u':
+    case 'Reçu':
       return 'bg-bleu-nuit/10 text-bleu-nuit'
     case 'En attente':
       return 'bg-or/10 text-or'
@@ -292,6 +315,7 @@ watch([search, filtreStatut, filtreType], () => {
   currentPage.value = 1
 })
 </script>
+
 
 
 

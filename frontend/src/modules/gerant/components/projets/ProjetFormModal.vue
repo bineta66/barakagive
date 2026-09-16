@@ -4,10 +4,10 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold" style="color: #744D03">
+          <h2 class="text-2xl font-bold text-or">
             {{ projet ? 'Modifier le projet' : 'Nouveau projet' }}
           </h2>
           <button
@@ -18,7 +18,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          {{ projet ? 'Modifiez les informations du projet' : 'CrÃ©ez un nouveau projet' }}
+          {{ projet ? 'Modifiez les informations du projet' : 'Créez un nouveau projet' }}
         </p>
       </div>
 
@@ -52,7 +52,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option v-for="c in chefsProjet" :key="c" :value="c">{{ c }}</option>
           </select>
         </div>
@@ -64,35 +64,13 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option v-for="r in responsablesFinance" :key="r" :value="r">{{ r }}</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">RÃ©gion *</label>
-          <input
-            v-model="form.region"
-            type="text"
-            placeholder="Dakar"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Budget (FCFA) *</label>
-          <input
-            v-model.number="form.budget"
-            type="number"
-            placeholder="0 FCFA"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Date dÃ©but *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Date début *</label>
           <input
             v-model="form.dateDebut"
             type="date"
@@ -118,8 +96,8 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
           >
             <option>En cours</option>
-            <option>PlanifiÃ©</option>
-            <option>TerminÃ©</option>
+            <option>Planifié</option>
+            <option>Terminé</option>
           </select>
         </div>
 
@@ -139,7 +117,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ projet ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ projet ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -166,8 +144,6 @@ const form = ref({
   code: '',
   chefProjet: '',
   responsableFinance: '',
-  region: '',
-  budget: 0,
   dateDebut: '',
   dateFin: '',
   statut: 'En cours',
@@ -186,8 +162,6 @@ watch(
         code: '',
         chefProjet: '',
         responsableFinance: '',
-        region: '',
-        budget: 0,
         dateDebut: '',
         dateFin: '',
         statut: 'En cours',
@@ -206,6 +180,7 @@ const submit = () => {
   emit('save', { ...form.value })
 }
 </script>
+
 
 
 

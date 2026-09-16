@@ -4,6 +4,8 @@ from django.db import models
 class Organization(models.Model):
 
     class Status(models.TextChoices):
+        EN_ATTENTE = "EN_ATTENTE", "En attente"
+        VALIDE = "VALIDE", "Validée"
         PENDING = "PENDING", "En attente"
         ACTIVE = "ACTIVE", "Active"
         SUSPENDED = "SUSPENDED", "Suspendue"
@@ -15,6 +17,7 @@ class Organization(models.Model):
     phone = models.CharField(max_length=20)
 
     address = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
     region = models.CharField(max_length=100)
     country = models.CharField(max_length=100, default="Sénégal")
 
@@ -31,6 +34,8 @@ class Organization(models.Model):
         choices=Status.choices,
         default=Status.PENDING
     )
+
+    is_active = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

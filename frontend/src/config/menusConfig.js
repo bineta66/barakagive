@@ -1,4 +1,4 @@
-import {
+﻿import {
   LayoutDashboard,
   FolderKanban,
   ClipboardList,
@@ -61,13 +61,13 @@ export const menusConfig = {
   ],
 
   "Agent de terrain": [
-    { nom: "Tableau de bord", route: "/agent/dashboard", icon: LayoutDashboard },
     { nom: "Mes campagnes", route: "/agent/campagnes", icon: FolderKanban },
-    { nom: "Collecte terrain", route: "/agent/collecte", icon: MapPinned },
-    { nom: "Synchronisation", route: "/agent/sync", icon: Smartphone },
+      { nom: "Synchronisation", route: "/agent/synchronisation", icon: Smartphone },
+      { nom: "Profil", route: "/agent/profil", icon: Users },
   ],
 };
 
 export const getMenusForRole = (role) => {
   return menusConfig[role] || menusConfig["Chef de projet"];
 };
+

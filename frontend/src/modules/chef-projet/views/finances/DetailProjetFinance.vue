@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-or">DÃ©tail du projet</h1>
+        <h1 class="text-3xl font-bold text-or">Détail du projet</h1>
         <p class="text-sm text-gray-600 mt-1">
-          Informations budgÃ©taires complÃ¨tes du projet.
+          Informations budgétaires complètes du projet.
         </p>
       </div>
 
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <!-- DÃ©tails -->
+    <!-- Détails -->
     <div v-if="projet" class="bg-white border border-slate-200/60 rounded-xl p-6">
       <div class="grid grid-cols-2 gap-6">
         <div>
@@ -36,7 +36,7 @@
         </div>
 
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900 mb-1">RÃ©gion</p>
+          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Région</p>
           <p class="text-gray-700">{{ projet.region }}</p>
         </div>
 
@@ -46,7 +46,7 @@
         </div>
 
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Date de dÃ©but</p>
+          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Date de début</p>
           <p class="text-gray-700">{{ projet.dateDebut }}</p>
         </div>
 
@@ -56,12 +56,12 @@
         </div>
 
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Budget allouÃ©</p>
+          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Budget alloué</p>
           <p class="text-gray-700 font-semibold">{{ formatMontant(projet.budgetAllocation) }} FCFA</p>
         </div>
 
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Montant engagÃ©</p>
+          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Montant engagé</p>
           <p class="text-gray-700 font-semibold">{{ formatMontant(projet.montantEngage) }} FCFA</p>
         </div>
 
@@ -71,7 +71,7 @@
         </div>
 
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Taux d'exÃ©cution</p>
+          <p class="text-xs font-bold uppercase text-slate-900 mb-1">Taux d'exécution</p>
           <p class="text-gray-700 font-semibold">{{ projet.tauxExecution }}%</p>
         </div>
 
@@ -87,10 +87,10 @@
       </div>
     </div>
 
-    <!-- Campagnes associÃ©es -->
+    <!-- Campagnes associées -->
     <div v-if="projet" class="bg-white border border-slate-200/60 rounded-xl p-6">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-sm font-bold uppercase text-slate-900">Campagnes associÃ©es</h3>
+        <h3 class="text-sm font-bold uppercase text-slate-900">Campagnes associées</h3>
         <span class="text-xs text-slate-500">{{ projet.campagnes.length }} campagne(s)</span>
       </div>
 
@@ -114,10 +114,10 @@
       </table>
     </div>
 
-    <!-- Dons associÃ©s -->
+    <!-- Dons associés -->
     <div v-if="projet" class="bg-white border border-slate-200/60 rounded-xl p-6">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-sm font-bold uppercase text-slate-900">Dons associÃ©s</h3>
+        <h3 class="text-sm font-bold uppercase text-slate-900">Dons associés</h3>
         <span class="text-xs text-slate-500">{{ projet.dons.length }} don(s)</span>
       </div>
 
@@ -161,7 +161,7 @@
             <td class="px-4 py-2 text-sm text-slate-600">{{ justificatif.date }}</td>
             <td class="px-4 py-2">
               <div class="flex justify-end">
-                <button class="text-slate-500 hover:text-bleu-nuit" title="TÃ©lÃ©charger">
+                <button class="text-slate-500 hover:text-bleu-nuit" title="Télécharger">
                   <Download :size="18" />
                 </button>
               </div>
@@ -204,4 +204,5 @@ function exporterPdf() {
   alert("Export PDF du projet " + projet.value?.code)
 }
 </script>
+
 

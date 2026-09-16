@@ -1,10 +1,10 @@
 ﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl p-6">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center mb-4">
       <div>
-        <h3 class="text-sm font-bold uppercase text-slate-900">Mes projets assignÃ©s</h3>
-        <p class="text-xs text-gray-500 mt-1">Budget allouÃ© par projet</p>
+        <h3 class="text-sm font-bold uppercase text-slate-900">Mes projets assignés</h3>
+        <p class="text-xs text-gray-500 mt-1">Budget alloué par projet</p>
       </div>
       <span class="text-xs text-slate-500">{{ projets.length }} projet(s)</span>
     </div>
@@ -64,9 +64,9 @@ const couleurStatut = (statut) => {
   switch (statut) {
     case "En cours":
       return "#F59E0B"
-    case "BudgÃ©tisÃ©":
+    case "Budgétisé":
       return "#10B981"
-    case "Ã€ budgÃ©tiser":
+    case "À budgétiser":
       return "#6B7280"
     default:
       return "#9CA3AF"
@@ -77,13 +77,14 @@ const badgeClass = (statut) => {
   switch (statut) {
     case "En cours":
       return "bg-bleu-nuit/10 text-bleu-nuit"
-    case "BudgÃ©tisÃ©":
+    case "Budgétisé":
       return "bg-or/10 text-bleu-nuit"
-    case "Ã€ budgÃ©tiser":
+    case "À budgétiser":
       return "bg-or/10 text-or"
     default:
       return "bg-gray-100 text-gray-600"
   }
 }
 </script>
+
 

@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-5 gap-3">
+  <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-5 gap-3">
     <div class="relative">
       <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
       <input
@@ -18,8 +18,8 @@
     >
       <option>Tous les statuts</option>
       <option>En cours</option>
-      <option>PlanifiÃ©e</option>
-      <option>TerminÃ©e</option>
+      <option>Planifiée</option>
+      <option>Terminée</option>
     </select>
 
     <select
@@ -28,7 +28,7 @@
       class="border rounded-lg px-3 py-2 text-sm"
     >
       <option>Tous les projets</option>
-      <option>Projet SantÃ©</option>
+      <option>Projet Santé</option>
       <option>Projet Nutrition</option>
       <option>Projet Eau</option>
       <option>Projet Education</option>
@@ -44,11 +44,11 @@
       <option>Louga</option>
       <option>Kolda</option>
       <option>Matam</option>
-      <option>ThiÃ¨s</option>
+      <option>Thiès</option>
     </select>
 
     <BoutonTertiary @click="$emit('reset')">
-      RÃ©initialiser
+      Réinitialiser
     </BoutonTertiary>
   </div>
 </template>
@@ -72,4 +72,5 @@ defineEmits([
   "reset",
 ])
 </script>
+
 

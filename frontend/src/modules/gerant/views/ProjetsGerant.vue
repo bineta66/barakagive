@@ -1,242 +1,246 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
-    <div class="flex justify-between items-center  pb-4">
+    <!-- En-tête -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
       <div>
-        <h1 class="text-4xl font-bold text-or">Projets</h1>
-        <p class="text-xs text-gray-500 mt-1">
-          GÃ©rez les projets humanitaires et leurs Ã©quipes.
+        <h1 class="text-3xl font-bold text-or">Gestion des Projets</h1>
+        <p class="text-sm text-slate-500 mt-1">
+          Créez, suivez et administrez les projets humanitaires de votre organisation.
         </p>
       </div>
-      <BoutonPrimary to="/gerant/projets/creer">
-        <Plus class="w-5 h-5" />
-        Nouveau projet
-      </BoutonPrimary>
+
+      <div class="flex items-center gap-3">
+        <router-link
+          to="/gerant/projets/creer"
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-bleu-nuit hover:bg-[#01111eff] text-white text-sm font-semibold rounded-lg shadow-xs transition"
+        >
+          <Plus :size="18" />
+          Nouveau projet
+        </router-link>
+
+        <button
+          @click="store.fetchProjets"
+          class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition"
+        >
+          Actualiser
+        </button>
+      </div>
     </div>
 
+    <!-- Alert Message -->
+    <AlertMessage v-if="feedback.message" :type="feedback.type" :message="feedback.message" class="mb-4" />
+
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Projets actifs</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ projetsActifs }}</h3>
+          <p class="text-xs font-bold uppercase text-slate-500">Total Projets</p>
+          <h3 class="text-2xl font-bold text-or mt-1">{{ projets.length }}</h3>
         </div>
         <FolderKanban class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">En cours</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ projetsEnCours }}</h3>
+          <p class="text-xs font-bold uppercase text-slate-500">Projets Actifs</p>
+          <h3 class="text-2xl font-bold text-emerald-600 mt-1">{{ projetsActifs.length }}</h3>
         </div>
         <Activity class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex justify-between items-center">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">PlanifiÃ©s</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ projetsPlanifies }}</h3>
-        </div>
-        <Calendar class="text-bleu-nuit" :size="28" />
-      </div>
-
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Budget total</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(budgetTotal) }} FCFA</h3>
+          <p class="text-xs font-bold uppercase text-slate-500">Enveloppe budgétaire</p>
+          <h3 class="text-2xl font-bold text-or mt-1">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
         </div>
         <Wallet class="text-bleu-nuit" :size="28" />
       </div>
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
-      <div class="relative">
-        <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
+    <div class="bg-white border border-slate-200/60 shadow-xs-sm rounded-xl p-4 flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="16" />
         <input
           v-model="search"
           type="text"
-          placeholder="Rechercher un projet..."
-          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm"
+          placeholder="Rechercher par nom, code ou région..."
+          class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
         />
       </div>
 
-      <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Tous les statuts</option>
-        <option v-for="s in statutsListe" :key="s" :value="s">{{ s }}</option>
-      </select>
-
-      <select v-model="filtreRegion" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Toutes les rÃ©gions</option>
+      <select v-model="filtreRegion" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30 bg-white">
+        <option value="tous">Toutes les régions</option>
         <option v-for="r in regionsListe" :key="r" :value="r">{{ r }}</option>
       </select>
-
-      <BoutonTertiary @click="resetFilters">
-        RÃ©initialiser
-      </BoutonTertiary>
     </div>
+
+    <!-- Loading State -->
+    <LoadingSpinner v-if="loading" message="Chargement des projets..." />
 
     <!-- Tableau -->
-    <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
-          <tr>
-            <th class="text-left px-4 py-3">Projet</th>
-            <th class="text-left px-4 py-3">Chef de projet</th>
-            <th class="text-left px-4 py-3">Responsable Finance</th>
-            <th class="text-left px-4 py-3">RÃ©gion</th>
-            <th class="text-right px-4 py-3">Budget</th>
-            <th class="text-left px-4 py-3">Statut</th>
-            <th class="text-center px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="projet in projetsPage"
-            :key="projet.id"
-            class="border-t hover:bg-slate-50"
-          >
-            <td class="px-4 py-3">
-              <h3 class="font-semibold text-sm text-slate-800">{{ projet.nom }}</h3>
-              <p class="text-xs text-gray-500">{{ projet.code }}</p>
-            </td>
-            <td class="px-4 py-3 text-sm text-slate-700">{{ projet.chefProjet }}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">{{ projet.responsableFinance }}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">{{ projet.region }}</td>
-            <td class="px-4 text-right text-sm font-semibold text-slate-900">{{ formatMontant(projet.budget) }} FCFA</td>
-            <td class="px-4 py-3">
-              <StatusBadge :statut="projet.statut">{{ projet.statut }}</StatusBadge>
-            </td>
-            <td class="px-4 py-3 text-center">
-              <div class="flex justify-center gap-1">
-                <RouterLink
-                  :to="`/gerant/projets/${projet.id}`"
-                  class="p-1 text-slate-500 hover:text-bleu-nuit rounded-lg transition-colors"
-                  title="Voir"
-                >
-                  <Eye class="w-4 h-4" />
-                </RouterLink>
-                <button
-                  @click="openProjet(projet)"
-                  class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition-colors"
-                  title="Modifier"
-                >
-                  <Pencil class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <div v-else class="bg-white rounded-xl border border-slate-200/60 overflow-hidden shadow-xs-sm">
+      <EmptyState
+        v-if="projetsFiltres.length === 0"
+        titre="Aucun projet trouvé"
+        description="Aucun projet ne correspond à vos filtres actuels. Cliquez sur 'Nouveau projet' pour en créer un."
+      />
 
-    <!-- Pagination -->
+      <div v-else class="overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase text-bleu-nuit border-b border-slate-100">
+            <tr>
+              <th class="text-left px-4 py-3">Code & Projet</th>
+              <th class="text-left px-4 py-3">Chef de projet</th>
+              <th class="text-left px-4 py-3">Responsable Finance</th>
+              <th class="text-left px-4 py-3">Région</th>
+              <th class="text-right px-4 py-3">Budget</th>
+              <th class="text-left px-4 py-3">Période</th>
+              <th class="text-center px-4 py-3">Statut</th>
+              <th class="text-right px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 text-sm">
+            <tr
+              v-for="p in projetsFiltres"
+              :key="p.id"
+              class="hover:bg-slate-50/70 transition"
+            >
+              <td class="px-4 py-3.5">
+                <div class="font-semibold text-slate-900">{{ p.name }}</div>
+                <div class="text-xs font-medium text-or">{{ p.code || 'PRJ' }}</div>
+              </td>
+              <td class="px-4 py-3.5 text-slate-600 text-xs">
+                {{ p.chef_projet || 'Non assigné' }}
+              </td>
+              <td class="px-4 py-3.5 text-slate-600 text-xs">
+                {{ p.responsable_finance || 'Non assigné' }}
+              </td>
+              <td class="px-4 py-3.5 text-slate-600 text-xs">
+                {{ p.region || '-' }}
+              </td>
+              <td class="px-4 py-3.5 text-right font-semibold text-slate-900 text-xs">
+                {{ formatMontant(p.budget) }} FCFA
+              </td>
+              <td class="px-4 py-3.5 text-slate-500 text-xs">
+                {{ p.start_date || '-' }} au {{ p.end_date || '-' }}
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span
+                  class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
+                  :class="p.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'"
+                >
+                  {{ p.archived ? 'Archivé' : 'En cours' }}
+                </span>
+              </td>
+              <td class="px-4 py-3.5 text-right">
+                <div class="flex justify-end gap-1">
+                  <RouterLink
+                    :to="`/gerant/projets/${p.id}`"
+                    class="text-slate-400 hover:text-bleu-nuit transition p-1"
+                    title="Voir les détails"
+                  >
+                    <Eye :size="16" />
+                  </RouterLink>
+
+                  <RouterLink
+                    v-if="!p.archived"
+                    :to="`/gerant/projets/modifier/${p.id}`"
+                    class="text-slate-400 hover:text-or transition p-1"
+                    title="Modifier"
+                  >
+                    <Pencil :size="16" />
+                  </RouterLink>
+
+                  <button
+                    v-if="!p.archived"
+                    @click="archiverProjet(p.id)"
+                    class="text-slate-400 hover:text-red-600 transition p-1"
+                    title="Archiver ce projet"
+                  >
+                    <Trash2 :size="16" />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, reactive, onMounted } from "vue"
 import {
-  FolderKanban, Activity, Calendar, Wallet,
-  Search, Eye, ChevronLeft, ChevronRight, Plus, Pencil
-} from 'lucide-vue-next'
-import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
-import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
-import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
+  FolderKanban,
+  Activity,
+  Wallet,
+  Search,
+  Plus,
+  Eye,
+  Pencil,
+  Trash2,
+} from "lucide-vue-next"
+import { RouterLink } from "vue-router"
+import { useGerantStore } from "@/modules/gerant/stores/gerantStore.js"
+import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
+import EmptyState from "@/components/ui/EmptyState.vue"
+import AlertMessage from "@/components/ui/AlertMessage.vue"
 
 const store = useGerantStore()
-const { formatMontant } = store
+const search = ref("")
+const filtreRegion = ref("tous")
+const loading = ref(false)
+const feedback = reactive({ type: "success", message: "" })
 
-const search = ref('')
-const filtreStatut = ref('')
-const filtreRegion = ref('')
-const currentPage = ref(1)
-const itemsPerPage = 5
+const projets = computed(() => store.projets)
+const statistiques = computed(() => store.statistiques)
+const formatMontant = store.formatMontant
 
-const statutsListe = computed(() =>
-  [...new Set(store.projets.map(p => p.statut))]
-)
+const projetsActifs = computed(() => projets.value.filter((p) => !p.archived))
 
-const regionsListe = computed(() =>
-  [...new Set(store.projets.map(p => p.region))]
-)
+const regionsListe = computed(() => {
+  const regions = projets.value.map((p) => p.region).filter(Boolean)
+  return [...new Set(regions)]
+})
 
-const projetsActifs = computed(() => store.projets.length)
-const projetsEnCours = computed(() =>
-  store.projets.filter(p => p.statut === 'En cours').length
-)
-const projetsPlanifies = computed(() =>
-  store.projets.filter(p => p.statut === 'PlanifiÃ©').length
-)
-const budgetTotal = computed(() =>
-  store.projets.reduce((sum, p) => sum + (p.budget || 0), 0)
-)
+const projetsFiltres = computed(() => {
+  return projets.value.filter((p) => {
+    const q = search.value.toLowerCase()
+    const matchesSearch =
+      !q ||
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.code && p.code.toLowerCase().includes(q)) ||
+      (p.region && p.region.toLowerCase().includes(q))
 
-const filteredProjets = computed(() => {
-  return store.projets.filter(p => {
-    const matchesSearch = p.nom.toLowerCase().includes(search.value.toLowerCase()) ||
-      p.code.toLowerCase().includes(search.value.toLowerCase()) ||
-      p.chefProjet.toLowerCase().includes(search.value.toLowerCase())
-    const matchesStatut = filtreStatut.value ? p.statut === filtreStatut.value : true
-    const matchesRegion = filtreRegion.value ? p.region === filtreRegion.value : true
-    return matchesSearch && matchesStatut && matchesRegion
+    const matchesRegion =
+      filtreRegion.value === "tous" || p.region === filtreRegion.value
+
+    return matchesSearch && matchesRegion
   })
 })
 
-const projetsPage = computed(() => {
-  return filteredProjets.value.slice(
-    (currentPage.value - 1) * itemsPerPage,
-    currentPage.value * itemsPerPage
-  )
-})
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredProjets.value.length / itemsPerPage))
-)
-
-const startItem = computed(() =>
-  filteredProjets.value.length === 0 ? 0 : (currentPage.value - 1) * itemsPerPage + 1
-)
-
-const endItem = computed(() =>
-  Math.min(currentPage.value * itemsPerPage, filteredProjets.value.length)
-)
-
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
-  const current = currentPage.value
-  let start = Math.max(1, current - 2)
-  let end = Math.min(total, start + 4)
-  if (end === total) start = Math.max(1, end - 4)
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-})
-
-const resetFilters = () => {
-  search.value = ''
-  filtreStatut.value = ''
-  filtreRegion.value = ''
-}
-
-const badgeClass = (statut) => {
-  switch (statut) {
-    case 'En cours':
-      return 'bg-or/10 text-or'
-    case 'PlanifiÃ©':
-      return 'bg-or/10 text-bleu-nuit'
-    case 'TerminÃ©':
-      return 'bg-bleu-nuit/10 text-bleu-nuit'
-    default:
-      return 'bg-gray-100 text-gray-600'
+const archiverProjet = async (id) => {
+  if (!confirm("Voulez-vous vraiment archiver ce projet ?")) return
+  feedback.message = ""
+  try {
+    await store.deleteProject(id)
+    feedback.type = "success"
+    feedback.message = "Projet archivé avec succès."
+  } catch (err) {
+    feedback.type = "error"
+    feedback.message = "Erreur lors de l'archivage du projet."
   }
 }
 
-watch([search, filtreStatut, filtreRegion], () => {
-  currentPage.value = 1
+onMounted(async () => {
+  loading.value = true
+  try {
+    await store.fetchProjets()
+  } finally {
+    loading.value = false
+  }
 })
 </script>
-
-
-
-
 

@@ -1,18 +1,18 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Rapports financiers</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Analyse dÃ©taillÃ©e des performances budgÃ©taires et financiÃ¨res
+          Analyse détaillée des performances budgétaires et financières
         </p>
       </div>
     </div>
 
     <!-- Cartes KPI -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Budget total</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stats.budgetTotal) }} FCFA</h3>
@@ -20,15 +20,15 @@
         <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">DÃ©penses rÃ©alisÃ©es</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Dépenses réalisées</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stats.depensesRealisees) }} FCFA</h3>
         </div>
         <Receipt class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Solde disponible</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stats.soldeDisponible) }} FCFA</h3>
@@ -36,9 +36,9 @@
         <Banknote class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exÃ©cution</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exécution</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ stats.tauxExecution }}%</h3>
         </div>
         <TrendingUp class="text-bleu-nuit" :size="28" />
@@ -47,9 +47,9 @@
 
     <!-- Graphiques -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <!-- RÃ©partition par projet -->
+      <!-- Répartition par projet -->
       <div class="bg-white border border-slate-200/60 rounded-xl p-5">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">RÃ©partition budgÃ©taire par projet</h2>
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Répartition budgétaire par projet</h2>
         <div class="space-y-3">
           <div
             v-for="budget in store.budgets"
@@ -70,9 +70,9 @@
         </div>
       </div>
 
-      <!-- DerniÃ¨res opÃ©rations -->
+      <!-- Dernières opérations -->
       <div class="bg-white border border-slate-200/60 rounded-xl p-5">
-        <h2 class="text-lg font-semibold text-slate-900 mb-4">DerniÃ¨res opÃ©rations</h2>
+        <h2 class="text-lg font-semibold text-slate-900 mb-4">Dernières opérations</h2>
         <div class="space-y-3">
           <div
             v-for="operation in dernieresOperations"
@@ -91,7 +91,7 @@
                 {{ formatMontant(operation.montant) }} FCFA
               </p>
               <p class="text-xs text-slate-500">
-                {{ operation.type === 'don' ? 'EntrÃ©e' : 'Sortie' }}
+                {{ operation.type === 'don' ? 'Entrée' : 'Sortie' }}
               </p>
             </div>
           </div>
@@ -102,7 +102,7 @@
     <!-- Tableau des projets -->
     <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
       <div class="px-5 py-4 ">
-        <h2 class="text-lg font-semibold text-slate-900">SynthÃ¨se par projet</h2>
+        <h2 class="text-lg font-semibold text-slate-900">Synthèse par projet</h2>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full">
@@ -115,7 +115,7 @@
                 Budget
               </th>
               <th class="text-right px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
-                ConsommÃ©
+                Consommé
               </th>
               <th class="text-right px-4 py-3 text-xs font-medium text-bleu-nuit uppercase tracking-wider">
                 Solde
@@ -177,15 +177,16 @@ const badgeClass = (statut) => {
   switch (statut) {
     case "En cours":
       return "bg-bleu-nuit/10 text-bleu-nuit"
-    case "TerminÃ©e":
+    case "Terminée":
       return "bg-or/10 text-bleu-nuit"
-    case "PlanifiÃ©e":
+    case "Planifiée":
       return "bg-purple-100 text-purple-700"
-    case "Ã€ budgÃ©tiser":
+    case "À budgétiser":
       return "bg-or/10 text-or"
     default:
       return "bg-gray-100 text-gray-600"
   }
 }
 </script>
+
 

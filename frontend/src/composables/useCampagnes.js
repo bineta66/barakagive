@@ -1,19 +1,50 @@
-import { ref, computed } from "vue"
-import { campagnesMock } from "@/data/campagnesMock.js"
+﻿import { ref, computed, onMounted } from "vue"
+import { useCampaignStore } from "@/stores/campaign.js"
 
 export function useCampagnes() {
+  const campaignStore = useCampaignStore()
   const recherche = ref("")
   const filtreStatut = ref("Tous les statuts")
   const filtreProjet = ref("Tous les projets")
   const filtreZone = ref("Toutes les zones")
   const pageCourante = ref(1)
-  const parPage = 5
+  const parPage = 8
+
+  onMounted(() => {
+    campaignStore.fetchCampaigns().catch(() => {})
+  })
+
+  const determineStatus = (c) => {
+    const today = new Date().toISOString().split("T")[0]
+    if (c.date_debut && c.date_debut > today) return "Planifiée"
+    if (c.date_fin && c.date_fin < today) return "Terminée"
+    return "En cours"
+  }
+
+  const normaliserCampagne = (c) => {
+    return {
+      ...c,
+      nom: c.nom,
+      code: c.code_campagne || c.code || `CMP-${c.id?.substring ? c.id.substring(0, 6) : c.id}`,
+      projet: c.projet?.name || (typeof c.projet === "string" ? c.projet : "-"),
+      zone: c.zones_count ? `${c.zones_count} zone(s)` : (c.zone || "-"),
+      statut: c.statut || determineStatus(c),
+      dateDebut: c.date_debut,
+      dateFin: c.date_fin,
+    }
+  }
+
+  const campagnesNormalisees = computed(() => {
+    return campaignStore.campaigns.map(normaliserCampagne)
+  })
 
   const campagnesFiltrees = computed(() => {
-    return campagnesMock.value.filter((c) => {
+    return campagnesNormalisees.value.filter((c) => {
+      const q = recherche.value.toLowerCase()
       const okRecherche =
-        c.nom.toLowerCase().includes(recherche.value.toLowerCase()) ||
-        c.code.toLowerCase().includes(recherche.value.toLowerCase())
+        !q ||
+        (c.nom || "").toLowerCase().includes(q) ||
+        (c.code || "").toLowerCase().includes(q)
 
       const okStatut =
         filtreStatut.value === "Tous les statuts" ||
@@ -41,10 +72,10 @@ export function useCampagnes() {
   })
 
   const statistiques = computed(() => {
-    const total = campagnesMock.value.length
-    const actives = campagnesMock.value.filter((c) => c.statut === "En cours").length
-    const planifiees = campagnesMock.value.filter((c) => c.statut === "Planifiée").length
-    const terminees = campagnesMock.value.filter((c) => c.statut === "Terminée").length
+    const total = campagnesNormalisees.value.length
+    const actives = campagnesNormalisees.value.filter((c) => c.statut === "En cours").length
+    const planifiees = campagnesNormalisees.value.filter((c) => c.statut === "Planifiée").length
+    const terminees = campagnesNormalisees.value.filter((c) => c.statut === "Terminée").length
     return { total, actives, planifiees, terminees }
   })
 
@@ -67,5 +98,8 @@ export function useCampagnes() {
     totalPages,
     statistiques,
     reinitialiserFiltres,
+    campaignStore,
   }
 }
+
+

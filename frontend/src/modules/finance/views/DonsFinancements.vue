@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Dons & Financements</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Enregistrement et suivi des financements reÃ§us
+          Enregistrement et suivi des financements reçus
         </p>
       </div>
       <BoutonPrimary @click="modalDon = true">
@@ -16,7 +16,7 @@
 
     <!-- Cartes KPI -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total financements</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stat.totalFinancements) }} FCFA</h3>
@@ -24,7 +24,7 @@
         <Wallet class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Nombre de bailleurs</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ stat.nombreBailleurs }}</h3>
@@ -32,7 +32,7 @@
         <Users class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Financements du mois</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stat.financementDuMois) }} FCFA</h3>
@@ -40,9 +40,9 @@
         <TrendingUp class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Projets financÃ©s</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Projets financés</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ stat.projetsFinances }}</h3>
         </div>
         <FolderKanban class="text-bleu-nuit" :size="28" />
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -72,7 +72,7 @@
       </select>
 
       <BoutonTertiary @click="resetFilters">
-        RÃ©initialiser
+        Réinitialiser
       </BoutonTertiary>
     </div>
 
@@ -85,7 +85,7 @@
             <th class="text-left px-4 py-3">Projet</th>
             <th class="text-right px-4 py-3">Montant</th>
             <th class="text-left px-4 py-3">Date</th>
-            <th class="text-left px-4 py-3">RÃ©fÃ©rence</th>
+            <th class="text-left px-4 py-3">Référence</th>
             <th class="text-left px-4 py-3">Statut</th>
             <th class="text-center px-4 py-3">Actions</th>
           </tr>
@@ -264,10 +264,15 @@ const deleteDon = (don) => {
   console.log('Delete don:', don)
 }
 
-const saveDon = (donData) => {
-  console.log('Don saved:', donData)
-  modalDon.value = false
-  donSelectionne.value = null
+const saveDon = async (donData) => {
+  try {
+    const bailleur = store.bailleurRecords.find((item) => item.nom === donData.bailleur)
+    await store.createDonation({ ...donData, bailleurId: bailleur?.id })
+    modalDon.value = false
+    donSelectionne.value = null
+  } catch (error) {
+    store.error = error.response?.data?.detail || error.message
+  }
 }
 
 const formatDate = (dateStr) => {
@@ -278,11 +283,11 @@ const formatDate = (dateStr) => {
 
 const badgeClass = (statut) => {
   switch (statut) {
-    case 'ValidÃ©':
+    case 'Validé':
       return 'bg-bleu-nuit/10 text-bleu-nuit'
     case 'En attente':
       return 'bg-or/10 text-or'
-    case 'RejetÃ©':
+    case 'Rejeté':
       return 'bg-red-100 text-red-700'
     default:
       return 'bg-gray-100 text-gray-600'
@@ -293,4 +298,5 @@ watch([search, filtreStatut, filtreProjet], () => {
   currentPage.value = 1
 })
 </script>
+
 

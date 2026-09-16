@@ -13,7 +13,7 @@ import { computed } from "vue"
 const props = defineProps({
   status: {
     type: String,
-    default: "PlanifiÃ©",
+    default: "Planifié",
   },
 })
 
@@ -21,13 +21,14 @@ const badgeClass = computed(() => {
   switch (props.status) {
     case "En cours":
       return "bg-or text-white"
-    case "PlanifiÃ©":
+    case "Planifié":
       return "bg-bleu-nuit text-white"
-    case "TerminÃ©":
+    case "Terminé":
       return "bg-gray-500 text-white"
     default:
       return "bg-gray-500 text-white"
   }
 })
 </script>
+
 

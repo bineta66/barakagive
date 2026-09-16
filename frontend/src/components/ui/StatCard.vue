@@ -1,6 +1,6 @@
 ﻿<template>
   <div
-    class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between items-center"
+    class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between items-center"
   >
     <div>
       <p class="text-sm text-slate-500 mb-1">{{ titre }}</p>
@@ -21,7 +21,7 @@ import { computed } from "vue"
 const props = defineProps({
   titre: { type: String, required: true },
   valeur: { type: [String, Number], required: true },
-  icone: { type: [String, Object], required: true },
+  icone: { type: [String, Object, Function], required: true },
   couleur: { type: String, default: "sky" },
 })
 
@@ -53,4 +53,3 @@ const textColor = computed(() => {
   return colors[props.couleur] || "text-slate-600"
 })
 </script>
-

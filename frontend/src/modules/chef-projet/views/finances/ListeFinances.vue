@@ -5,30 +5,30 @@
       <div>
         <h1 class="text-4xl font-bold text-or">Finances</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Suivi budgÃ©taire et exÃ©cutive des projets humanitaires.
+          Suivi budgétaire et exécutive des projets humanitaires.
         </p>
       </div>
     </div>
 
     <!-- Cartes statistiques -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Volume budgÃ©taire allouÃ©</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Volume budgétaire alloué</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
         </div>
         <Wallet class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exÃ©cution</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exécution</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.tauxExecution }} %</h3>
         </div>
         <Activity class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Montant restant</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.totalRestant) }} FCFA</h3>
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -52,8 +52,8 @@
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
         <option>Tous les statuts</option>
         <option>En cours</option>
-        <option>TerminÃ©e</option>
-        <option>PlanifiÃ©e</option>
+        <option>Terminée</option>
+        <option>Planifiée</option>
       </select>
 
       <select v-model="filtreProjet" class="border rounded-lg px-3 py-2 text-sm">
@@ -62,7 +62,7 @@
       </select>
 
       <select v-model="filtreRegion" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Toutes les rÃ©gions</option>
+        <option>Toutes les régions</option>
         <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
       </select>
     </div>
@@ -73,8 +73,8 @@
         <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
           <tr>
             <th class="text-left px-4 py-4">Projet</th>
-            <th class="text-right px-4">Budget allouÃ©</th>
-            <th class="text-right px-4">EngagÃ©</th>
+            <th class="text-right px-4">Budget alloué</th>
+            <th class="text-right px-4">Engagé</th>
             <th class="text-right px-4">Restant</th>
             <th class="text-left px-4">Statut</th>
             <th class="text-right px-4">Actions</th>
@@ -124,7 +124,7 @@
       <!-- Pagination -->
       <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
         <p class="text-slate-500">
-          Affichage de 1 Ã  {{ financesPage.length }} sur {{ financesFiltrees.length }} projets
+          Affichage de 1 à {{ financesPage.length }} sur {{ financesFiltrees.length }} projets
         </p>
 
         <div class="flex gap-1">
@@ -133,7 +133,7 @@
             :disabled="pageCourante === 1"
             @click="pageCourante = pageCourante - 1"
           >
-            PrÃ©cÃ©dent
+            Précédent
           </button>
 
           <button
@@ -190,4 +190,5 @@ function formatMontant(montant) {
   return montant.toLocaleString("fr-FR")
 }
 </script>
+
 

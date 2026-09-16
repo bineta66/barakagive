@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.gis.geos import Point
 
 from drf_spectacular.utils import extend_schema
@@ -51,6 +52,7 @@ class ReverseGeocodeView(APIView):
 class ZoneListView(generics.ListCreateAPIView):
 
     serializer_class = ZoneSerializer
+    permission_classes = [IsAuthenticated]
     queryset = Zone.objects.select_related(
         "organization", "created_by"
     ).all()
@@ -59,6 +61,9 @@ class ZoneListView(generics.ListCreateAPIView):
         if self.request.method == "POST":
             return ZoneCreateSerializer
         return ZoneSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(organization=self.request.user.organization)
 
     def perform_create(self, serializer):
         serializer.save(
@@ -71,9 +76,14 @@ class ZoneListView(generics.ListCreateAPIView):
 class ZoneDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     serializer_class = ZoneSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_url_kwarg = "id"
     queryset = Zone.objects.select_related(
         "organization", "created_by"
     ).all()
+
+    def get_queryset(self):
+        return self.queryset.filter(organization=self.request.user.organization)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

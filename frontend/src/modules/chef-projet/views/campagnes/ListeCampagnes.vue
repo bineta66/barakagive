@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
-    <div class="flex justify-between items-center  pb-4">
+    <div class="flex justify-between items-center pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Campagnes</h1>
         <p class="text-xs text-gray-500 mt-1">
-          GÃ©rez et suivez les campagnes humanitaires.
+          Gérez et suivez les campagnes humanitaires.
         </p>
       </div>
 
@@ -15,9 +15,12 @@
       </BoutonPrimary>
     </div>
 
+    <LoadingSpinner v-if="campaignStore.loading && !campaignStore.campaigns.length" message="Chargement des campagnes..." />
+    <AlertMessage v-if="feedback.message" :type="feedback.type" :message="feedback.message" class="mb-4" />
+
     <!-- Cartes statistiques -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total campagnes</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.total }}</h3>
@@ -25,7 +28,7 @@
         <ClipboardList class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Actives</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.actives }}</h3>
@@ -33,9 +36,9 @@
         <Activity class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">TerminÃ©es</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Terminées</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.terminees }}</h3>
         </div>
         <CheckCircle class="text-bleu-nuit" :size="28" />
@@ -43,63 +46,46 @@
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-3 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
-          :value="recherche"
-          @input="$emit('update:recherche', $event.target.value)"
+          v-model="recherche"
           type="text"
           placeholder="Rechercher une campagne..."
-          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm"
+          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-or/30"
         />
       </div>
 
       <select
-        :value="filtreStatut"
-        @change="$emit('update:filtreStatut', $event.target.value)"
-        class="border rounded-lg px-3 py-2 text-sm"
+        v-model="filtreStatut"
+        class="border rounded-lg px-3 py-2 text-sm bg-white"
       >
-        <option>Tous les statuts</option>
-        <option>En cours</option>
-        <option>PlanifiÃ©e</option>
-        <option>TerminÃ©e</option>
+        <option value="Tous les statuts">Tous les statuts</option>
+        <option value="En cours">En cours</option>
+        <option value="Planifiée">Planifiée</option>
+        <option value="Terminée">Terminée</option>
       </select>
 
       <select
-        :value="filtreProjet"
-        @change="$emit('update:filtreProjet', $event.target.value)"
-        class="border rounded-lg px-3 py-2 text-sm"
+        v-model="filtreProjet"
+        class="border rounded-lg px-3 py-2 text-sm bg-white"
       >
-        <option>Tous les projets</option>
-        <option>Projet SantÃ©</option>
-        <option>Projet Nutrition</option>
-        <option>Projet Eau</option>
-        <option>Projet Education</option>
-      </select>
-
-      <select
-        :value="filtreZone"
-        @change="$emit('update:filtreZone', $event.target.value)"
-        class="border rounded-lg px-3 py-2 text-sm"
-      >
-        <option>Toutes les zones</option>
-        <option>Dakar</option>
-        <option>Louga</option>
-        <option>Kolda</option>
-        <option>Matam</option>
-        <option>ThiÃ¨s</option>
+        <option value="Tous les projets">Tous les projets</option>
+        <option v-for="proj in projectStore.projects" :key="proj.id" :value="proj.name">
+          {{ proj.name }}
+        </option>
       </select>
     </div>
 
     <!-- Tableau -->
-     <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
+    <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
       <table class="w-full min-w-[640px]">
         <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
           <tr>
             <th class="text-left px-4 py-4">Campagne</th>
             <th class="text-left px-4">Projet</th>
-            <th class="text-left px-4">Zone</th>
+            <th class="text-left px-4">Zones</th>
             <th class="text-left px-4">Statut</th>
             <th class="text-right px-4">Actions</th>
           </tr>
@@ -123,45 +109,55 @@
             </td>
 
             <td class="px-4">
-               <StatusBadge :statut="campagne.statut">{{ campagne.statut }}</StatusBadge>
+              <StatusBadge :statut="campagne.statut">{{ campagne.statut }}</StatusBadge>
             </td>
 
             <td class="px-4">
               <div class="flex justify-end gap-2">
-                <RouterLink :to="`/chef-projet/campagnes/${campagne.id}`" class="text-slate-500 hover:text-bleu-nuit">
+                <RouterLink :to="`/chef-projet/campagnes/${campagne.id}`" class="text-slate-500 hover:text-bleu-nuit p-1" title="Voir détails">
                   <Eye :size="18" />
                 </RouterLink>
 
-                <RouterLink :to="`/chef-projet/campagnes/modifier/${campagne.id}`" class="text-slate-500 hover:text-or">
+                <RouterLink :to="`/chef-projet/campagnes/modifier/${campagne.id}`" class="text-slate-500 hover:text-or p-1" title="Modifier">
                   <Pencil :size="18" />
                 </RouterLink>
 
-                <RouterLink :to="`/chef-projet/campagnes/${campagne.id}/formulaire`" class="text-slate-500 hover:text-bleu-nuit" title="Formulaire">
+                <RouterLink :to="`/chef-projet/campagnes/${campagne.id}/formulaire`" class="text-slate-500 hover:text-bleu-nuit p-1" title="Formulaire dynamique">
                   <FileText :size="18" />
                 </RouterLink>
 
-                <button class="text-slate-500 hover:text-red-600">
+                <button
+                  @click="supprimerCampagne(campagne.id)"
+                  class="text-slate-500 hover:text-red-600 p-1"
+                  title="Supprimer"
+                >
                   <Archive :size="18" />
                 </button>
               </div>
+            </td>
+          </tr>
+
+          <tr v-if="!campagnesPage.length">
+            <td colspan="5" class="py-8 text-center text-sm text-slate-500">
+              Aucune campagne trouvée.
             </td>
           </tr>
         </tbody>
       </table>
 
       <!-- Pagination -->
-      <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
+      <div v-if="campagnesFiltrees.length > 0" class="flex items-center justify-between px-4 py-3 border-t text-xs">
         <p class="text-slate-500">
-          Affichage de 1 Ã  {{ campagnesPage.length }} sur {{ campagnesFiltrees.length }} campagnes
+          Affichage de {{ campagnesPage.length }} sur {{ campagnesFiltrees.length }} campagnes
         </p>
 
-        <div class="flex gap-1">
+        <div class="flex gap-1" v-if="totalPages > 1">
           <button
             class="px-3 py-2 border rounded bg-slate-100 text-slate-400"
             :disabled="pageCourante === 1"
             @click="pageCourante = pageCourante - 1"
           >
-            PrÃ©cÃ©dent
+            Précédent
           </button>
 
           <button
@@ -188,10 +184,18 @@
 </template>
 
 <script setup>
+import { reactive, onMounted } from "vue"
+import { RouterLink } from "vue-router"
 import StatusBadge from "@/components/ui/StatusBadge.vue"
+import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
+import AlertMessage from "@/components/ui/AlertMessage.vue"
 import { useCampagnes } from "@/composables/useCampagnes.js"
+import { useProjectStore } from "@/stores/project.js"
 import { Plus, ClipboardList, Activity, CheckCircle, Search, Eye, Pencil, Archive, FileText } from "lucide-vue-next"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
+
+const projectStore = useProjectStore()
+const feedback = reactive({ type: "success", message: "" })
 
 const {
   recherche,
@@ -203,7 +207,26 @@ const {
   totalPages,
   campagnesFiltrees,
   statistiques,
-  reinitialiserFiltres,
+  campaignStore,
 } = useCampagnes()
+
+onMounted(async () => {
+  try {
+    await projectStore.fetchProjects()
+  } catch (e) {}
+})
+
+const supprimerCampagne = async (id) => {
+  if (!confirm("Êtes-vous sûr de vouloir supprimer cette campagne ?")) return
+  feedback.message = ""
+  try {
+    await campaignStore.deleteCampaign(id)
+    feedback.type = "success"
+    feedback.message = "Campagne supprimée avec succès."
+  } catch (err) {
+    feedback.type = "error"
+    feedback.message = campaignStore.error || "Erreur lors de la suppression de la campagne."
+  }
+}
 </script>
 

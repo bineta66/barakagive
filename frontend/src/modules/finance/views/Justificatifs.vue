@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Justificatifs</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Gestion des justificatifs de dÃ©penses
+          Gestion des justificatifs de dépenses
         </p>
       </div>
       <BoutonPrimary @click="openJustificatifModal(null)">
@@ -16,15 +16,15 @@
 
     <!-- Cartes KPI -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">ValidÃ©s</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Validés</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ stat.valides }}</h3>
         </div>
         <FileText class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">En attente</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ stat.enAttente }}</h3>
@@ -32,17 +32,17 @@
         <Clock class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Montant justifiÃ©</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Montant justifié</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stat.montantJustifie) }} FCFA</h3>
         </div>
         <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">DÃ©penses sans justificatif</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Dépenses sans justificatif</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ stat.depensesSansJustificatif }}</h3>
         </div>
         <AlertCircle class="text-bleu-nuit" :size="28" />
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -72,7 +72,7 @@
       </select>
 
       <BoutonTertiary @click="resetFilters">
-        RÃ©initialiser
+        Réinitialiser
       </BoutonTertiary>
     </div>
 
@@ -81,7 +81,7 @@
       <table class="w-full">
         <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
           <tr>
-            <th class="text-left px-4 py-3">DÃ©pense</th>
+            <th class="text-left px-4 py-3">Dépense</th>
             <th class="text-left px-4 py-3">Projet</th>
             <th class="text-left px-4 py-3">Type de document</th>
             <th class="text-left px-4 py-3">Date</th>
@@ -116,7 +116,7 @@
                 <button
                   @click="downloadDocument(justificatif)"
                   class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition-colors"
-                  title="TÃ©lÃ©charger"
+                  title="Télécharger"
                 >
                   <Download class="w-4 h-4" />
                 </button>
@@ -282,11 +282,15 @@ const replaceDocument = (justificatif) => {
   modalJustificatif.value = true
 }
 
-const saveJustificatif = (justificatifData) => {
-  console.log('Justificatif saved:', justificatifData)
-  modalJustificatif.value = false
-  justificatifSelectionne.value = null
-  depenseInitiale.value = null
+const saveJustificatif = async (justificatifData) => {
+  try {
+    await store.uploadJustification(justificatifData.depenseId, justificatifData.pieceJointe)
+    modalJustificatif.value = false
+    justificatifSelectionne.value = null
+    depenseInitiale.value = null
+  } catch (error) {
+    store.error = error.response?.data?.detail || error.message
+  }
 }
 
 const formatDate = (dateStr) => {
@@ -297,11 +301,11 @@ const formatDate = (dateStr) => {
 
 const badgeClass = (statut) => {
   switch (statut) {
-    case 'ValidÃ©':
+    case 'Validé':
       return 'bg-bleu-nuit/10 text-bleu-nuit'
     case 'En attente':
       return 'bg-or/10 text-or'
-    case 'RejetÃ©':
+    case 'Rejeté':
       return 'bg-red-100 text-red-700'
     default:
       return 'bg-gray-100 text-gray-600'
@@ -312,4 +316,5 @@ watch([search, filtreStatut, filtreType], () => {
   currentPage.value = 1
 })
 </script>
+
 

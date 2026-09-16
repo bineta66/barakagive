@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
@@ -18,7 +18,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          {{ budget ? 'Modifiez les informations du budget' : 'CrÃ©ez un nouveau budget pour le projet' }}
+          {{ budget ? 'Modifiez les informations du budget' : 'Créez un nouveau budget pour le projet' }}
         </p>
       </div>
 
@@ -30,8 +30,22 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner un projet</option>
+            <option value="">Sélectionner un projet</option>
             <option v-for="p in projets" :key="p.id" :value="p.id">{{ p.nom }} ({{ p.code }})</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Don *</label>
+          <select
+            v-model="form.donId"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+            required
+          >
+            <option value="">Sélectionner un don</option>
+            <option v-for="don in dons" :key="don.id" :value="don.id">
+              {{ don.reference }} - {{ don.bailleur }} ({{ don.montant }} FCFA)
+            </option>
           </select>
         </div>
 
@@ -58,7 +72,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Date dÃ©but *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Date début *</label>
           <input
             v-model="form.dateDebut"
             type="date"
@@ -93,7 +107,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ budget ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ budget ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -109,6 +123,7 @@ import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
 const props = defineProps({
   ouvert: Boolean,
   projets: { type: Array, default: () => [] },
+  dons: { type: Array, default: () => [] },
   budget: { type: Object, default: null },
 })
 
@@ -116,6 +131,7 @@ const emit = defineEmits(['fermer', 'save'])
 
 const form = ref({
   projetId: '',
+  donId: '',
   exercice: '',
   budgetTotal: 0,
   dateDebut: '',
@@ -136,6 +152,7 @@ watch(
     if (val && !props.budget) {
       form.value = {
         projetId: '',
+        donId: '',
         exercice: '',
         budgetTotal: 0,
         dateDebut: '',
@@ -152,16 +169,18 @@ const submit = () => {
   const budgetData = {
     ...form.value,
     projetId: Number(form.value.projetId),
+    donId: form.value.donId,
     projet: projet?.nom || '',
     chefProjet: projet?.chefProjet || '',
     budgetTotal: Number(form.value.budgetTotal) || 0,
     consomme: props.budget?.consomme || 0,
     solde: (Number(form.value.budgetTotal) || 0) - (props.budget?.consomme || 0),
-    statut: props.budget?.statut || 'Ã€ budgÃ©tiser',
+    statut: props.budget?.statut || 'À budgétiser',
   }
   emit('save', budgetData)
 }
 </script>
+
 
 
 

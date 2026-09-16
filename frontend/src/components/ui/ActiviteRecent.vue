@@ -1,17 +1,17 @@
 ﻿<template>
   <div class="self-stretch p-6 bg-white inline-flex flex-col justify-between items-start">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="self-stretch flex flex-col justify-start items-start gap-4">
       <div class="self-stretch pb-3 inline-flex justify-between items-center">
         <div class="text-slate-700 text-sm font-bold uppercase leading-5 tracking-wide">
-          ACTIVITÃ‰ RÃ‰CENTE
+          ACTIVITE RECENTE
         </div>
         <div class="text-slate-400 text-xs font-medium leading-4">
-          Temps rÃ©el
+          Temps réel
         </div>
       </div>
 
-      <!-- ActivitÃ©s -->
+      <!-- Activités -->
       <div class="self-stretch flex flex-col justify-start items-start gap-4">
         <div
           v-for="activite in activites"
@@ -52,39 +52,38 @@
 const activites = [
   {
     id: 1,
-     couleur: "bg-bleu-nuit",
-    titre: "DÃ©ploiement du projet ",
-    titreGras: "Eau & SantÃ© Sahel",
-    meta: "Par Dr. Ousmane Kane â€¢ Il y a 25 min",
+    couleur: "bg-bleu-nuit",
+    titre: "Déploiement du projet ",
+    titreGras: "Eau & Santé Sahel",
+    meta: "Par Dr. Ousmane Kane • Il y a 25 min",
   },
   {
     id: 2,
     couleur: "bg-emerald-600",
     titre: "Enregistrement de ",
-    titreGras: "320 bÃ©nÃ©ficiaires",
-    meta: "validÃ© â€¢ Zone Sud-Mali â€¢ Il y a 1h 10",
+    titreGras: "320 bénéficiaires",
+    meta: "validé • Zone Sud-Mali • Il y a 1h 10",
   },
   {
     id: 3,
     couleur: "bg-bleu-nuit",
-    titre: "Nouvel utilisateur accrÃ©ditÃ© : ",
+    titre: "Nouvel utilisateur accrédité : ",
     titreGras: "Sarah B. (Coordinatrice)",
-    meta: "RÃ´le : Gestionnaire de camp â€¢ Il y a 3h",
+    meta: "Rôle : Gestionnaire de camp • Il y a 3h",
   },
   {
     id: 4,
     couleur: "bg-slate-200",
-    titre: "ClÃ´ture administrative : ",
+    titre: "Clôture administrative : ",
     titreGras: "Mission Urgence Famine Tchad",
-    meta: "Rapport d'audit archivÃ© â€¢ Hier Ã  17:40",
+    meta: "Rapport d'audit archivé • Hier à 17:40",
   },
   {
     id: 5,
-     couleur: "bg-bleu-nuit",
+    couleur: "bg-bleu-nuit",
     titre: "Subvention bailleur ",
-    titreGras: "USAID/BHA rÃ©ceptionnÃ©e",
-    meta: "Finances â€¢ Hier Ã  11:15",
+    titreGras: "USAID/BHA réceptionnée",
+    meta: "Finances • Hier à 11:15",
   },
 ]
 </script>
-

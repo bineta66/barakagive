@@ -1,11 +1,11 @@
 ﻿<template>
   <div class="flex-1 min-w-0">
     <div class="self-stretch h-[626px] min-h-[580px] relative bg-white">
-      <div class="w-[608.66px] pb-3 left-[16px] top-[16px] absolute bg-white rounded-xl shadow-[0px_4px_20px_0px_rgba(0,0,0,0.05)] inline-flex justify-between items-center">
+      <div class="w-[608.66px] pb-3 left-[16px] top-[16px] absolute bg-white rounded-xl shadow-xs-[0px_4px_20px_0px_rgba(0,0,0,0.05)] inline-flex justify-between items-center">
         <div class="size- flex justify-start items-center gap-2">
           <div class="size-3 bg-bleu-nuit"></div>
           <div class="size- inline-flex flex-col justify-start items-start">
-            <div class="justify-center text-slate-900 text-base font-semibold font-['Poppins'] leading-6">Cartographie OpÃ©rationnelle // SÃ©nÃ©gal</div>
+            <div class="justify-center text-slate-900 text-base font-semibold font-['Poppins'] leading-6">Cartographie Opérationnelle // Sénégal</div>
           </div>
         </div>
         <div class="size- inline-flex flex-col justify-start items-start">
@@ -19,12 +19,12 @@
             <div class="size- left-0 top-[30px] absolute inline-flex justify-start items-center gap-1">
               <div class="size-3 bg-neutral-300"></div>
               <div class="size- inline-flex flex-col justify-start items-start">
-                <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4 tracking-wide">Zone sans bÃ©nÃ©ficiaire</div>
+                <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4 tracking-wide">Zone sans bénéficiaire</div>
               </div>
             </div>
           </div>
           <div class="size- flex flex-col justify-start items-start">
-            <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4">DerniÃ¨re synchro GPS : 10:42:19 UTC</div>
+            <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4">Dernière synchro GPS : 10:42:19 UTC</div>
           </div>
         </div>
       </div>
@@ -33,7 +33,7 @@
         <div class="size- px-3 py-1 left-[12px] top-[12px] absolute bg-white/90 flex justify-start items-center gap-1">
           <div class="size-2 bg-bleu-nuit"></div>
           <div class="size- inline-flex flex-col justify-start items-start">
-            <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4 tracking-wide">FLUX EN DIRECT // SÃ‰NÃ‰GAL OPÃ‰RATIONS</div>
+            <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4 tracking-wide">FLUX EN DIRECT // SENEGAL OPERATIONS</div>
           </div>
         </div>
       </div>
@@ -67,4 +67,5 @@ const clearRegion = () => {
   emit("update:zoneSelectionnee", "")
 }
 </script>
+
 

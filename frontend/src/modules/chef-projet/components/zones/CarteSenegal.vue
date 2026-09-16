@@ -14,24 +14,25 @@
         attribution="&copy; OpenStreetMap contributors"
       />
 
-      <!-- Cercles rouges foncÃ©s des zones enregistrÃ©es -->
+      <!-- Cercles rouges foncés des zones enregistrées -->
       <LCircle
         v-for="zone in zones"
         :key="zone.id"
-        :lat-lng="[zone.latitude, zone.longitude]"
+        :lat-lng="[Number(zone.latitude), Number(zone.longitude)]"
         :radius="zone.rayon"
+        :interactive="mode === 'readonly'"
         color="#7F1D1D"
         fill-color="#DC2626"
         :fill-opacity="0.55"
         :weight="4"
       >
-        <LTooltip permanent class="zone-tooltip">
+        <LTooltip v-if="mode === 'readonly'" permanent class="zone-tooltip">
           <div class="text-center">
             <strong>{{ zone.nom }}</strong><br />
-            <span class="text-xs">{{ zone.region }} â€¢ {{ zone.rayon }} m</span>
+            <span class="text-xs">{{ zone.region }} • {{ zone.rayon }} m</span>
           </div>
         </LTooltip>
-        <LPopup>
+        <LPopup v-if="mode === 'readonly'">
           <div class="min-w-[180px]">
             <div class="flex items-center gap-2 mb-2">
               <div class="w-3 h-3 rounded-full bg-red-600"></div>
@@ -39,11 +40,11 @@
             </div>
             <div class="space-y-1 text-sm">
               <div class="flex justify-between">
-                <span class="text-gray-500">RÃ©gion</span>
+                <span class="text-gray-500">Région</span>
                 <span class="font-semibold text-gray-900">{{ zone.region }}</span>
               </div>
               <div class="flex justify-between">
-                <span class="text-gray-500">DÃ©partement</span>
+                <span class="text-gray-500">Département</span>
                 <span class="font-semibold text-gray-900">{{ zone.departement }}</span>
               </div>
               <div class="flex justify-between">
@@ -61,7 +62,7 @@
               </div>
               <div class="pt-1 border-t border-gray-100">
                 <span class="text-xs text-gray-400">
-                  {{ zone.latitude.toFixed(4) }}, {{ zone.longitude.toFixed(4) }}
+                  {{ formatCoordinate(zone.latitude) }}, {{ formatCoordinate(zone.longitude) }}
                 </span>
               </div>
             </div>
@@ -78,7 +79,7 @@
         <LPopup>
           <div class="text-center">
             <strong>Nouvelle zone</strong><br />
-            <span class="text-xs">{{ form.region || "RÃ©gion" }}</span>
+            <span class="text-xs">{{ form.region || "Région" }}</span>
           </div>
         </LPopup>
       </LMarker>
@@ -113,12 +114,27 @@ const props = defineProps({
 
 const emit = defineEmits(["region-selected", "map-click", "submit"])
 
+const formatCoordinate = (value) => {
+  const coordinate = Number(value)
+  return Number.isFinite(coordinate) ? coordinate.toFixed(4) : "-"
+}
+
+const setPointFromLatLng = (latlng) => {
+  const latitude = Number(latlng.lat.toFixed(7))
+  const longitude = Number(latlng.lng.toFixed(7))
+
+  props.form.latitude = latitude
+  props.form.longitude = longitude
+  tempMarker.value = [latitude, longitude]
+
+  emit("map-click", { latitude, longitude })
+}
+
 const mapRef = ref(null)
 const tempMarker = ref(null)
 let geoJsonLayer = null
 let mapInstance = null
 let selectedLayer = null
-let skipNextMapClick = false
 
 const redIcon = new L.Icon({
   iconUrl: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#DC2626"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white"/></svg>`)}`,
@@ -135,9 +151,9 @@ const onFeatureClick = (event) => {
   const region = props_data.shapeName || props_data.name || ""
   const departement = region
 
-  if (props.mode === "creation") {
-    if (layer === selectedLayer) return
-    skipNextMapClick = true
+  if (props.mode === "creation" && layer === selectedLayer) {
+    setPointFromLatLng(event.latlng)
+    return
   }
 
   emit("region-selected", { region, departement })
@@ -161,21 +177,7 @@ const onFeatureClick = (event) => {
 const onMapClick = (event) => {
   if (props.mode !== "creation") return
 
-  if (skipNextMapClick) {
-    skipNextMapClick = false
-    return
-  }
-
-  const { lat, lng } = event.latlng
-
-  if (!selectedLayer) {
-    alert("Veuillez d'abord sÃ©lectionner une rÃ©gion sur la carte.")
-    return
-  }
-
-  tempMarker.value = [lat, lng]
-
-  emit("map-click", { latitude: lat, longitude: lng })
+  setPointFromLatLng(event.latlng)
 }
 
 const onMapReady = (map) => {
@@ -226,9 +228,8 @@ const addGeoJsonLayer = () => {
 watch(
   () => props.form.submitDone,
   (done) => {
-    if (done && props.mode === "creation") {
+     if (done && props.mode === "creation") {
       tempMarker.value = null
-      skipNextMapClick = false
       if (selectedLayer && geoJsonLayer) {
         geoJsonLayer.resetStyle(selectedLayer)
         selectedLayer = null
@@ -268,7 +269,7 @@ onUnmounted(() => {
   padding: 0.6rem 0.9rem;
   font-weight: 800;
   font-size: 0.95rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.15);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   letter-spacing: 0.02em;
 }
 
@@ -284,7 +285,7 @@ onUnmounted(() => {
   padding: 0.5rem 0.8rem;
   font-weight: 800;
   font-size: 0.9rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
@@ -301,7 +302,6 @@ onUnmounted(() => {
 :deep(.leaflet-popup-content-wrapper) {
   border-radius: 0.75rem;
   padding: 0;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 </style>
-

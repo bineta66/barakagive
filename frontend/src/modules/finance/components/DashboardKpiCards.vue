@@ -1,6 +1,6 @@
-<template>
+﻿<template>
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <!-- BUDGET TOTAL ALLOUÉ -->
+    <!-- BUDGET TOTAL ALLOUE -->
     <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
       <div>
         <p class="text-xs font-bold uppercase text-slate-900">Budget total alloué</p>
@@ -9,7 +9,7 @@
       <PiggyBank class="text-slate-400" :size="28" />
     </div>
 
-    <!-- DÉPENSES RÉALISÉES -->
+    <!-- DEPENSES REALISEES -->
     <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
       <div>
         <p class="text-xs font-bold uppercase text-slate-900">Dépenses réalisées</p>
@@ -27,7 +27,7 @@
       <Banknote class="text-slate-400" :size="28" />
     </div>
 
-    <!-- CAMPAGNES FINANCÉES -->
+    <!-- CAMPAGNES FINANCEES -->
     <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between">
       <div>
         <p class="text-xs font-bold uppercase text-slate-900">Campagnes financées</p>

@@ -4,17 +4,17 @@
     <div class="self-stretch pb-3 inline-flex justify-between items-center">
       <div class="self-stretch flex flex-col justify-start items-start gap-0.5">
         <div class="text-slate-900 text-base font-bold font-['Inter'] leading-6">
-          Trajectoire budgÃ©taire et dÃ©penses (2026)
+          Trajectoire budgétaire et dépenses (2026)
         </div>
         <div class="text-zinc-500 text-xs font-normal font-['Inter'] leading-4">
-          Suivi cumulÃ© mensuel des dÃ©penses et du budget allouÃ©s (en millions FCFA)
+          Suivi cumulé mensuel des dépenses et du budget alloués (en millions FCFA)
         </div>
       </div>
       <div class="flex justify-start items-center gap-2">
         <div class="px-4 py-2 bg-bleu-nuit flex justify-start items-center gap-1 rounded-lg">
           <div class="w-3 h-3 bg-white"></div>
           <div class="text-center text-white text-sm font-semibold font-['Inter'] leading-5">
-            Exporter arrÃªtÃ©
+            Exporter arrêté
           </div>
         </div>
       </div>
@@ -28,10 +28,10 @@
           <div class="self-stretch inline-flex justify-between items-center">
             <div class="self-stretch flex flex-col justify-start items-start gap-0.5">
               <div class="text-slate-700 text-sm font-bold font-['Inter'] uppercase leading-5 tracking-wide">
-                TRAJECTOIRE BUDGÃ‰TAIRE ET DÃ‰PENSES
+                TRAJECTOIRE BUDGETAIRE ET DEPENSES
               </div>
               <div class="text-gray-500 text-xs font-normal font-['Inter'] leading-4">
-                Progression mensuelle cumulÃ©e sur les 6 derniers mois (2025)
+                Progression mensuelle cumulée sur les 6 derniers mois (2025)
               </div>
             </div>
             <div class="flex justify-start items-center">
@@ -41,7 +41,7 @@
               </div>
               <div class="ml-4 flex items-center gap-2">
                 <div class="w-3 h-3 bg-or"></div>
-                <span class="text-slate-600 text-xs font-['Inter']">DÃ©penses</span>
+                <span class="text-slate-600 text-xs font-['Inter']">Dépenses</span>
               </div>
             </div>
           </div>
@@ -72,7 +72,7 @@
                   <div
                     class="w-4 bg-or opacity-90 rounded-t transition-all"
                     :style="{ height: `${item.depenses}%` }"
-                    :title="`${item.mois} - DÃ©penses: ${item.depensesMillions} M FCFA`"
+                    :title="`${item.mois} - Dépenses: ${item.depensesMillions} M FCFA`"
                   ></div>
                 </div>
               </div>
@@ -106,7 +106,7 @@
       </div>
       <div class="flex items-center gap-0.5">
         <div class="text-bleu-nuit text-xs font-semibold font-['Inter'] leading-4 tracking-tight">
-          DÃ©tail analytique par projet
+          Détail analytique par projet
         </div>
         <div class="w-2 h-1.5 bg-bleu-nuit"></div>
       </div>
@@ -115,15 +115,61 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { computed } from "vue"
+import { useFinanceStore } from "@/modules/finance/stores/financeStore.js"
 
-const dataMensuelle = ref([
-  { mois: "Janvier", budget: 40, depenses: 33, budgetMillions: 30, depensesMillions: 25 },
-  { mois: "FÃ©vrier", budget: 67, depenses: 51, budgetMillions: 50, depensesMillions: 38 },
-  { mois: "Mars", budget: 73, depenses: 56, budgetMillions: 55, depensesMillions: 42 },
-  { mois: "Avril", budget: 80, depenses: 69, budgetMillions: 60, depensesMillions: 52 },
-  { mois: "Mai", budget: 100, depenses: 77, budgetMillions: 75, depensesMillions: 58 },
-  { mois: "Juin", budget: 100, depenses: 12, budgetMillions: 75, depensesMillions: 9.25 },
-])
+const store = useFinanceStore()
+
+const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin"]
+
+const asNumber = (value) => Number(value || 0)
+
+const dataMensuelle = computed(() => {
+  const budgets = store.budgets || []
+  const depenses = store.depenses || []
+
+  const budgetTotal = budgets.reduce((sum, b) => sum + asNumber(b.budgetTotal), 0)
+  const depensesTotal = depenses.reduce((sum, d) => sum + asNumber(d.montant), 0)
+  const maxVal = Math.max(budgetTotal, depensesTotal, 1)
+
+  // Aggregate budgets and expenses by month (based on date fields)
+  const byMonth = {}
+  MONTHS.forEach((m) => {
+    byMonth[m] = { budget: 0, depenses: 0 }
+  })
+
+  const monthIndex = (value) => {
+    if (!value) return -1
+    const d = new Date(value)
+    if (isNaN(d.getTime())) return -1
+    return d.getMonth() // 0-based
+  }
+
+  budgets.forEach((b) => {
+    const idx = monthIndex(b.date || b.created_at)
+    if (idx >= 0 && idx < MONTHS.length) {
+      byMonth[MONTHS[idx]].budget += asNumber(b.budgetTotal)
+    }
+  })
+
+  depenses.forEach((d) => {
+    const idx = monthIndex(d.date || d.date_depense || d.created_at)
+    if (idx >= 0 && idx < MONTHS.length) {
+      byMonth[MONTHS[idx]].depenses += asNumber(d.montant)
+    }
+  })
+
+  return MONTHS.map((m, i) => {
+    const budget = byMonth[m].budget
+    const depenses = byMonth[m].depenses
+    return {
+      mois: m,
+      budget: maxVal ? Math.round((budget / maxVal) * 100) : 0,
+      depenses: maxVal ? Math.round((depenses / maxVal) * 100) : 0,
+      budgetMillions: (budget / 1_000_000).toFixed(1),
+      depensesMillions: (depenses / 1_000_000).toFixed(1),
+      isCurrent: i === MONTHS.length - 1,
+    }
+  })
+})
 </script>
-

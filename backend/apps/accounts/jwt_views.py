@@ -45,7 +45,9 @@ class JWTLoginSerializer(TokenObtainPairSerializer):
             "organization": (
                 user.organization.id if user.organization else None
             ),
+            "must_change_password": user.must_change_password,
         }
+        data["must_change_password"] = user.must_change_password
 
         return data
 

@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
@@ -18,7 +18,7 @@
           </button>
         </div>
         <p class="text-sm text-gray-500 mt-1">
-          {{ don ? 'Modifiez les informations du financement' : 'Enregistrez un nouveau financement reÃ§u' }}
+          {{ don ? 'Modifiez les informations du financement' : 'Enregistrez un nouveau financement reçu' }}
         </p>
       </div>
 
@@ -30,7 +30,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner un projet</option>
+            <option value="">Sélectionner un projet</option>
             <option v-for="p in projets" :key="p.id" :value="p.id">{{ p.nom }}</option>
           </select>
         </div>
@@ -42,7 +42,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner un bailleur</option>
+            <option value="">Sélectionner un bailleur</option>
             <option v-for="b in bailleurs" :key="b" :value="b">{{ b }}</option>
             <option value="__new__">Autre...</option>
           </select>
@@ -65,7 +65,7 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option v-for="t in typesFinancement" :key="t" :value="t">{{ t }}</option>
           </select>
         </div>
@@ -92,7 +92,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">RÃ©fÃ©rence</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Référence</label>
           <input
             v-model="form.reference"
             type="text"
@@ -117,7 +117,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ don ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ don ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -189,6 +189,7 @@ const submit = () => {
   emit('save', donData)
 }
 </script>
+
 
 
 

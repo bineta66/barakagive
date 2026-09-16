@@ -3,9 +3,9 @@
     <div class="w-full max-w-4xl">
       <div class="p-6">
         <div class="mb-6">
-          <h1 class="text-3xl font-bold text-or">DÃ©tail de la zone</h1>
+          <h1 class="text-3xl font-bold text-or">Détail de la zone</h1>
           <p class="text-sm text-gray-600 mt-1">
-            SynthÃ¨se et bÃ©nÃ©ficiaires de la zone sÃ©lectionnÃ©e.
+            Synthèse et bénéficiaires de la zone sélectionnée.
           </p>
         </div>
 
@@ -31,4 +31,5 @@ const {
   beneficiairesUrgents,
 } = useBeneficiaires()
 </script>
+
 

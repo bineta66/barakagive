@@ -1,14 +1,14 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Partenaires</h1>
         <p class="text-xs text-gray-500 mt-1">
-          GÃ©rez les organisations partenaires des missions humanitaires.
+          Gérez les organisations partenaires des missions humanitaires.
         </p>
       </div>
-      <BoutonPrimary @click="modalPartenaire = true">
+      <BoutonPrimary @click="partenaireSelectionne = null; modalPartenaire = true">
         <Plus class="w-5 h-5" />
         Nouveau partenaire
       </BoutonPrimary>
@@ -16,7 +16,7 @@
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total partenaires</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ partenaires.length }}</h3>
@@ -24,7 +24,7 @@
         <Handshake class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Partenaires actifs</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ partenairesActifs }}</h3>
@@ -32,7 +32,7 @@
         <CheckCircle class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Zones couvertes</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ zonesCouvrir }}</h3>
@@ -40,7 +40,7 @@
         <MapPinned class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Domaines d'intervention</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ domainesCount }}</h3>
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 grid md:grid-cols-4 gap-3">
+    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
         <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
         <input
@@ -73,7 +73,7 @@
       </select>
 
       <BoutonTertiary @click="resetFilters">
-        RÃ©initialiser
+        Réinitialiser
       </BoutonTertiary>
     </div>
 
@@ -113,6 +113,13 @@
                   title="Modifier"
                 >
                   <Pencil class="w-4 h-4" />
+                </button>
+                <button
+                  @click="supprimerPartenaire(partenaire)"
+                  class="p-1 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                  title="Supprimer"
+                >
+                  <Trash2 class="w-4 h-4" />
                 </button>
               </div>
             </td>
@@ -174,7 +181,7 @@
 import { ref, computed, watch } from 'vue'
 import {
   Handshake, CheckCircle, MapPinned, FolderKanban,
-  Search, ChevronLeft, ChevronRight, Plus, Pencil
+  Search, ChevronLeft, ChevronRight, Plus, Pencil, Trash2
 } from 'lucide-vue-next'
 import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
@@ -258,10 +265,20 @@ const openPartenaire = (partenaire) => {
   modalPartenaire.value = true
 }
 
-const savePartenaire = (partenaireData) => {
-  console.log('Partenaire saved:', partenaireData)
-  modalPartenaire.value = false
-  partenaireSelectionne.value = null
+const savePartenaire = async (partenaireData) => {
+  try {
+    await store.savePartenaireApi(partenaireData, partenaireSelectionne.value?.id)
+    modalPartenaire.value = false
+    partenaireSelectionne.value = null
+  } catch (error) {
+    store.error = error.response?.data?.detail || "Impossible d'enregistrer le partenaire."
+  }
+}
+
+const supprimerPartenaire = (partenaire) => {
+  if (confirm(`Voulez-vous vraiment supprimer le partenaire "${partenaire.nom}" ?`)) {
+    store.deletePartenaireApi(partenaire.id)
+  }
 }
 
 const badgeClass = (statut) => {
@@ -279,6 +296,7 @@ watch([search, filtreStatut, filtreDomaine], () => {
   currentPage.value = 1
 })
 </script>
+
 
 
 

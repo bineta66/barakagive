@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="flex items-center justify-between px-4 py-3 border-t text-xs">
     <p class="text-slate-500">
-      Affichage de 1 Ã  {{ beneficiairesPage.length }} sur {{ total }} bÃ©nÃ©ficiaires
+      Affichage de 1 à {{ beneficiairesPage.length }} sur {{ total }} bénéficiaires
     </p>
 
     <div class="flex gap-1">
@@ -10,7 +10,7 @@
         :disabled="page === 1"
         @click="$emit('update:page', page - 1)"
       >
-        PrÃ©cÃ©dent
+        Précédent
       </button>
 
       <button
@@ -56,4 +56,5 @@ defineProps({
 
 defineEmits(["update:page"])
 </script>
+
 

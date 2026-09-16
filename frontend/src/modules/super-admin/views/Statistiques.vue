@@ -5,7 +5,7 @@
       <div>
         <h1 class="text-2xl font-bold text-slate-900">Statistiques</h1>
         <p class="text-sm text-slate-500 mt-1">
-          Analyse dÃ©taillÃ©e des performances de la plateforme
+          Analyse détaillée des performances de la plateforme
         </p>
       </div>
     </div>
@@ -31,7 +31,7 @@
         couleur="purple"
       />
       <KpiCard
-        titre="Demandes traitÃ©es"
+        titre="Demandes traitées"
         :valeur="demandeStats.traitees"
         :icone="CheckCircle"
         couleur="amber"
@@ -43,7 +43,7 @@
       <!-- Revenue Chart -->
       <div class="bg-white border border-slate-200/60 rounded-xl p-5">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">
-          Ã‰volution des revenus
+          Évolution des revenus
         </h2>
         <SuperAdminRevenueChart />
       </div>
@@ -69,7 +69,6 @@
 
 <script setup>
 import { useSuperAdminStore } from "@/modules/super-admin/stores/superAdminStore.js"
-import { superAdminService } from "@/modules/super-admin/services/superAdminService.js"
 import {
   PiggyBank,
   CreditCard,
@@ -84,9 +83,10 @@ import SuperAdminPlanChart from "@/modules/super-admin/components/charts/SuperAd
 const store = useSuperAdminStore()
 const { statistiques, formatMontant } = store
 
-const abonnementStats = superAdminService.getAbonnementStatistiques()
-const demandeStats = superAdminService.getDemandeStatistiques()
+const abonnementStats = { revenuTotal: 0, actifs: 0 }
+const demandeStats = { traitees: 0 }
 </script>
+
 
 
 

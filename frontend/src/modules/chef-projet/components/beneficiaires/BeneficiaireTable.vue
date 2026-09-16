@@ -1,12 +1,12 @@
 ﻿<template>
-  <div class="bg-white border border-slate-200/60 rounded-xl shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
+  <div class="bg-white border border-slate-200/60 rounded-xl shadow-xs-[0px_1px_2px_0px_rgba(0,0,0,0.05)] overflow-hidden">
     <div class="overflow-x-auto">
       <table class="w-full">
         <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
           <tr>
             <th class="text-left px-4 py-4">Identifiant</th>
             <th class="text-left px-4">Nom</th>
-            <th class="text-left px-4">RÃ©gion</th>
+            <th class="text-left px-4">Région</th>
             <th class="text-left px-4">Zone</th>
             <th class="text-left px-4">Campagne</th>
             <th class="text-left px-4">Score IA</th>
@@ -54,4 +54,5 @@ defineProps({
   },
 })
 </script>
+
 

@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.utils import timezone
 
 
@@ -16,6 +17,8 @@ def generate_campaign_code(project):
     Returns:
         str: Code de campagne unique
     """
+    from apps.campaigns.models import Campaign
+
     year = timezone.now().year
     region_prefix = project.region[:3].upper() if project.region else "XXX"
 
@@ -101,6 +104,7 @@ def validate_dates(date_debut, date_fin):
         raise ValueError("La date de fin doit être postérieure à la date de début.")
 
 
+@transaction.atomic
 def create_campaign(validated_data, user):
     """
     Crée une campagne avec toutes les validations métier.
@@ -116,7 +120,8 @@ def create_campaign(validated_data, user):
         ValueError: Si une validation échoue
     """
     from apps.projects.models import Project
-    from apps.campaigns.models import Campaign
+    from apps.campaigns.models import Campaign, CampagneAffectation
+    from apps.accounts.models import User
 
     projet_id = validated_data.get("projet_id")
     nom = validated_data.get("nom")
@@ -124,6 +129,7 @@ def create_campaign(validated_data, user):
     zone_ids = validated_data.get("zone_ids", [])
     date_debut = validated_data.get("date_debut")
     date_fin = validated_data.get("date_fin")
+    agent_assignments = validated_data.get("agents", [])
 
     if not projet_id:
         raise ValueError("L'ID du projet est obligatoire.")
@@ -133,15 +139,20 @@ def create_campaign(validated_data, user):
     except Project.DoesNotExist:
         raise ValueError("Le projet spécifié n'existe pas.")
 
-    validate_project_for_chef_projet(project, user)
-    validate_zones_for_organization(zone_ids, user.organization)
+    if user.role == User.Role.SUPER_ADMIN:
+        organization = project.organization
+    else:
+        validate_project_for_chef_projet(project, user)
+        organization = user.organization
+
+    validate_zones_for_organization(zone_ids, organization)
     validate_dates(date_debut, date_fin)
 
     code_campagne = generate_campaign_code(project)
 
     campaign = Campaign.objects.create(
         projet=project,
-        organization=user.organization,
+        organization=organization,
         nom=nom,
         code_campagne=code_campagne,
         description=description,
@@ -151,7 +162,34 @@ def create_campaign(validated_data, user):
     )
 
     if zone_ids:
-        zones = validate_zones_for_organization(zone_ids, user.organization)
+        zones = validate_zones_for_organization(zone_ids, organization)
         campaign.zones.set(zones)
+
+    agent_ids = [item["agent_id"] for item in agent_assignments]
+    if len(agent_ids) != len(set(agent_ids)):
+        raise ValueError("Un agent ne peut être affecté qu'une seule fois à la campagne.")
+
+    agents = {
+        str(agent.id): agent
+        for agent in User.objects.filter(
+            id__in=agent_ids,
+            organization=organization,
+            role=User.Role.AGENT,
+        )
+    }
+    if len(agents) != len(agent_ids):
+        raise ValueError("Tous les agents affectés doivent appartenir à votre ONG.")
+
+    for assignment in agent_assignments:
+        zone_name = assignment["zone"]
+        if not campaign.zones.filter(nom=zone_name).exists():
+            raise ValueError(f"La zone '{zone_name}' ne fait pas partie de la campagne.")
+        CampagneAffectation.objects.create(
+            campagne=campaign,
+            agent=agents[str(assignment["agent_id"])],
+            zone=zone_name,
+            objectif_beneficiaires=assignment["objectif"],
+            created_by=user,
+        )
 
     return campaign

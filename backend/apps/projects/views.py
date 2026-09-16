@@ -22,9 +22,15 @@ class ProjectListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsGerantOrFinanceOrAgent, CanManageProject]
 
     def get_queryset(self):
-        return Project.objects.select_related(
+        queryset = Project.objects.select_related(
             "chef_projet", "responsable_finance", "organization", "created_by"
         ).prefetch_related("criteria").all()
+        user = self.request.user
+        if user.role == "CHEF_PROJET":
+            return queryset.filter(organization=user.organization, chef_projet=user)
+        if user.role == "FINANCE":
+            return queryset.filter(organization=user.organization, responsable_finance=user)
+        return queryset.filter(organization=user.organization)
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -42,6 +48,14 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.select_related(
         "chef_projet", "responsable_finance", "organization", "created_by"
     ).prefetch_related("criteria").all()
+
+    def get_queryset(self):
+        queryset = self.queryset.filter(organization=self.request.user.organization)
+        if self.request.user.role == "CHEF_PROJET":
+            queryset = queryset.filter(chef_projet=self.request.user)
+        elif self.request.user.role == "FINANCE":
+            queryset = queryset.filter(responsable_finance=self.request.user)
+        return queryset
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

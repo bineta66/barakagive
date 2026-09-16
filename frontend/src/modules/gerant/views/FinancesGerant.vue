@@ -1,6 +1,6 @@
 ﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tÃªte -->
+    <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Finances</h1>
@@ -12,23 +12,23 @@
 
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Budget total allouÃ©</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Budget total alloué</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
         </div>
         <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">DÃ©penses rÃ©alisÃ©es</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Dépenses réalisées</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.budgetEngage) }} FCFA</h3>
         </div>
         <Receipt class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Solde disponible</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.soldeDisponible) }} FCFA</h3>
@@ -36,21 +36,21 @@
         <Banknote class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div class="bg-white border border-slate-200/60 shadow rounded-xl p-4 flex justify-between">
+      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exÃ©cution</p>
+          <p class="text-xs font-bold uppercase text-slate-900">Taux d'exécution</p>
           <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.tauxExecution }}%</h3>
         </div>
         <Activity class="text-bleu-nuit" :size="28" />
       </div>
     </div>
 
-    <!-- Trajectoire budgÃ©taire - read-only chart -->
+    <!-- Trajectoire budgétaire - read-only chart -->
     <div class="bg-white border border-slate-200/60 rounded-xl p-6">
       <div class="flex justify-between items-center mb-6">
         <div>
-          <h3 class="text-sm font-bold uppercase text-slate-900">Trajectoire budgÃ©taire et dÃ©penses (2025)</h3>
-          <p class="text-xs text-gray-500 mt-1">Progression mensuelle cumulÃ©e (en FCFA)</p>
+          <h3 class="text-sm font-bold uppercase text-slate-900">Trajectoire budgétaire et dépenses (2025)</h3>
+          <p class="text-xs text-gray-500 mt-1">Progression mensuelle cumulée (en FCFA)</p>
         </div>
       </div>
 
@@ -76,7 +76,7 @@
             stroke-linejoin="round"
           />
 
-          <!-- DÃ©penses curve -->
+          <!-- Dépenses curve -->
           <polyline
             :points="depensesPoints"
             fill="none"
@@ -98,7 +98,7 @@
             />
           </g>
 
-          <!-- DÃ©penses data points -->
+          <!-- Dépenses data points -->
           <g v-for="(item, i) in dataMensuelle" :key="`depenses-${i}`">
             <circle
               :cx="pointX(i)"
@@ -132,23 +132,23 @@
         </div>
         <div class="flex items-center gap-2">
           <div class="w-3 h-3 bg-or rounded-full"></div>
-          <span class="text-slate-600 text-xs">DÃ©penses</span>
+          <span class="text-slate-600 text-xs">Dépenses</span>
         </div>
       </div>
     </div>
 
-    <!-- RÃ©partition des projets par rÃ©gion -->
+    <!-- Répartition des projets par région -->
     <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
       <div class="px-6 py-4 ">
-        <h3 class="text-sm font-bold uppercase text-slate-900">RÃ©partition des projets par rÃ©gion</h3>
-        <p class="text-xs text-gray-500 mt-1">{{ store.projets.length }} projet(s) gÃ©rÃ©(s)</p>
+        <h3 class="text-sm font-bold uppercase text-slate-900">Répartition des projets par région</h3>
+        <p class="text-xs text-gray-500 mt-1">{{ store.projets.length }} projet(s) géré(s)</p>
       </div>
 
       <table class="w-full">
         <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
           <tr>
             <th class="text-left px-4 py-3">Projet</th>
-            <th class="text-left px-4 py-3">RÃ©gion</th>
+            <th class="text-left px-4 py-3">Région</th>
             <th class="text-right px-4 py-3">Budget</th>
             <th class="text-left px-4 py-3">Chef de projet</th>
             <th class="text-left px-4 py-3">Statut</th>
@@ -196,7 +196,7 @@ const marginBottom = 32
 const yAxisStep = (chartHeight - marginTop - marginBottom) / 5
 const dataMensuelle = ref([
   { mois: "Janv", budget: 20, depenses: 15 },
-  { mois: "FÃ©vr", budget: 40, depenses: 33 },
+  { mois: "Févr", budget: 40, depenses: 33 },
   { mois: "Mars", budget: 60, depenses: 45 },
   { mois: "Avril", budget: 75, depenses: 55 },
   { mois: "Mai", budget: 90, depenses: 70 },
@@ -230,15 +230,16 @@ const badgeClass = (statut) => {
   switch (statut) {
     case "En cours":
       return "bg-or/10 text-or"
-    case "PlanifiÃ©":
+    case "Planifié":
       return "bg-or/10 text-bleu-nuit"
-    case "TerminÃ©":
+    case "Terminé":
       return "bg-bleu-nuit/10 text-bleu-nuit"
     default:
       return "bg-gray-100 text-gray-600"
   }
 }
 </script>
+
 
 
 

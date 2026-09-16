@@ -19,7 +19,7 @@
 
         <div class="self-stretch mt-2">
           <div v-if="question.type === 'texte'" class="self-stretch p-3 border border-gray-300 rounded bg-white hover:border-gray-400 transition">
-            <span class="text-sm text-gray-400">RÃ©ponse texte</span>
+            <span class="text-sm text-gray-400">Réponse texte</span>
           </div>
 
           <div v-else-if="question.type === 'nombre'" class="self-stretch p-3 border border-gray-300 rounded bg-white hover:border-gray-400 transition">
@@ -72,9 +72,9 @@
               <svg class="w-4 h-4 text-bleu-nuit" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
               </svg>
-              <span class="text-sm font-medium text-bleu-nuit">14.1386Â° N, 16.0743Â° W</span>
+              <span class="text-sm font-medium text-bleu-nuit">14.1386° N, 16.0743° W</span>
             </div>
-            <p class="text-xs text-gray-500 mt-1">CoordonnÃ©es GPS gÃ©nÃ©rÃ©es automatiquement</p>
+            <p class="text-xs text-gray-500 mt-1">Coordonnées GPS générées automatiquement</p>
           </div>
         </div>
 
@@ -161,10 +161,10 @@ const optionTemp = ref("")
 const typeLabels = {
   texte: "Texte",
   nombre: "Nombre",
-  liste: "Liste dÃ©roulante",
+  liste: "Liste déroulante",
   "oui-non": "Oui/Non",
   date: "Date",
-  telephone: "TÃ©lÃ©phone",
+  telephone: "Téléphone",
   photo: "Photo",
   gps: "GPS",
 }
@@ -199,4 +199,5 @@ const supprimer = () => {
   emit("supprimer", props.question.id)
 }
 </script>
+
 

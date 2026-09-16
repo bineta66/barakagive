@@ -1,259 +1,244 @@
 ﻿<template>
-  <div class="min-h-screen bg-white flex justify-center items-start py-12 px-4 sm:px-6 lg:px-8">
-    <div class="w-full max-w-4xl bg-white rounded-2xl border border-slate-200/60 inline-flex flex-col justify-start items-start p-8">
-    <div class="self-stretch mb-6">
-      <h2 class="text-3xl font-bold text-or">CrÃ©er une nouvelle campagne</h2>
-      <p class="text-gray-600 text-sm mt-1">Configurez les paramÃ¨tres de base et les zones de dÃ©ploiement.</p>
-    </div>
+  <div class="min-h-screen bg-white flex justify-center items-start py-8 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-4xl bg-white rounded-2xl border border-slate-200/60 p-8 shadow-xs-sm">
+      <div class="mb-6">
+        <h2 class="text-3xl font-bold text-or">Créer une nouvelle campagne</h2>
+        <p class="text-gray-600 text-sm mt-1">Configurez les paramètres de base et les zones de déploiement.</p>
+      </div>
 
-    <div class="self-stretch flex flex-col justify-start items-start gap-6">
-      <!-- Section 1 -->
-      <div class="self-stretch pb-8">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-xl font-bold text-or">1. Identification</h3>
+      <LoadingSpinner v-if="loadingInit" message="Chargement des projets et des zones..." />
+      <AlertMessage v-if="feedback.message" :type="feedback.type" :message="feedback.message" class="mb-6" />
+
+      <form v-if="!loadingInit" @submit.prevent="creerCampagne" class="space-y-8">
+        <!-- Section 1 : Identification -->
+        <div>
+          <h3 class="text-xl font-bold text-or mb-4 pb-2 border-b">1. Identification</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Nom de la campagne *</label>
+              <input
+                v-model="form.nom"
+                type="text"
+                required
+                placeholder="Ex : Distribution Alimentaire d'Urgence Hivernage 2026"
+                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Projet humanitaire rattaché *</label>
+              <select
+                v-model="form.projet_id"
+                required
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+              >
+                <option value="">Sélectionner un projet parent...</option>
+                <option v-for="p in projectStore.projects" :key="p.id" :value="p.id">
+                  {{ p.name || p.nom }} ({{ p.code }})
+                </option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+              <textarea
+                v-model="form.description"
+                rows="3"
+                placeholder="Décrivez succinctement l'objectif de la campagne..."
+                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+              ></textarea>
+            </div>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Nom de la campagne *</label>
-            <input
-              v-model="form.nom"
-              type="text"
-              placeholder="Ex : Distribution Alimentaire d'Urgence Hivernage 2026"
-              class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-3 focus:ring-2 focus:ring-or/30 outline-none"
-            />
+        <!-- Section 2 : Zones d'intervention -->
+        <div>
+          <h3 class="text-xl font-bold text-or mb-4 pb-2 border-b">2. Zones d'intervention</h3>
+
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Sélectionnez les zones d'intervention * (au moins une zone)
+            </label>
+
+            <div v-if="zoneStore.zones.length === 0" class="p-4 bg-slate-50 border rounded-lg text-sm text-slate-500">
+              Aucune zone géographique configurée. Rendez-vous dans le menu "Zones" pour en créer une.
+            </div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto border rounded-lg p-3 bg-slate-50">
+              <label
+                v-for="z in zoneStore.zones"
+                :key="z.id"
+                class="flex items-center gap-2 p-2 rounded hover:bg-white cursor-pointer transition border border-transparent hover:border-slate-200"
+              >
+                <input
+                  type="checkbox"
+                  :value="z.id"
+                  v-model="form.zone_ids"
+                  class="rounded text-bleu-nuit focus:ring-or/30 w-4 h-4"
+                />
+                <span class="text-sm font-medium text-slate-800">{{ z.nom }}</span>
+                <span class="text-xs text-slate-500">({{ z.region }})</span>
+              </label>
+            </div>
+            <p class="text-xs text-slate-500 mt-1.5">
+              {{ form.zone_ids.length }} zone(s) sélectionnée(s).
+            </p>
+          </div>
+        </div>
+
+        <!-- Section 3 : Calendrier -->
+        <div>
+          <h3 class="text-xl font-bold text-or mb-4 pb-2 border-b">3. Calendrier</h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Date de début *</label>
+              <input
+                v-model="form.date_debut"
+                type="date"
+                required
+                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 text-sm"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Date de fin *</label>
+              <input
+                v-model="form.date_fin"
+                type="date"
+                required
+                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4 : Affectation des agents terrain -->
+        <div>
+          <h3 class="text-xl font-bold text-or mb-4 pb-2 border-b">4. Affectation des agents terrain</h3>
+          <p class="text-sm text-gray-600 mb-3">
+            Sélectionnez les agents terrain qui recevront cette campagne. Chaque agent verra uniquement les campagnes qui lui sont assignées.
+          </p>
+
+          <div v-if="campaignStore.agents.length === 0" class="p-4 bg-slate-50 border rounded-lg text-sm text-slate-500">
+            Aucun agent terrain actif disponible pour votre ONG. Les agents doivent d'abord être créés par le Gérant.
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Projet humanitaire rattachÃ© *</label>
-            <select
-              v-model="form.projet"
-              class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 focus:ring-2 focus:ring-or/30 outline-none"
+          <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto border rounded-lg p-3 bg-slate-50">
+            <label
+              v-for="agent in campaignStore.agents"
+              :key="agent.id"
+              class="flex items-center gap-2 p-2 rounded hover:bg-white cursor-pointer transition border border-transparent hover:border-slate-200"
             >
-              <option value="">SÃ©lectionner un projet parent...</option>
-              <option value="1">Projet A</option>
-              <option value="2">Projet B</option>
-            </select>
+              <input
+                type="checkbox"
+                :value="agent.id"
+                v-model="form.agents"
+                class="rounded text-bleu-nuit focus:ring-or/30 w-4 h-4"
+              />
+              <span class="text-sm font-medium text-slate-800">{{ agent.full_name || (agent.first_name + " " + agent.last_name) }}</span>
+              <span class="text-xs text-slate-500">({{ agent.role === "AGENT" ? "Agent" : "Chef" }})</span>
+            </label>
           </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Code campagne</label>
-            <div class="bg-or/10 border border-or/30 rounded-lg px-4 py-3 font-semibold text-bleu-nuit">
-              {{ form.code }}
-            </div>
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Description courte *</label>
-            <textarea
-              v-model="form.description"
-              rows="4"
-              placeholder="DÃ©crivez succinctement l'objectif de la campagne..."
-              class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-3 focus:ring-2 focus:ring-or/30 outline-none"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section 2 -->
-      <div class="self-stretch pb-8">
-        <div class="flex items-center gap-3 mb-6">
-         
-          <h3 class="text-xl font-bold text-or">2. Zones d'intervention</h3>
+          <p class="text-xs text-slate-500 mt-1.5">
+            {{ form.agents.length }} agent(s) sélectionné(s).
+          </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">RÃ©gions *</label>
-            <div class="relative">
-              <button
-                type="button"
-                @click="showRegionDropdown = !showRegionDropdown"
-                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-3 text-left flex justify-between items-center focus:ring-2 focus:ring-or/30 outline-none"
-              >
-                <span :class="form.zones.length ? 'text-gray-800' : 'text-gray-400'">
-                  {{ form.zones.length ? `${form.zones.length} rÃ©gion(s) sÃ©lectionnÃ©e(s)` : 'SÃ©lectionner des rÃ©gions...' }}
-                </span>
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-              <div v-if="showRegionDropdown" class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                <div v-for="region in regions" :key="region" class="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2" @click="toggleRegion(region)">
-                  <div class="w-4 h-4 border rounded flex items-center justify-center" :class="form.zones.includes(region) ? 'bg-bleu-nuit border-sky-900' : 'border-gray-300'">
-                    <svg v-if="form.zones.includes(region)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                  </div>
-                  <span class="text-sm text-gray-700">{{ region }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- Boutons d'action -->
+        <div class="pt-6 border-t flex justify-end gap-4">
+          <BoutonSecondary to="/chef-projet/campagnes" type="button">
+            Annuler
+          </BoutonSecondary>
 
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Zones concernÃ©es *</label>
-            <div class="relative">
-              <button
-                type="button"
-                @click="showZoneDropdown = !showZoneDropdown"
-                class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-3 text-left flex justify-between items-center focus:ring-2 focus:ring-or/30 outline-none"
-              >
-                <span :class="form.zonesPrioritaires.length ? 'text-gray-800' : 'text-gray-400'">
-                  {{ form.zonesPrioritaires.length ? `${form.zonesPrioritaires.length} zone(s) sÃ©lectionnÃ©e(s)` : 'SÃ©lectionner des zones...' }}
-                </span>
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-              </button>
-              <div v-if="showZoneDropdown" class="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
-                <div class="p-2 border-b border-gray-200">
-                  <input
-                    v-model="zoneSearch"
-                    type="text"
-                    placeholder="Rechercher..."
-                    class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
-                    @click.stop
-                  />
-                </div>
-                <div class="max-h-48 overflow-y-auto">
-                  <div v-for="zone in filteredZones" :key="zone" class="px-4 py-2 hover:bg-gray-50 cursor-pointer flex items-center gap-2" @click="toggleZone(zone)">
-                    <div class="w-4 h-4 border rounded flex items-center justify-center" :class="form.zonesPrioritaires.includes(zone) ? 'bg-bleu-nuit border-sky-900' : 'border-gray-300'">
-                      <svg v-if="form.zonesPrioritaires.includes(zone)" class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-                      </svg>
-                    </div>
-                    <span class="text-sm text-gray-700">{{ zone }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <button
+            type="submit"
+            :disabled="submitting || !form.zone_ids.length"
+            class="px-6 py-2.5 bg-bleu-nuit text-white font-semibold text-sm rounded-lg hover:bg-[#01111eff] transition shadow-xs disabled:opacity-50"
+          >
+            {{ submitting ? "Création en cours..." : "Créer et activer la campagne" }}
+          </button>
         </div>
-      </div>
-
-      <!-- Section 3 -->
-      <div class="self-stretch">
-        <div class="flex items-center gap-3 mb-6">
-          
-          <h3 class="text-xl font-bold text-or">3. Calendrier</h3>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de dÃ©but *</label>
-            <input
-              v-model="form.dateDebut"
-              type="date"
-              class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-3"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Date de fin *</label>
-            <input
-              v-model="form.dateFin"
-              type="date"
-              class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-3"
-            />
-          </div>
-        </div>
-      </div>
+      </form>
     </div>
-
-    <!-- Footer -->
-    <div class="self-stretch bg-gray-50 border-t border-gray-100 mt-8 p-6 flex justify-between items-center">
-      <div class="flex items-center gap-2 text-xs text-gray-600">
-        <div class="w-3 h-3.5 bg-gray-800 relative"></div>
-        <span>VÃ©rification automatique des donnÃ©es conforme OCHA.</span>
-      </div>
-
-      <div class="flex gap-4">
-        <BoutonSecondary type="button">
-          Annuler
-        </BoutonSecondary>
-        <BoutonPrimary type="submit">
-          <div class="w-4 h-4 bg-white rounded"></div>
-          CrÃ©er et activer la campagne
-        </BoutonPrimary>
-      </div>
-    </div>
-  </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed } from "vue"
+import { reactive, ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
-import { campagnesMock } from "@/data/campagnesMock.js"
-import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
+import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
+import AlertMessage from "@/components/ui/AlertMessage.vue"
+import { useCampaignStore } from "@/stores/campaign.js"
+import { useProjectStore } from "@/stores/project.js"
+import { useZoneStore } from "@/stores/zone.js"
 
 const router = useRouter()
+const campaignStore = useCampaignStore()
+const projectStore = useProjectStore()
+const zoneStore = useZoneStore()
 
-const regions = ["Dakar", "ThiÃ¨s", "Kaolack", "Saint-Louis", "Fatick", "Ziguinchor", "Tambacounda", "Kolda", "Matam", "Kaffrine", "KÃ©dougou", "SÃ©dhiou", "Louga"]
-
-const zones = [
-  "Pikine Est", "GuÃ©diawaye", "Kaolack Nord", "Ndiaffate", "ThiÃ¨s Ouest", "Mboro", "Tivaouane", "Mbour", "Rufisque", "Bargny",
-  "Dakar Plateau", "Medina", "Fann", "Mermoz", "Yoff", "Ngor", "Ouakam", "Parcelles Assainies", "CambÃ©rÃ¨ne", "Grand Yoff",
-  "Keur Massar", "Biscuiterie", "Dieuppeul", "DerklÃ©", "Hann Bel Air", "Sicap LibertÃ©", "AmitiÃ©", "CitÃ© Keur Gorgui", "Almadies", "Ngor Virage",
-  "ThiÃ¨s Ville", "MÃ©dina Baye", "Khombole", "MÃ©khÃ©", "Tivaouane Ville", "Mboro Ville", "Pout", "Sindia", "Bambey", "Diourbel",
-  "Kaolack Ville", "Nioro du Rip", "Koungheul", "Koussanar", "Sokone", "Keur SocÃ©", "NdoffÃ¨ne", "Thiouthioune", "Ndiaffatou", "Kara",
-  "Saint-Louis Ville", "Richard Toll", "Podor", "Dagana", "Matam Ville", "Agnam Civol", "Agnam Thiodaye", "BokidiawÃ©", "Dabia", "Ouro Sogui",
-  "Ziguinchor Ville", "Oussouye", "Casamance", "Bignona", "SÃ©dhiou Ville", "Kolda Ville", "Kaffrine Ville", "KÃ©dougou Ville", "Louga Ville", "Tambacounda Ville",
-  "Fatick Ville", "Foundiougne", "Passy", "Djifer", "Bipallet", "Sokone Delta", "Niodior", "Foundioune", "Djinon", "Palmarin",
-  "Rufisque Est", "Rufisque Ouest", "Bargny Guedj", "SÃ©bikotane", "Bambylor", "Tivaouane Peulh", "ThiÃ¨s Sud", "ThiÃ¨s Nord", "Pikine Ouest", "GuÃ©diawaye Nord"
-]
-
-const showRegionDropdown = ref(false)
-const showZoneDropdown = ref(false)
-const zoneSearch = ref("")
-
-const filteredZones = computed(() => {
-  if (!zoneSearch.value) return zones
-  const search = zoneSearch.value.toLowerCase()
-  return zones.filter(zone => zone.toLowerCase().includes(search))
-})
+const loadingInit = ref(true)
+const submitting = ref(false)
+const feedback = reactive({ type: "success", message: "" })
 
 const form = reactive({
   nom: "",
-  projet: "",
-  code: "CMP-2026-DKR-09",
+  projet_id: "",
   description: "",
-  zones: [],
-  zonesPrioritaires: [],
-  dateDebut: "",
-  dateFin: "",
+  zone_ids: [],
+  date_debut: "",
+  date_fin: "",
+  agents: [],
 })
 
-const toggleRegion = (region) => {
-  const index = form.zones.indexOf(region)
-  if (index > -1) {
-    form.zones.splice(index, 1)
-  } else {
-    form.zones.push(region)
+onMounted(async () => {
+  loadingInit.value = true
+  try {
+    await Promise.allSettled([
+      projectStore.fetchProjects(),
+      zoneStore.fetchZones(),
+      campaignStore.fetchAgents(),
+    ])
+  } finally {
+    loadingInit.value = false
   }
-}
+})
 
-const toggleZone = (zone) => {
-  const index = form.zonesPrioritaires.indexOf(zone)
-  if (index > -1) {
-    form.zonesPrioritaires.splice(index, 1)
-  } else {
-    form.zonesPrioritaires.push(zone)
-  }
-}
-
-const creerCampagne = () => {
-  const nouvelleCampagne = {
-    id: Date.now(),
-    code: form.code,
-    ...form,
+const creerCampagne = async () => {
+  if (!form.zone_ids.length) {
+    feedback.type = "error"
+    feedback.message = "Veuillez sélectionner au moins une zone d'intervention."
+    return
   }
 
-  campagnesMock.value.push(nouvelleCampagne)
-  alert("Campagne crÃ©Ã©e avec succÃ¨s !")
-  router.push("/chef-projet/campagnes")
+  submitting.value = true
+  feedback.message = ""
+
+try {
+    await campaignStore.createCampaign({
+      nom: form.nom,
+      projet_id: Number(form.projet_id),
+      description: form.description,
+      zone_ids: form.zone_ids,
+      date_debut: form.date_debut,
+      date_fin: form.date_fin,
+      agents: form.agents.map((id) => ({ agent_id: Number(id), zone: "", objectif: 0 })),
+    })
+
+    feedback.type = "success"
+    feedback.message = "Campagne créée avec succès !"
+    setTimeout(() => {
+      router.push("/chef-projet/campagnes")
+    }, 800)
+  } catch (err) {
+    feedback.type = "error"
+    feedback.message = campaignStore.error || "Erreur lors de la création de la campagne."
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 

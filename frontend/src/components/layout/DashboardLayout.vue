@@ -1,15 +1,40 @@
 ﻿<template>
   <div class="flex min-h-screen bg-white">
-    <aside class="fixed top-0 left-0 z-40 h-screen w-64 overflow-y-auto">
-      <Sidebar />
+    <!-- Sidebar mobile (overlay) -->
+    <transition name="fade">
+      <div
+        v-if="mobileOpen"
+        class="fixed inset-0 z-40 bg-slate-900/50 lg:hidden"
+        @click="mobileOpen = false"
+      ></div>
+    </transition>
+
+    <aside
+      :class="[
+        'fixed top-0 z-50 h-screen bg-bleu-nuit transition-all duration-300 ease-in-out flex flex-col',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+        'w-72 lg:w-64',
+      ]"
+    >
+      <Sidebar @close="mobileOpen = false" />
     </aside>
 
-    <div class="flex-1 flex flex-col ml-64">
-      <header class="fixed top-0 left-64 z-30 h-16 w-[calc(100%-16rem)]  bg-white">
+    <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+      <header class="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 shadow-xs-sm flex items-center px-4 gap-3">
+        <button
+          type="button"
+          class="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-700 hover:bg-slate-100"
+          @click="mobileOpen = !mobileOpen"
+          aria-label="Ouvrir le menu"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
         <Navbar />
       </header>
 
-      <main class="flex-1 pt-16 p-6">
+      <main class="flex-1 p-4 sm:p-6">
         <router-view />
       </main>
     </div>
@@ -17,7 +42,18 @@
 </template>
 
 <script setup>
+import { ref } from "vue"
 import Sidebar from "@/components/layout/Sidebar.vue"
 import Navbar from "@/components/layout/Navbar.vue"
+
+const mobileOpen = ref(false)
 </script>
 
+<style scoped>
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+</style>

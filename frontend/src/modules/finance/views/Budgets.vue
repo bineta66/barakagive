@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
@@ -165,6 +165,7 @@
       v-if="modalBudget"
       :ouvert="modalBudget"
       :projets="store.projetsAssignes"
+      :dons="store.donsFinancements"
       :budget="budgetSelectionne"
       @fermer="modalBudget = false"
       @save="saveBudget"
@@ -252,13 +253,18 @@ const openBudget = (budget) => {
   modalBudget.value = true
 }
 
-const saveBudget = (budgetData) => {
-  console.log('Budget saved:', budgetData)
-  modalBudget.value = false
-  budgetSelectionne.value = null
+const saveBudget = async (budgetData) => {
+  try {
+    await store.createBudget(budgetData)
+    modalBudget.value = false
+    budgetSelectionne.value = null
+  } catch (error) {
+    store.error = error.response?.data?.detail || "Impossible d'enregistrer le budget."
+  }
 }
 
 watch([search, filtreStatut, filtreProjet], () => {
   currentPage.value = 1
 })
 </script>
+

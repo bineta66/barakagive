@@ -30,6 +30,7 @@ class RegisterOrganizationSerializer(serializers.ModelSerializer):
             "region",
             "country",
             "intervention_domain",
+            "description",
             "logo",
 
             "manager_first_name",

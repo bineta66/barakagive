@@ -4,7 +4,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
     @click.self="fermer"
   >
-    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold" style="color: #744D03">
@@ -24,13 +24,13 @@
 
       <form @submit.prevent="submit" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">DÃ©pense *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Dépense *</label>
           <select
             v-model="form.depenseId"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner une dÃ©pense</option>
+            <option value="">Sélectionner une dépense</option>
             <option v-for="d in depenses" :key="d.id" :value="d.id">
               {{ d.libelle }} ({{ formatMontant(d.montant) }} FCFA)
             </option>
@@ -44,13 +44,13 @@
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
             required
           >
-            <option value="">SÃ©lectionner</option>
+            <option value="">Sélectionner</option>
             <option v-for="t in typesDocument" :key="t" :value="t">{{ t }}</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">NumÃ©ro du document *</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Numéro du document *</label>
           <input
             v-model="form.numeroDocument"
             type="text"
@@ -81,13 +81,13 @@
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">PiÃ¨ce jointe</label>
+          <label class="block text-xs font-medium text-gray-600 mb-1">Pièce jointe</label>
           <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center hover:border-or/30 transition-colors cursor-pointer">
             <Upload :size="24" class="mx-auto text-gray-400 mb-2" />
             <p class="text-xs text-gray-500">PDF, JPG, PNG (max 5MB)</p>
             <input
-              v-if="false"
               type="file"
+              required
               accept=".pdf,.jpg,.jpeg,.png"
               @change="uploadFile"
             />
@@ -110,7 +110,7 @@
           Annuler
         </BoutonTertiary>
         <BoutonPrimary @click="submit">
-          {{ justificatif ? 'Mettre Ã  jour' : 'Enregistrer' }}
+          {{ justificatif ? 'Mettre à jour' : 'Enregistrer' }}
         </BoutonPrimary>
       </div>
     </div>
@@ -187,10 +187,12 @@ const submit = () => {
     montant: Number(form.value.montant) || 0,
     observation: form.value.observation,
     statut: props.justificatif?.statut || 'En attente',
+    pieceJointe: form.value.pieceJointe,
   }
   emit('save', justificatifData)
 }
 </script>
+
 
 
 

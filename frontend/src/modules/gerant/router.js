@@ -37,6 +37,16 @@ const routes = [
         component: CreerProjetGerant,
       },
       {
+        path: "projets/modifier/:id",
+        name: "gerant-projets-modifier",
+        redirect: { name: "gerant-projets" },
+      },
+      {
+        path: "projets/:id",
+        name: "gerant-projets-detail",
+        redirect: { name: "gerant-projets" },
+      },
+      {
         path: "utilisateurs",
         name: "gerant-utilisateurs",
         component: UtilisateursGerant,

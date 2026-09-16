@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
     <div class="flex justify-between items-center px-6 py-4 ">
-      <h3 class="text-sm font-bold uppercase text-slate-900">Mes projets assignÃ©s</h3>
+      <h3 class="text-sm font-bold uppercase text-slate-900">Mes projets assignés</h3>
       <span class="text-xs text-slate-500">{{ projets.length }} projet(s)</span>
     </div>
 
@@ -10,7 +10,7 @@
         <tr>
           <th class="text-left px-4 py-3">Projet</th>
           <th class="text-left px-4 py-3">Chef de projet</th>
-          <th class="text-right px-4 py-3">Budget allouÃ©</th>
+          <th class="text-right px-4 py-3">Budget alloué</th>
           <th class="text-center px-4 py-3">Statut</th>
         </tr>
       </thead>
@@ -43,4 +43,5 @@ const store = useFinanceStore()
 
 const { projetsAssignes: projets, formatMontant } = store
 </script>
+
 

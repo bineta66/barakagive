@@ -4,8 +4,8 @@
       <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
         <tr>
           <th class="text-left px-4 py-3">Nom</th>
-          <th class="text-left px-4">RÃ©gion</th>
-          <th class="text-left px-4">DÃ©partement</th>
+          <th class="text-left px-4">Région</th>
+          <th class="text-left px-4">Département</th>
           <th class="text-right px-4">Rayon</th>
           <th class="text-left px-4">Statut</th>
           <th class="text-right px-4">Actions</th>
@@ -19,18 +19,18 @@
           </td>
 
           <td class="px-4 text-xs text-slate-600">{{ zone.region }}</td>
-          <td class="px-4 text-xs text-slate-600">{{ zone.departement }}</td>
+<td class="px-4 text-xs text-slate-600">{{ zone.departement || "-" }}</td>
 
           <td class="px-4 text-right text-xs text-slate-600">
-            {{ zone.rayon }} m
+            {{ zone.rayon ? zone.rayon + ' m' : '-' }}
           </td>
 
           <td class="px-4">
             <span
               class="px-2 py-1 rounded text-xs font-semibold"
-              :class="zone.statut === 'Actif' ? 'bg-bleu-nuit/10 text-bleu-nuit' : 'bg-gray-100 text-gray-600'"
+              :class="isActive(zone.statut) ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'"
             >
-              {{ zone.statut }}
+              {{ isActive(zone.statut) ? 'Actif' : 'Inactif' }}
             </span>
           </td>
 
@@ -38,21 +38,24 @@
             <div class="flex justify-end gap-2">
               <RouterLink
                 :to="`/chef-projet/zones/${zone.id}`"
-                class="text-slate-500 hover:text-bleu-nuit"
+                class="text-slate-500 hover:text-bleu-nuit p-1"
+                title="Voir détails"
               >
                 <Eye :size="16" />
               </RouterLink>
 
               <RouterLink
                 :to="`/chef-projet/zones/modifier/${zone.id}`"
-                class="text-slate-500 hover:text-or"
+                class="text-slate-500 hover:text-or p-1"
+                title="Modifier"
               >
                 <Pencil :size="16" />
               </RouterLink>
 
               <button
-                @click="onDelete(zone)"
-                class="text-slate-500 hover:text-red-600"
+                @click="$emit('delete', zone.id)"
+                class="text-slate-500 hover:text-red-600 p-1"
+                title="Supprimer"
               >
                 <Trash2 :size="16" />
               </button>
@@ -62,7 +65,7 @@
 
         <tr v-if="!zones || zones.length === 0">
           <td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">
-            Aucune zone enregistrÃ©e.
+            Aucune zone enregistrée.
           </td>
         </tr>
       </tbody>
@@ -81,12 +84,10 @@ defineProps({
   },
 })
 
-const emit = defineEmits(["delete"])
+defineEmits(["delete"])
 
-const onDelete = (zone) => {
-  if (confirm(`Supprimer la zone "${zone.nom}" ?`)) {
-    emit("delete", zone.id)
-  }
+const isActive = (statut) => {
+  return statut === true || statut === "Actif" || statut === "ACTIF"
 }
 </script>
 
