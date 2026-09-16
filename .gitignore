@@ -18,3 +18,8 @@ dist/
 # Système
 .DS_Store
 Thumbs.db
+# Scripts locaux de maintenance
+normalize_shadows.py
+normalize_strings.py
+add_borders.py
+test_api.py
