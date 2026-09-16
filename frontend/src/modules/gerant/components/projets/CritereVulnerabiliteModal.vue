@@ -20,7 +20,7 @@
         </p>
       </div>
 
-      <div class="px-6 py-4">
+      <div class="px-6 py-4 space-y-4">
         <AlertMessage
           v-if="submitError"
           type="error"
@@ -30,20 +30,38 @@
           class="mb-4"
         />
 
-        <label class="block text-sm font-semibold text-gray-700 mb-1">
-          Nom du critère *
-        </label>
-        <input
-          v-model="nom"
-          type="text"
-          placeholder="Ex: Femme enceinte"
-          class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
-          :disabled="submitting"
-          required
-        />
-        <p class="text-xs text-gray-500 mt-1">
-          Le critère sera réutilisable pour les projets de votre organisation.
-        </p>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Nom du critère *
+          </label>
+          <input
+            v-model="nom"
+            type="text"
+            placeholder="Ex: Femme enceinte"
+            class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+            :disabled="submitting"
+            required
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Poids (%) *
+          </label>
+          <input
+            v-model="poids"
+            type="number"
+            min="1"
+            max="100"
+            placeholder="Ex: 25"
+            class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+            :disabled="submitting"
+            required
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            Valeur comprise entre 1 et 100.
+          </p>
+        </div>
       </div>
 
       <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
@@ -80,27 +98,33 @@ const emit = defineEmits(["fermer", "cree"])
 
 const store = useProjectStore()
 const nom = ref("")
+const poids = ref("")
 const submitting = ref(false)
 const submitError = ref(null)
 
 const fermer = () => {
   nom.value = ""
+  poids.value = ""
   submitError.value = null
   emit("fermer")
 }
 
 const creer = async () => {
   if (submitting.value) return
-  const value = nom.value.trim()
-  if (!value) return
+  const nomValue = nom.value.trim()
+  const poidsValue = parseInt(poids.value, 10)
+  if (!nomValue || !poidsValue) return
+  if (poidsValue < 1 || poidsValue > 100) {
+    submitError.value = "Le poids doit être compris entre 1 et 100."
+    return
+  }
   submitting.value = true
   submitError.value = null
   try {
-    const created = await store.createCriteria(value)
-    emit("cree", created)
+    emit("cree", { nom: nomValue, poids: poidsValue })
     fermer()
   } catch (err) {
-    submitError.value = store.error || "Erreur lors de la création du critère."
+    submitError.value = "Erreur lors de la création du critère."
   } finally {
     submitting.value = false
   }

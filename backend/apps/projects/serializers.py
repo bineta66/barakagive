@@ -12,11 +12,34 @@ class ProjectCriteriaSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_by", "created_at"]
 
 
+class ProjectCriteriaCreateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ProjectCriteria
+        fields = ["nom", "poids"]
+        read_only_fields = ["created_by"]
+
+    def validate_poids(self, value):
+        if value < 1 or value > 100:
+            raise serializers.ValidationError("Le poids doit être compris entre 1 et 100.")
+        return value
+
+    def create(self, validated_data):
+        if "projet" not in validated_data:
+            validated_data["projet"] = self.context.get("projet")
+        if "created_by" not in validated_data:
+            request = self.context.get("request")
+            if request and request.user:
+                validated_data["created_by"] = request.user
+        return super().create(validated_data)
+
+
 class ProjectSerializer(serializers.ModelSerializer):
 
     chef_projet = serializers.ReadOnlyField(source="chef_projet.email")
     responsable_finance = serializers.ReadOnlyField(source="responsable_finance.email")
     organization = serializers.ReadOnlyField(source="organization.name")
+    criteres = ProjectCriteriaSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project
@@ -37,6 +60,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "archived",
+            "criteres",
         ]
         read_only_fields = [
             "id",
@@ -58,13 +82,7 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         write_only=True,
     )
-    criteria_ids = serializers.PrimaryKeyRelatedField(
-        many=True,
-        queryset=ProjectCriteria.objects.all(),
-        write_only=True,
-        required=False,
-        default=[],
-    )
+    criteres = ProjectCriteriaCreateSerializer(many=True, write_only=True, required=False)
 
     class Meta:
         model = Project
@@ -77,7 +95,7 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             "end_date",
             "chef_projet",
             "responsable_finance",
-            "criteria_ids",
+            "criteres",
             "code",
             "budget",
             "organization",
@@ -102,11 +120,26 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 "end_date": "La date de fin doit être postérieure à la date de début."
             })
+
+        criteres = attrs.get("criteres", [])
+        total_poids = 0
+        for idx, c in enumerate(criteres):
+            poids = c.get("poids", 0)
+            if poids < 1 or poids > 100:
+                raise serializers.ValidationError({
+                    "criteres": f"Le critère #{idx + 1} a un poids invalide ({poids}). Il doit être compris entre 1 et 100."
+                })
+            total_poids += poids
+
+        if total_poids != 100:
+            raise serializers.ValidationError({
+                "criteres": f"La somme des poids des critères doit être exactement 100. Total actuel : {total_poids}."
+            })
         return attrs
 
     def create(self, validated_data):
         request = self.context["request"]
-        criteria_ids = validated_data.pop("criteria_ids", [])
+        criteres_data = validated_data.pop("criteres", [])
 
         project = Project.objects.create(
             **validated_data,
@@ -115,8 +148,12 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
             budget=0,
         )
 
-        if criteria_ids:
-            project.criteria.set(criteria_ids)
+        for critere_data in criteres_data:
+            ProjectCriteria.objects.create(
+                projet=project,
+                created_by=request.user,
+                **critere_data,
+            )
 
         return project
 

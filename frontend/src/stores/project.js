@@ -89,22 +89,40 @@ export const useProjectStore = defineStore("project", () => {
     }
   }
 
-  const fetchCriteria = async () => {
+  const fetchCriteria = async (projectId) => {
     try {
-      const response = await api.get("/api/project-criteria/")
-      criteria.value = response.data
+      const response = await api.get(`/api/projets/${projectId}/criteres/`)
+      criteria.value = response.data.criteres || []
       return response.data
     } catch (err) {
       error.value = getErrorMessage(err)
-      return []
+      return { criteres: [], total_poids: 0 }
     }
   }
 
-  const createCriteria = async (name) => {
+  const createCriteria = async (projectId, data) => {
     try {
-      const response = await api.post("/api/project-criteria/", { name })
-      await fetchCriteria()
+      const response = await api.post(`/api/projets/${projectId}/criteres/`, data)
       return response.data
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
+    }
+  }
+
+  const updateCriteria = async (id, data) => {
+    try {
+      const response = await api.put(`/api/criteres/${id}/`, data)
+      return response.data
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
+    }
+  }
+
+  const deleteCriteria = async (id) => {
+    try {
+      await api.delete(`/api/criteres/${id}/`)
     } catch (err) {
       error.value = getErrorMessage(err)
       throw err
@@ -127,5 +145,7 @@ export const useProjectStore = defineStore("project", () => {
     archiveProject,
     fetchCriteria,
     createCriteria,
+    updateCriteria,
+    deleteCriteria,
   }
 })

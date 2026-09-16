@@ -4,7 +4,9 @@
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <div class="flex items-center gap-3">
-            <h2 class="text-3xl font-bold" style="color: #744D03">Formulaire dynamique</h2>
+            <h2 class="text-3xl font-bold" style="color: #744D03">
+              {{ titreFormulaire }}
+            </h2>
             <span
               v-if="currentForm"
               class="px-2.5 py-1 text-xs font-semibold rounded-full"
@@ -103,6 +105,8 @@ const {
 
 const campagneId = route.params.id
 
+const titreFormulaire = ref("Formulaire dynamique")
+
 const chargerFormulaire = async () => {
   loadingInit.value = true
   feedback.message = ""
@@ -111,21 +115,25 @@ const chargerFormulaire = async () => {
     let found = forms.find((f) => f.campagne?.id === campagneId)
 
     if (!found) {
-      // Auto-create a draft form for this campaign
       let campagneName = "Campagne"
       try {
         const camp = await campaignStore.fetchCampaign(campagneId)
         campagneName = camp.nom
-      } catch (e) {}
+      } catch (e) {
+        const existing = campaignStore.campaigns.find((c) => String(c.id) === String(campagneId))
+        campagneName = existing?.nom || campagneName
+      }
 
       found = await formStore.createForm({
         campagne_id: campagneId,
         nom: `Formulaire de collecte - ${campagneName}`,
         fields: [],
       })
+      titreFormulaire.value = found?.nom || `Formulaire de collecte - ${campagneName}`
+    } else {
+      titreFormulaire.value = found.nom
     }
 
-    // Load full details with fields
     const fullForm = await formStore.fetchForm(found.id)
     currentForm.value = fullForm
     loadFromBackendFields(fullForm.fields || [], fullForm.id)
@@ -158,7 +166,12 @@ const ajouterNouvelleQuestion = async (type) => {
     libelle: "Nouvelle question",
     type: type,
     obligatoire: false,
-    options: type === "liste" ? ["Option 1", "Option 2"] : [],
+    options:
+      type === "liste"
+        ? ["Option 1", "Option 2"]
+        : type === "selection-multiple"
+          ? ["Option 1", "Option 2"]
+          : [],
   }
 
   const payload = prepareForBackend(tempQ, questions.value.length)

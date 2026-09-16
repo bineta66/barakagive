@@ -225,7 +225,7 @@ try {
       zone_ids: form.zone_ids,
       date_debut: form.date_debut,
       date_fin: form.date_fin,
-      agents: form.agents.map((id) => ({ agent_id: Number(id), zone: "", objectif: 0 })),
+      agents: form.agents.map((id) => ({ agent_id: id, zone: "", objectif: 0 })),
     })
 
     feedback.type = "success"

@@ -48,9 +48,9 @@
           <p class="text-xs font-bold uppercase text-slate-900 mb-1">Statut</p>
           <span
             class="px-2.5 py-1 text-xs font-semibold rounded-full inline-block"
-            :class="statutCampagne === 'En cours' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'"
+            :class="badgeStatut(campagne.statut)"
           >
-            {{ statutCampagne }}
+            {{ labelStatut(campagne.statut) }}
           </span>
         </div>
 
@@ -104,13 +104,41 @@ const campagne = ref(null)
 const loading = ref(false)
 const error = ref(null)
 
-const statutCampagne = computed(() => {
-  if (!campagne.value) return ""
-  const today = new Date().toISOString().split("T")[0]
-  if (campagne.value.date_debut && campagne.value.date_debut > today) return "Planifiée"
-  if (campagne.value.date_fin && campagne.value.date_fin < today) return "Terminée"
-  return "En cours"
-})
+const statutCampagne = computed(() => labelStatut(campagne.value?.statut))
+
+const labelStatut = (statut) => {
+  switch (statut) {
+    case "BROUILLON":
+      return "Brouillon"
+    case "PLANIFIER":
+      return "Planifiée"
+    case "EN_COURS":
+      return "En cours"
+    case "TERMINE":
+      return "Terminée"
+    case "ANNULEE":
+      return "Annulée"
+    default:
+      return statut || "-"
+  }
+}
+
+const badgeStatut = (statut) => {
+  switch (statut) {
+    case "EN_COURS":
+      return "bg-emerald-50 text-emerald-700"
+    case "PLANIFIER":
+      return "bg-bleu-nuit text-white"
+    case "TERMINE":
+      return "bg-gray-500 text-white"
+    case "ANNULEE":
+      return "bg-red-100 text-red-800"
+    case "BROUILLON":
+      return "bg-amber-100 text-amber-800"
+    default:
+      return "bg-slate-100 text-slate-600"
+  }
+}
 
 onMounted(async () => {
   loading.value = true

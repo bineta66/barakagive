@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 
 class Campaign(models.Model):
@@ -48,6 +49,19 @@ class Campaign(models.Model):
 
     date_fin = models.DateField()
 
+    class Statut(models.TextChoices):
+        BROUILLON = "BROUILLON", "Brouillon"
+        PLANIFIER = "PLANIFIER", "Planifiée"
+        EN_COURS = "EN_COURS", "En cours"
+        TERMINE = "TERMINE", "Terminée"
+        ANNULEE = "ANNULEE", "Annulée"
+
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.BROUILLON,
+    )
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -60,6 +74,17 @@ class Campaign(models.Model):
 
     def __str__(self):
         return f"{self.code_campagne} - {self.nom}"
+
+    def statut_auto(self):
+        today = timezone.now().date()
+        if self.statut in {self.Statut.ANNULEE, self.Statut.TERMINE}:
+            return self.statut
+        if self.date_debut and self.date_fin:
+            if today < self.date_debut:
+                return self.Statut.PLANIFIER
+            if today > self.date_fin:
+                return self.Statut.TERMINE
+        return self.Statut.EN_COURS
 
     class Meta:
         verbose_name = "Campagne"

@@ -14,7 +14,25 @@ export function useCampagnes() {
     campaignStore.fetchCampaigns().catch(() => {})
   })
 
+  const statutLabel = (statut) => {
+    switch (statut) {
+      case "BROUILLON":
+        return "Brouillon"
+      case "PLANIFIER":
+        return "Planifiée"
+      case "EN_COURS":
+        return "En cours"
+      case "TERMINE":
+        return "Terminée"
+      case "ANNULEE":
+        return "Annulée"
+      default:
+        return statut || "-"
+    }
+  }
+
   const determineStatus = (c) => {
+    if (c.statut) return statutLabel(c.statut)
     const today = new Date().toISOString().split("T")[0]
     if (c.date_debut && c.date_debut > today) return "Planifiée"
     if (c.date_fin && c.date_fin < today) return "Terminée"
@@ -28,7 +46,7 @@ export function useCampagnes() {
       code: c.code_campagne || c.code || `CMP-${c.id?.substring ? c.id.substring(0, 6) : c.id}`,
       projet: c.projet?.name || (typeof c.projet === "string" ? c.projet : "-"),
       zone: c.zones_count ? `${c.zones_count} zone(s)` : (c.zone || "-"),
-      statut: c.statut || determineStatus(c),
+      statut: determineStatus(c),
       dateDebut: c.date_debut,
       dateFin: c.date_fin,
     }

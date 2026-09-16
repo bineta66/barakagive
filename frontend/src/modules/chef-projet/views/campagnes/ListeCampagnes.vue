@@ -62,9 +62,11 @@
         class="border rounded-lg px-3 py-2 text-sm bg-white"
       >
         <option value="Tous les statuts">Tous les statuts</option>
-        <option value="En cours">En cours</option>
+        <option value="Brouillon">Brouillon</option>
         <option value="Planifiée">Planifiée</option>
+        <option value="En cours">En cours</option>
         <option value="Terminée">Terminée</option>
+        <option value="Annulée">Annulée</option>
       </select>
 
       <select

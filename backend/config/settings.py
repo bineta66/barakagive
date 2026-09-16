@@ -60,8 +60,9 @@ INSTALLED_APPS = [
      "apps.beneficiaries",
      "apps.finance",
      "apps.donors",
-     "apps.reports",
- ]
+      "apps.reports",
+      "apps.ia",
+  ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -190,6 +191,19 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Dakar"
+
+CELERY_BEAT_SCHEDULE = {
+    "ia-analyses-every-6-hours": {
+        "task": "apps.ia.tasks.run_ia_analyses",
+        "schedule": 21600.0,
+    },
+    "update-campaign-statuses-daily": {
+        "task": "apps.campaigns.tasks.update_campaign_statuses",
+        "schedule": 86400.0,
+    },
+}
+
+IA_SERVICE_URL = os.getenv("IA_SERVICE_URL", "http://ia_service:8000")
 # Email (Brevo API)
 # ==========================
 # Brevo API

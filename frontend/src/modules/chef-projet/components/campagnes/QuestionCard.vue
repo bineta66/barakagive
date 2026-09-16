@@ -27,19 +27,65 @@
           </div>
 
           <div v-else-if="question.type === 'liste'" class="self-stretch flex flex-col gap-2">
-            <div v-for="(option, idx) in question.options" :key="idx" class="self-stretch p-3 border border-gray-300 rounded bg-white flex items-center gap-3">
-              <div class="w-4 h-4 border border-gray-300 rounded-sm"></div>
-              <span class="text-sm text-gray-700">{{ option }}</span>
+            <div v-for="(option, idx) in question.options" :key="idx" class="flex items-center gap-2">
+              <input
+                v-model="question.options[idx]"
+                @input="mettreAJourOption(question, idx)"
+                type="text"
+                class="flex-1 rounded-lg border px-3 py-2 text-sm"
+                style="border-color: #744D03; background-color: #fff"
+              />
             </div>
-            <div class="flex items-center gap-2 mt-2">
+            <div class="flex items-center gap-2">
               <div class="w-4 h-4 border border-gray-300 rounded-sm"></div>
               <input
                 v-model="optionTemp"
                 @keyup.enter="ajouterOptionLocale"
                 type="text"
-                placeholder="Autre"
+                placeholder="Ajouter une option..."
                 class="flex-1 text-sm text-gray-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder-gray-400"
+                autocomplete="off"
               />
+              <button
+                @click="ajouterOptionLocale"
+                class="text-xs font-semibold px-2 py-1 rounded border"
+                style="border-color: #744D03; color: #744D03"
+                type="button"
+              >
+                Ajouter
+              </button>
+            </div>
+          </div>
+
+          <div v-else-if="question.type === 'selection-multiple'" class="self-stretch flex flex-col gap-2">
+            <div v-for="(option, idx) in question.options" :key="idx" class="flex items-center gap-2">
+              <input type="checkbox" disabled />
+              <input
+                v-model="question.options[idx]"
+                @input="mettreAJourOption(question, idx)"
+                type="text"
+                class="flex-1 rounded-lg border px-3 py-2 text-sm"
+                style="border-color: #744D03; background-color: #fff"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-4 h-4 border border-gray-300 rounded-sm"></div>
+              <input
+                v-model="optionTemp"
+                @keyup.enter="ajouterOptionLocale"
+                type="text"
+                placeholder="Ajouter une option..."
+                class="flex-1 text-sm text-gray-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder-gray-400"
+                autocomplete="off"
+              />
+              <button
+                @click="ajouterOptionLocale"
+                class="text-xs font-semibold px-2 py-1 rounded border"
+                style="border-color: #744D03; color: #744D03"
+                type="button"
+              >
+                Ajouter
+              </button>
             </div>
           </div>
 
@@ -78,7 +124,7 @@
           </div>
         </div>
 
-        <div v-if="question.type === 'liste'" class="flex items-center gap-2 mt-2">
+        <div v-if="question.type === 'liste' || question.type === 'selection-multiple'" class="flex items-center gap-2 mt-2">
           <input
             v-model="optionTemp"
             @keyup.enter="ajouterOptionLocale"
@@ -86,11 +132,12 @@
             placeholder="Ajouter une option..."
             class="flex-1 rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
             style="border-color: #744D03; background-color: #fff"
+            autocomplete="off"
           />
           <button
             @click="ajouterOptionLocale"
             class="text-sm font-semibold hover:underline"
-          style="color: #021427"
+            style="color: #021427"
           >
             + Ajouter
           </button>
@@ -158,14 +205,19 @@ const emit = defineEmits(["supprimer", "dupliquer", "mettre-a-jour", "ajouter-op
 
 const optionTemp = ref("")
 
+const mettreAJourOption = (question, index) => {
+  emit("mettre-a-jour", question.id, "options", [...question.options])
+}
+
 const typeLabels = {
   texte: "Texte",
   nombre: "Nombre",
   liste: "Liste déroulante",
+  "selection-multiple": "Sélection multiple",
   "oui-non": "Oui/Non",
   date: "Date",
   telephone: "Téléphone",
-  photo: "Photo",
+  photo: "Texte long / Photo",
   gps: "GPS",
 }
 

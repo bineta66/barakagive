@@ -8,6 +8,7 @@ export function useFormBuilder() {
     texte: "TEXT",
     nombre: "NUMBER",
     liste: "SELECT",
+    "selection-multiple": "CHECKBOX",
     "oui-non": "YES_NO",
     date: "DATE",
     telephone: "PHONE",
@@ -19,7 +20,7 @@ export function useFormBuilder() {
     TEXT: "texte",
     NUMBER: "nombre",
     SELECT: "liste",
-    CHECKBOX: "liste",
+    CHECKBOX: "selection-multiple",
     YES_NO: "oui-non",
     DATE: "date",
     PHONE: "telephone",
@@ -42,6 +43,11 @@ export function useFormBuilder() {
       id: "liste",
       label: "Liste déroulante",
       iconPath: "M19 9l-7 7-7-7",
+    },
+    {
+      id: "selection-multiple",
+      label: "Sélection multiple",
+      iconPath: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
     },
     {
       id: "oui-non",

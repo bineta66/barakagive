@@ -165,28 +165,43 @@ def create_campaign(validated_data, user):
         zones = validate_zones_for_organization(zone_ids, organization)
         campaign.zones.set(zones)
 
-    agent_ids = [item["agent_id"] for item in agent_assignments]
+    agent_ids = [str(item["agent_id"]) for item in agent_assignments]
     if len(agent_ids) != len(set(agent_ids)):
         raise ValueError("Un agent ne peut être affecté qu'une seule fois à la campagne.")
+
+    numeric_agent_ids = []
+    for aid in agent_ids:
+        if aid.isdigit():
+            numeric_agent_ids.append(int(aid))
+        else:
+            raise ValueError(f"Identifiant agent invalide : {aid}")
 
     agents = {
         str(agent.id): agent
         for agent in User.objects.filter(
-            id__in=agent_ids,
+            id__in=numeric_agent_ids,
             organization=organization,
-            role=User.Role.AGENT,
         )
     }
-    if len(agents) != len(agent_ids):
-        raise ValueError("Tous les agents affectés doivent appartenir à votre ONG.")
+
+    missing_ids = [aid for aid in agent_ids if aid not in agents]
+    if missing_ids:
+        raise ValueError(f"Agents introuvables : {missing_ids}")
 
     for assignment in agent_assignments:
+        agent_id = str(assignment["agent_id"])
+        agent = agents.get(agent_id)
+        if not agent:
+            raise ValueError(f"Agent introuvable : {agent_id}")
         zone_name = assignment["zone"]
-        if not campaign.zones.filter(nom=zone_name).exists():
-            raise ValueError(f"La zone '{zone_name}' ne fait pas partie de la campagne.")
+        if zone_name:
+            if not campaign.zones.filter(nom=zone_name).exists():
+                raise ValueError(f"La zone '{zone_name}' ne fait pas partie de la campagne.")
+        else:
+            zone_name = campaign.zones.values_list("nom", flat=True).first() or ""
         CampagneAffectation.objects.create(
             campagne=campaign,
-            agent=agents[str(assignment["agent_id"])],
+            agent=agent,
             zone=zone_name,
             objectif_beneficiaires=assignment["objectif"],
             created_by=user,

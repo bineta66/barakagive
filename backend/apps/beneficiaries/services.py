@@ -13,6 +13,73 @@ class BeneficiaryError(Exception):
     pass
 
 
+def build_zone_ranking(campaign):
+    """
+    Construit le classement des zones pour une campagne.
+
+    Args:
+        campaign: Instance de Campaign
+
+    Returns:
+        list[dict]: Classement des zones avec score_total, beneficiaires_prioritaires, top5
+    """
+    beneficiaries = Beneficiary.objects.filter(
+        campagne=campaign
+    ).select_related("zone").prefetch_related("responses__question").order_by("-ai_score")
+
+    zones_data = {}
+    for beneficiary in beneficiaries:
+        zone_nom = beneficiary.zone.nom if beneficiary.zone else "Inconnue"
+        if zone_nom not in zones_data:
+            zones_data[zone_nom] = {
+                "nom": zone_nom,
+                "score_total": Decimal("0"),
+                "beneficiaires": [],
+            }
+        score = beneficiary.ai_score or Decimal("0")
+        zones_data[zone_nom]["score_total"] += score
+        zones_data[zone_nom]["beneficiaires"].append({
+            "id": str(beneficiary.id),
+            "nom": f"{beneficiary.prenom} {beneficiary.nom}",
+            "score": int(score),
+            "raisons": _extraire_raisons(beneficiary),
+        })
+
+    classement = []
+    for zone_nom, data in zones_data.items():
+        beneficiaires_tries = sorted(
+            data["beneficiaires"],
+            key=lambda b: b["score"],
+            reverse=True,
+        )
+        top5 = beneficiaires_tries[:5]
+        classement.append({
+            "nom": data["nom"],
+            "score_total": int(data["score_total"]),
+            "beneficiaires_prioritaires": len([b for b in data["beneficiaires"] if b["score"] >= 70]),
+            "top5": top5,
+        })
+
+    classement.sort(key=lambda z: z["score_total"], reverse=True)
+    return classement
+
+
+def _extraire_raisons(beneficiary):
+    """
+    Extrait les raisons de priorisation d'un bénéficiaire à partir de ses réponses.
+    """
+    raisons = []
+    try:
+        responses = beneficiary.responses.select_related("question").all()
+        for response in responses:
+            valeur = _extraire_valeur_reponse(response)
+            if _est_reponse_vulnerable(valeur):
+                raisons.append(response.question.label)
+    except Exception:
+        pass
+    return raisons[:3]
+
+
 def validate_agent_permissions(user, campaign, zone, formulaire):
     """
     Vérifie que l'agent a les droits pour créer un bénéficiaire.
@@ -372,8 +439,7 @@ def sync_pending_beneficiaries(pending_data_list, user):
 
 def calculate_ai_score(beneficiary):
     """
-    Calcule le score IA d'un bénéficiaire.
-    À implémenter selon les critères du projet.
+    Calcule le score IA d'un bénéficiaire selon les critères du projet.
 
     Args:
         beneficiary: Instance de Beneficiary
@@ -381,24 +447,91 @@ def calculate_ai_score(beneficiary):
     Returns:
         Decimal: Score entre 0 et 100
     """
-    # TODO: Implémenter la logique de calcul du score IA
-    # Basé sur :
-    # - Les réponses (FormResponse)
-    # - Les critères du projet (ProjectCriteria)
-    # - La campagne
-    # - La zone
+    try:
+        from decimal import Decimal
+        project = beneficiary.campagne.projet
+        criteria = list(project.criteres.filter(actif=True).values_list("nom", "poids"))
+        if not criteria:
+            return Decimal("50.00")
 
-    # Pour l'instant, retourner un score par défaut
-    return Decimal("50.00")
+        responses = {
+            r.question.label.lower(): r
+            for r in beneficiary.responses.select_related("question").all()
+        }
+
+        score = Decimal("0")
+        matched_weights = Decimal("0")
+
+        for nom, poids in criteria:
+            label = nom.lower()
+            response = responses.get(label)
+            if not response:
+                continue
+
+            valeur = _extraire_valeur_reponse(response)
+            if _est_reponse_vulnerable(valeur):
+                score += Decimal(str(poids))
+            matched_weights += Decimal(str(poids))
+
+        if matched_weights == 0:
+            return Decimal("50.00")
+
+        max_score = sum(Decimal(str(p)) for _, p in criteria)
+        if max_score == 0:
+            return Decimal("50.00")
+
+        return min((score / max_score) * Decimal("100"), Decimal("100"))
+    except Exception:
+        return Decimal("50.00")
+
+
+def _extraire_valeur_reponse(response):
+    """
+    Extrait la valeur lisible d'une FormResponse.
+    """
+    if response.value_boolean is not None:
+        return response.value_boolean
+    if response.value_number is not None:
+        return response.value_number
+    if response.value_text:
+        return response.value_text.lower()
+    if response.value_json:
+        return response.value_json
+    if response.value_date:
+        return response.value_date
+    return None
+
+
+def _est_reponse_vulnerable(valeur):
+    """
+    Détermine si une réponse indique une vulnérabilité.
+    """
+    if valeur is None:
+        return False
+
+    if isinstance(valeur, bool):
+        return valeur is True
+
+    if isinstance(valeur, (int, float, Decimal)):
+        return float(valeur) < 0
+
+    texte = str(valeur).lower()
+    valeurs_vulnerables = [
+        "oui", "true", "1", "handicap", "malade", "maladie",
+        "faible", "très faible", "tres faible", "sans emploi",
+        "moins de 5", "moins de 5 ans", "enfant", "personne âgée",
+        "personne agee", "foyer nombreux", "veuf", "orphelin",
+        "déplacé", "deplace", "réfugié", "refugie", "sans abri",
+        "sans domicile", "chronique", "grave", "critique",
+    ]
+    return any(v in texte for v in valeurs_vulnerables)
 
 
 def update_ai_score(beneficiary):
     """
     Met à jour le score IA d'un bénéficiaire.
-
     Args:
         beneficiary: Instance de Beneficiary
-
     Returns:
         Beneficiary: Le bénéficiaire avec score mis à jour
     """

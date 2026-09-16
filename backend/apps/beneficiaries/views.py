@@ -69,6 +69,13 @@ class BeneficiaryListCreateView(APIView):
                 "campagne", "zone", "created_by"
             ).order_by("-created_at")
 
+            beneficiaries |= Beneficiary.objects.filter(
+                created_by=request.user,
+                organization=request.user.organization,
+            ).select_related(
+                "campagne", "zone", "created_by"
+            ).order_by("-created_at")
+
         else:  # GERANT
             beneficiaries = Beneficiary.objects.filter(
                 organization=request.user.organization,

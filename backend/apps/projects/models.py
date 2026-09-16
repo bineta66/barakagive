@@ -4,7 +4,17 @@ from django.conf import settings
 
 class ProjectCriteria(models.Model):
 
-    name = models.CharField(max_length=200, unique=True)
+    projet = models.ForeignKey(
+        "Project",
+        on_delete=models.CASCADE,
+        related_name="criteres",
+    )
+
+    nom = models.CharField(max_length=200)
+
+    poids = models.PositiveIntegerField()
+
+    actif = models.BooleanField(default=True)
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -14,8 +24,11 @@ class ProjectCriteria(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ("projet", "nom")
+
     def __str__(self):
-        return self.name
+        return f"{self.projet} - {self.nom}"
 
 
 class Project(models.Model):
@@ -65,12 +78,6 @@ class Project(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     archived = models.BooleanField(default=False)
-
-    criteria = models.ManyToManyField(
-        ProjectCriteria,
-        related_name="projects",
-        blank=True,
-    )
 
     def __str__(self):
         return f"{self.code} - {self.name}"

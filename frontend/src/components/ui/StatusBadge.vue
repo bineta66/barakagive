@@ -27,6 +27,7 @@ const badgeClass = computed(() => {
       return "bg-emerald-600 text-white"
     case "En cours":
     case "EN COURS":
+    case "EN_COURS":
     case "Budgété":
     case "Budgétisé":
     case "Élevé":
@@ -36,16 +37,24 @@ const badgeClass = computed(() => {
     case "PLANIFIÉ":
     case "Planifiée":
     case "PLANIFIÉE":
+    case "PLANIFIER":
     case "À budgétiser":
       return "bg-bleu-nuit text-white"
     case "Terminé":
     case "TERMINÉ":
     case "Terminée":
     case "TERMINÉE":
+    case "TERMINE":
     case "Archivé":
     case "Archivée":
     case "ARCHIVE":
       return "bg-gray-500 text-white"
+    case "BROUILLON":
+    case "Brouillon":
+      return "bg-amber-100 text-amber-800"
+    case "ANNULEE":
+    case "Annulée":
+      return "bg-red-100 text-red-800"
     case "Inactif":
     case "INACTIF":
     case "SUSPENDED":

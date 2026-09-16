@@ -13,6 +13,7 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectCriteria)
 class ProjectCriteriaAdmin(admin.ModelAdmin):
-    list_display = ["name", "created_by", "created_at"]
-    search_fields = ["name"]
+    list_display = ["projet", "nom", "poids", "actif", "created_by", "created_at"]
+    list_filter = ["actif", "projet"]
+    search_fields = ["nom", "projet__name"]
     readonly_fields = ["created_by", "created_at"]

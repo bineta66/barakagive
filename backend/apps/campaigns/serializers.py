@@ -31,7 +31,7 @@ class CampagneAffectationSerializer(serializers.ModelSerializer):
 class AgentAssignmentInputSerializer(serializers.Serializer):
     """Données reçues lors de l'affectation d'un agent."""
 
-    agent_id = serializers.UUIDField()
+    agent_id = serializers.IntegerField()
     zone = serializers.CharField(max_length=150, required=False, allow_blank=True)
     objectif = serializers.IntegerField(min_value=0, default=0)
 
@@ -44,7 +44,7 @@ class AgentCampagneSerializer(serializers.ModelSerializer):
     zone = serializers.SerializerMethodField()
     objectif = serializers.SerializerMethodField()
     collectes = serializers.IntegerField(read_only=True)
-    statut = serializers.SerializerMethodField()
+    statut = serializers.CharField(read_only=True)
 
     class Meta:
         model = Campaign
@@ -52,14 +52,6 @@ class AgentCampagneSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return None
-
-    def get_statut(self, obj):
-        today = timezone.now().date()
-        if obj.date_fin < today:
-            return "TERMINE"
-        if obj.date_debut > today:
-            return "EN_ATTENTE"
-        return "EN_COURS"
 
     def get_zone(self, obj):
         assignment = obj.affectations.all().first()
@@ -111,6 +103,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
 
     projet = serializers.SerializerMethodField()
     zones_count = serializers.SerializerMethodField()
+    statut = serializers.CharField(read_only=True)
 
     class Meta:
         model = Campaign
@@ -122,6 +115,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "zones_count",
             "date_debut",
             "date_fin",
+            "statut",
         ]
 
     def get_projet(self, obj):
@@ -163,6 +157,7 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             "created_by",
             "created_at",
             "updated_at",
+            "statut",
         ]
 
     def get_regions(self, obj):
