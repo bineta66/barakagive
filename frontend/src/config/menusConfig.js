@@ -1,4 +1,4 @@
-﻿import {
+import {
   LayoutDashboard,
   FolderKanban,
   ClipboardList,
@@ -17,7 +17,7 @@
   CreditCard,
   Smartphone,
   Cloud,
-  RefreshCw,
+  RefreshCw
 } from "lucide-vue-next";
 
 export const menusConfig = {

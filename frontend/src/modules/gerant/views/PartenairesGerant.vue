@@ -187,6 +187,7 @@ import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
 import PartenaireFormModal from '@/modules/gerant/components/partenaires/PartenaireFormModal.vue'
+import ExecutiveOrbitalIA from '@/components/ia/ExecutiveOrbitalIA.vue'
 
 const store = useGerantStore()
 
@@ -296,6 +297,8 @@ watch([search, filtreStatut, filtreDomaine], () => {
   currentPage.value = 1
 })
 </script>
+
+<ExecutiveOrbitalIA />
 
 
 

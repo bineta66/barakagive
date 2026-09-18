@@ -91,7 +91,7 @@
         <div>
           <h3 class="text-xl font-bold text-or mb-4 pb-2 border-b">3. Calendrier</h3>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Date de début *</label>
               <input
@@ -110,6 +110,21 @@
                 required
                 class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 text-sm"
               />
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Statut *</label>
+              <select
+                v-model="form.statut"
+                required
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm"
+              >
+                <option value="BROUILLON">Brouillon</option>
+                <option value="PLANIFIER">Planifiée</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="TERMINE">Terminée</option>
+                <option value="ANNULEE">Annulée</option>
+              </select>
             </div>
           </div>
         </div>
@@ -163,6 +178,8 @@
       </form>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -171,6 +188,7 @@ import { useRouter } from "vue-router"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useCampaignStore } from "@/stores/campaign.js"
 import { useProjectStore } from "@/stores/project.js"
 import { useZoneStore } from "@/stores/zone.js"
@@ -192,6 +210,7 @@ const form = reactive({
   date_debut: "",
   date_fin: "",
   agents: [],
+  statut: "PLANIFIER",
 })
 
 onMounted(async () => {
@@ -226,6 +245,7 @@ try {
       date_debut: form.date_debut,
       date_fin: form.date_fin,
       agents: form.agents.map((id) => ({ agent_id: id, zone: "", objectif: 0 })),
+      statut: form.statut,
     })
 
     feedback.type = "success"

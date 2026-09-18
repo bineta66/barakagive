@@ -188,6 +188,7 @@ import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
 import BailleurFormModal from '@/modules/gerant/components/bailleurs/BailleurFormModal.vue'
+import ExecutiveOrbitalIA from '@/components/ia/ExecutiveOrbitalIA.vue'
 
 const store = useGerantStore()
 const { formatMontant } = store
@@ -315,6 +316,8 @@ watch([search, filtreStatut, filtreType], () => {
   currentPage.value = 1
 })
 </script>
+
+<ExecutiveOrbitalIA />
 
 
 

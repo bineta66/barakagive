@@ -50,71 +50,75 @@
         </div>
 
         <!-- Fiche à droite -->
-        <div class="w-full lg:w-[340px] flex-shrink-0 overflow-y-auto">
-          <!-- Top 5 zones critiques -->
-          <div v-if="topZones.length > 0" class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs-sm mb-4">
-            <h3 class="font-semibold text-slate-900 mb-3">Top zones prioritaires</h3>
+        <div class="w-full lg:w-[360px] flex-shrink-0 overflow-y-auto space-y-4">
+          <div v-if="topZones.length" class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs-sm">
+            <h3 class="font-semibold text-slate-900 mb-2">Top 5 zones prioritaires</h3>
+            <p class="text-xs text-gray-500 mb-3">Classement par score total et bénéficiaires prioritaires.</p>
             <div class="space-y-2">
               <div
                 v-for="(zone, index) in topZones"
-                :key="zone.id || index"
-                class="flex justify-between items-center px-3 py-2 rounded-lg"
-                :class="(zone.scoreIA || 0) >= 80 ? 'bg-red-50 border border-red-100' : (zone.scoreIA || 0) >= 50 ? 'bg-orange-50 border border-orange-100' : 'bg-or/10 border border-or/30'"
+                :key="zone.nom || index"
+                class="rounded-lg border border-slate-100 p-3"
+                :class="(zone.urgenceClass || 'bg-or/10')"
               >
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-bold text-gray-400 w-4">{{ index + 1 }}</span>
-                  <span class="text-sm font-semibold text-slate-900">{{ zone.nom }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs text-gray-600">{{ zone.beneficiairesCount }} bénéf.</span>
-                  <span
-                    class="px-2 py-0.5 rounded text-xs font-semibold"
-                    :class="(zone.scoreIA || 0) >= 80 ? 'bg-red-100 text-red-700' : (zone.scoreIA || 0) >= 50 ? 'bg-orange-100 text-orange-700' : 'bg-or/10 text-or'"
-                  >
-                    {{ (zone.scoreIA || 0) >= 80 ? 'Critique' : (zone.scoreIA || 0) >= 50 ? 'Élevé' : 'Normal' }}
+                <div class="flex items-center justify-between mb-1">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-400 w-4">{{ index + 1 }}</span>
+                    <span class="text-sm font-semibold text-slate-900">{{ zone.nom }}</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="zone.urgenceBadge">
+                    {{ zone.urgence }}
                   </span>
                 </div>
+                <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+                  <span>Score total : <span class="font-semibold">{{ zone.score_total }}</span></span>
+                  <span>{{ zone.beneficiairesCount }} bénéf.</span>
+                </div>
+                <button
+                  type="button"
+                  class="text-xs font-semibold text-bleu-nuit hover:underline"
+                  @click="ouvrirZone(zone)"
+                >
+                  Voir plus
+                </button>
               </div>
             </div>
           </div>
 
-          <!-- Bouton Évaluer -->
-          <button
-            @click="showEvalPanel = !showEvalPanel"
-            :disabled="!selectedRegion"
-            class="w-full h-11 bg-bleu-nuit text-white rounded-xl text-sm font-semibold hover:bg-[#01111eff] disabled:opacity-50 transition flex items-center justify-center gap-2 mb-4"
-          >
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
-            Évaluer
-          </button>
-
-          <!-- Panneau IA -->
-          <div v-if="showEvalPanel" class="bg-bleu-nuit text-white rounded-xl p-4 shadow-xs-sm">
-            <h4 class="font-semibold mb-3 flex items-center gap-2">
-              <div class="w-2 h-2 bg-emerald-400 rounded-full"></div>
-              Analyse IA - {{ selectedRegion || 'Toutes les régions' }}
-            </h4>
-            <p class="text-sm text-gray-300 leading-relaxed">
-              {{ evalText }}
-            </p>
-            <div class="mt-3 pt-3 border-t border-gray-700">
-              <p class="text-xs text-gray-400">Synthèse générée à partir des données terrain réelles.</p>
-            </div>
+          <div v-else class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs-sm">
+            <p class="text-xs text-gray-500">Aucune zone prioritaire identifiée pour le moment.</p>
           </div>
 
-          <!-- Carte IA de priorisation -->
-          <IAPrioritisationCard
-            :campagneId="firstCampaignId"
-            :projetId="firstProjetId"
-            :zones="zonesForIA"
-            class="mt-4"
-          />
+          <div v-if="selectedZone" class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs-sm">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="font-semibold text-slate-900">Bénéficiaires prioritaires - {{ selectedZone.nom }}</h3>
+              <button type="button" class="text-xs text-gray-500 hover:text-slate-900" @click="fermerZone">Fermer</button>
+            </div>
+            <p class="text-xs text-gray-500 mb-3">Top 5 bénéficiaires les plus urgents, avec les raisons issues des critères et réponses.</p>
+            <div v-if="selectedZone.beneficiaires?.length" class="space-y-2">
+              <div v-for="benef in selectedZone.beneficiaires" :key="benef.id || benef.nom" class="rounded-lg border border-slate-100 p-2">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-sm font-semibold text-slate-900">{{ benef.nom }}</span>
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold" :class="benef.score >= 80 ? 'bg-red-100 text-red-700' : benef.score >= 50 ? 'bg-orange-100 text-orange-700' : 'bg-or/10 text-or'">
+                    {{ benef.score }}
+                  </span>
+                </div>
+                <div v-if="benef.raisons?.length" class="text-xs text-gray-600">
+                  <span class="font-semibold">Pourquoi :</span>
+                  <ul class="list-disc list-inside mt-1 space-y-1">
+                    <li v-for="(raison, idx) in benef.raisons" :key="idx">{{ raison }}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <p v-else class="text-xs text-gray-500">Aucun bénéficiaire prioritaire à afficher pour cette zone.</p>
+          </div>
         </div>
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -122,8 +126,9 @@ import { ref, computed, onMounted } from "vue"
 import CarteSenegal from "@/modules/chef-projet/components/zones/CarteSenegal.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import IAPrioritisationCard from "@/modules/gerant/components/ia/IAPrioritisationCard.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import geoJsonRaw from "@/data/senegal-regions.geojson?raw"
+import api from "@/services/api.js"
 import { useBeneficiaryStore } from "@/stores/beneficiary.js"
 import { useZoneStore } from "@/stores/zone.js"
 import { useCampaignStore } from "@/stores/campaign.js"
@@ -135,9 +140,9 @@ const campaignStore = useCampaignStore()
 const geoJsonSenegal = JSON.parse(geoJsonRaw)
 const carteRef = ref(null)
 const selectedRegion = ref("")
-const showEvalPanel = ref(false)
 const loading = ref(false)
 const error = ref(null)
+const zoneRanking = ref([])
 
 onMounted(async () => {
   loading.value = true
@@ -148,6 +153,18 @@ onMounted(async () => {
       zoneStore.fetchZones(),
       campaignStore.fetchCampaigns(),
     ])
+
+    const campaignId = campaignStore.campaigns?.[0]?.id
+    if (campaignId) {
+      try {
+        const response = await api.get(`/api/beneficiaries/zone-ranking/`, {
+          params: { campaign_id: campaignId },
+        })
+        zoneRanking.value = response.data || []
+      } catch {
+        zoneRanking.value = []
+      }
+    }
   } catch (err) {
     error.value = "Erreur lors du chargement des données."
   } finally {
@@ -194,58 +211,48 @@ const zonesPourCarte = computed(() => {
   })
 })
 
-const topZones = computed(() => {
-  const list = regionZones.value.map((z) => {
-    const benefs = beneficiaryStore.beneficiaries.filter((b) => (b.zone?.id || b.zone_id) === z.id)
-    const avgScore = benefs.length
-      ? Math.round(benefs.reduce((acc, b) => acc + (Number.isFinite(b.ai_score) ? b.ai_score : 0), 0) / benefs.length)
-      : 0
-    return {
-      ...z,
-      beneficiairesCount: benefs.length,
-      scoreIA: avgScore,
-    }
-  })
-
-  return list
-    .sort((a, b) => b.scoreIA - a.scoreIA || b.beneficiairesCount - a.beneficiairesCount)
-    .slice(0, 5)
-})
-
 const onRegionSelected = (payload) => {
-  selectedRegion.value = payload.region
-  showEvalPanel.value = false
+  selectedRegion.value = payload.region || ""
 }
 
-const evalText = computed(() => {
-  if (!selectedRegion.value) return "Sélectionnez une région pour générer une analyse IA."
-  const totalBenefs = regionBeneficiairesCount.value
-  const zoneCount = regionZones.value.length
-  const top = topZones.value[0]
+const urgencePourZone = (zone) => {
+  const score = zone.score_total || 0
+  const prioritaires = zone.beneficiaires_prioritaires || 0
+  if (score >= 200 || prioritaires >= 20) return { urgence: "Très élevée", classe: "bg-red-50", badge: "bg-red-100 text-red-700" }
+  if (score >= 100 || prioritaires >= 10) return { urgence: "Élevée", classe: "bg-orange-50", badge: "bg-orange-100 text-orange-700" }
+  if (score >= 50 || prioritaires >= 5) return { urgence: "Moyenne", classe: "bg-or/10", badge: "bg-or/10 text-or" }
+  return { urgence: "Faible", classe: "bg-gray-50", badge: "bg-gray-100 text-gray-700" }
+}
 
-  let text = `Région ${selectedRegion.value} : ${totalBenefs} bénéficiaire(s) recensé(s) dans ${zoneCount} zone(s). `
-  if (top && top.beneficiairesCount > 0) {
-    text += `La zone avec la plus grande affluence est ${top.nom} avec ${top.beneficiairesCount} bénéficiaire(s). `
-  } else {
-    text += "Aucun regroupement critique identifié à ce stade. "
-  }
-  text += "Le déploiement des campagnes et la distribution de secours peuvent se poursuivre selon le planning établi."
-  return text
+const topZones = computed(() => {
+  const ranking = (zoneRanking.value || []).slice(0, 5)
+  return ranking.map((zone) => {
+    const info = urgencePourZone(zone)
+    return {
+      nom: zone.nom,
+      score_total: zone.score_total || 0,
+      beneficiairesCount: zone.beneficiaires_prioritaires || 0,
+      urgence: info.urgence,
+      urgenceClass: info.classe,
+      urgenceBadge: info.badge,
+      beneficiaires: (zone.top5 || []).map((b) => ({
+        id: b.id,
+        nom: b.nom,
+        score: b.score || 0,
+        raisons: b.raisons || [],
+      })),
+    }
+  })
 })
 
-const firstCampaignId = computed(() => campaignStore.campaigns?.[0]?.id || null)
-const firstProjetId = computed(() => {
-  const first = campaignStore.campaigns?.[0]
-  return first?.projet?.id || first?.projet_id || null
-})
-const zonesForIA = computed(() =>
-  zoneStore.zones.map((z) => ({
-    nom: z.nom,
-    urgence: "Moyenne",
-    score_total: 0,
-    beneficiaires_prioritaires: 0,
-    top5: [],
-  }))
-)
+const selectedZone = ref(null)
+
+const ouvrirZone = (zone) => {
+  selectedZone.value = zone
+}
+
+const fermerZone = () => {
+  selectedZone.value = null
+}
 </script>
 

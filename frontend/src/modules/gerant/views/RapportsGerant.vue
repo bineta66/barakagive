@@ -88,7 +88,10 @@
 import { FileText, BarChart3, Download, Eye } from 'lucide-vue-next'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
+import ExecutiveOrbitalIA from '@/components/ia/ExecutiveOrbitalIA.vue'
 </script>
+
+<ExecutiveOrbitalIA />
 
 
 

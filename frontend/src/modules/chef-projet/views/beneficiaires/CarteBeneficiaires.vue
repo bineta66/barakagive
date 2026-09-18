@@ -18,6 +18,8 @@
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -25,6 +27,7 @@ import { useBeneficiaires } from "@/composables/useBeneficiaires.js"
 import BeneficiaireHeader from "@/modules/chef-projet/components/beneficiaires/BeneficiaireHeader.vue"
 import SenegalMap from "@/modules/chef-projet/components/beneficiaires/SenegalMap.vue"
 import ZoneSummaryCard from "@/modules/chef-projet/components/beneficiaires/ZoneSummaryCard.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 
 const {
   regions,

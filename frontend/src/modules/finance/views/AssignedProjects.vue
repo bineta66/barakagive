@@ -75,6 +75,7 @@ import { FolderKanban, PiggyBank, Activity, Receipt } from 'lucide-vue-next'
 import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
 import ProjectFilters from '../components/projets/ProjectFilters.vue'
 import ProjectsTable from '../components/projets/ProjectsTable.vue'
+import FinancialOrbital from '@/components/ia/FinancialOrbital.vue'
 
 const searchQuery = ref('')
 const selectedStatut = ref('')
@@ -140,4 +141,6 @@ watch([searchQuery, selectedStatut, selectedChef], () => {
   currentPage.value = 1
 })
 </script>
+
+<FinancialOrbital />
 

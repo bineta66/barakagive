@@ -289,6 +289,7 @@
       @fermer="critereModalOuvert = false"
       @cree="onCritereCree"
     />
+    <ExecutiveOrbitalIA />
   </div>
 </template>
 
@@ -306,6 +307,7 @@ import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import BoutonTertiary from "@/components/ui/BoutonTertiary.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
 import CritereVulnerabiliteModal from "@/modules/gerant/components/projets/CritereVulnerabiliteModal.vue"
+import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const router = useRouter()
 const store = useGerantStore()

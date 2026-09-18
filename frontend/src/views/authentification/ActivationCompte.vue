@@ -47,95 +47,85 @@
           </p>
 
           <!-- Formulaire -->
-          <form @submit.prevent="activateAccount" class="space-y-6">
-            <!-- Nouveau mot de passe -->
-            <div>
-              <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
-                Nouveau mot de passe
-              </label>
+  <form @submit.prevent="activateAccount" class="space-y-6">
+    <div>
+      <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
+        Nouveau mot de passe
+      </label>
+      <div class="relative">
+        <input
+          :type="showPassword ? 'text' : 'password'"
+          v-model="form.password"
+          class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-or/30"
+          placeholder="********"
+          required
+        />
+        <button
+          type="button"
+          @click="showPassword = !showPassword"
+          class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+        >
+          {{ showPassword ? "Masquer" : "Afficher" }}
+        </button>
+      </div>
+    </div>
 
-              <div class="relative">
-                <input
-                  :type="showPassword ? 'text' : 'password'"
-                  v-model="form.password"
-                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-or/30"
-                    placeholder="********"
-                />
+    <div>
+      <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
+        Confirmation du mot de passe
+      </label>
+      <div class="relative">
+        <input
+          :type="showConfirm ? 'text' : 'password'"
+          v-model="form.confirmPassword"
+          class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-or/30"
+          placeholder="********"
+          required
+        />
+        <button
+          type="button"
+          @click="showConfirm = !showConfirm"
+          class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
+        >
+          {{ showConfirm ? "Masquer" : "Afficher" }}
+        </button>
+      </div>
+    </div>
 
-                <button
-                  type="button"
-                  @click="showPassword = !showPassword"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                >
-                    {{ showPassword ? "Masquer" : "Afficher" }}
-                </button>
-              </div>
-            </div>
+    <AlertMessage
+      v-if="errorMessage"
+      type="error"
+      :message="errorMessage"
+      :dismissible="true"
+      @dismiss="errorMessage = ''"
+    />
+    <AlertMessage
+      v-if="successMessage"
+      type="success"
+      :message="successMessage"
+    />
 
-            <!-- Confirmation -->
-            <div>
-              <label class="block text-xs font-bold uppercase text-gray-800 mb-2">
-                Confirmation du mot de passe
-              </label>
+    <div class="flex items-start gap-2 text-xs text-gray-700">
+      <input type="checkbox" checked disabled class="mt-1" />
+      <p>Le mot de passe doit comporter au moins 8 caractères.</p>
+    </div>
 
-              <div class="relative">
-                <input
-                  :type="showConfirm ? 'text' : 'password'"
-                  v-model="form.confirmPassword"
-                  class="w-full h-12 rounded-md border border-slate-300 px-4 pr-12 focus:outline-none focus:ring-2 focus:ring-or/30"
-                    placeholder="********"
-                />
+    <button
+      type="submit"
+      :disabled="loading"
+      class="w-full h-12 rounded-md bg-or hover:bg-[#6b4203] text-white font-semibold uppercase transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      <span v-if="loading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+      <span>{{ loading ? "Activation en cours..." : "Activer mon compte" }}</span>
+    </button>
 
-                <button
-                  type="button"
-                  @click="showConfirm = !showConfirm"
-                  class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
-                >
-                    {{ showConfirm ? "Masquer" : "Afficher" }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Messages d'alerte -->
-            <AlertMessage
-              v-if="errorMessage"
-              type="error"
-              :message="errorMessage"
-              :dismissible="true"
-              @dismiss="errorMessage = ''"
-            />
-            <AlertMessage
-              v-if="successMessage"
-              type="success"
-              :message="successMessage"
-            />
-
-            <!-- Information -->
-            <div class="flex items-start gap-2 text-xs text-gray-700">
-              <input type="checkbox" checked disabled class="mt-1" />
-              <p>
-                Le mot de passe doit comporter au moins 8 caractères.
-              </p>
-            </div>
-
-            <!-- Bouton -->
-            <button
-              type="submit"
-              :disabled="loading"
-              class="w-full h-12 rounded-md bg-or hover:bg-[#6b4203] text-white font-semibold uppercase transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <span v-if="loading" class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <span>{{ loading ? "Activation en cours..." : "Activer mon compte" }}</span>
-            </button>
-
-            <!-- Retour -->
-            <RouterLink
-              to="/connexion"
-              class="flex h-12 items-center justify-center rounded-md border border-bleu-nuit text-bleu-nuit font-bold text-sm hover:bg-bleu-nuit/10 transition"
-            >
-              Retour à la connexion
-            </RouterLink>
-          </form>
+    <RouterLink
+      to="/connexion"
+      class="flex h-12 items-center justify-center rounded-md border border-bleu-nuit text-bleu-nuit font-bold text-sm hover:bg-bleu-nuit/10 transition"
+    >
+      Retour à la connexion
+    </RouterLink>
+  </form>
         </div>
 
         <!-- Footer -->
@@ -176,9 +166,9 @@ const form = reactive({
 })
 
 onMounted(() => {
-  const queryToken = route.query.token
-  if (queryToken) {
-    token.value = String(queryToken)
+  const routeToken = route.params.token || route.query.token
+  if (routeToken) {
+    token.value = String(routeToken)
   }
 })
 

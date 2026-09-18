@@ -20,11 +20,14 @@
     <!-- Chart Section -->
     <FinanceEvolutionChart />
   </div>
+
+  <FinancialOrbital />
 </template>
 
 <script setup>
 import DashboardKpiCards from "@/modules/finance/components/DashboardKpiCards.vue"
 import FinanceEvolutionChart from "@/modules/finance/components/FinanceEvolutionChart.vue"
+import FinancialOrbital from "@/components/ia/FinancialOrbital.vue"
 </script>
 
 

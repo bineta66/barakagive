@@ -67,9 +67,6 @@
       </select>
     </div>
 
-    <!-- Analyse budgétaire IA -->
-    <IABudgetCard :projetId="firstFinanceProjectId" />
-
     <!-- Tableau -->
     <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
       <table class="w-full">
@@ -160,6 +157,8 @@
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -167,8 +166,8 @@ import { ref, computed, watch } from "vue"
 import { Wallet, Activity, PiggyBank, Search, Eye } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
 import StatutProjet from "@/modules/chef-projet/components/projets/StatutProjet.vue"
-import IABudgetCard from "@/modules/gerant/components/ia/IABudgetCard.vue"
 import { useFinances } from "@/composables/useFinances.js"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 
 const {
   recherche,

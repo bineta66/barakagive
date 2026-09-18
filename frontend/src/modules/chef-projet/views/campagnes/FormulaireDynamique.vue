@@ -97,13 +97,15 @@
       </div>
     </div>
 
-    <TypeQuestionModal
+<TypeQuestionModal
       :ouvert="modalOuvert"
       :types-questions="typesQuestions"
       @selectionner="ajouterNouvelleQuestion"
       @fermer="fermerModal"
     />
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -114,6 +116,7 @@ import { useFormStore } from "@/stores/form.js"
 import { useCampaignStore } from "@/stores/campaign.js"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import FormBuilder from "@/modules/chef-projet/components/campagnes/FormBuilder.vue"
 import ApercuFormulaire from "@/modules/chef-projet/components/campagnes/ApercuFormulaire.vue"
 import TypeQuestionModal from "@/modules/chef-projet/components/campagnes/TypeQuestionModal.vue"

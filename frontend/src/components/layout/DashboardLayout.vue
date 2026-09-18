@@ -34,19 +34,43 @@
         <Navbar />
       </header>
 
+      <!-- Trial Banner - Gérant only -->
+      <TrialBanner v-if="isGerant" />
+
       <main class="flex-1 p-4 sm:p-6">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <component :is="Component" />
+        </router-view>
       </main>
     </div>
+
+    <!-- Executive Orbital IA - Gérant only -->
+    <ExecutiveOrbitalIA v-if="isGerant" />
+
+    <!-- Financial Orbital - Responsable Finance only -->
+    <FinancialOrbital v-if="isFinance" />
+
+    <!-- Operational Orbital IA - Chef de Projet only -->
+    <OperationalOrbitalIA v-if="isChefProjet" />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, computed } from "vue"
+import { useAuthStore } from "@/stores/auth"
 import Sidebar from "@/components/layout/Sidebar.vue"
 import Navbar from "@/components/layout/Navbar.vue"
+import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
+import FinancialOrbital from "@/components/ia/FinancialOrbital.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
+import TrialBanner from "@/components/payment/TrialBanner.vue"
 
 const mobileOpen = ref(false)
+const authStore = useAuthStore()
+
+const isGerant = computed(() => authStore.role === "GERANT")
+const isFinance = computed(() => authStore.role === "FINANCE")
+const isChefProjet = computed(() => authStore.role === "CHEF_PROJET")
 </script>
 
 <style scoped>

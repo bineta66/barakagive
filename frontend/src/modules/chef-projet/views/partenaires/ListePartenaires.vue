@@ -89,6 +89,8 @@
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -97,6 +99,7 @@ import { Plus, Search, Users, Trash2 } from "lucide-vue-next"
 import StatusBadge from "@/components/ui/StatusBadge.vue"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonTertiary from "@/components/ui/BoutonTertiary.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 
 const recherche = ref("")
 const filtreStatut = ref("Tous les statuts")

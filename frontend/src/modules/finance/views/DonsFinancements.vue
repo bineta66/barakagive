@@ -190,6 +190,7 @@ import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
 import DonFormModal from '@/modules/finance/components/dons/DonFormModal.vue'
+import FinancialOrbital from '@/components/ia/FinancialOrbital.vue'
 
 const store = useFinanceStore()
 const { formatMontant } = store
@@ -298,5 +299,7 @@ watch([search, filtreStatut, filtreProjet], () => {
   currentPage.value = 1
 })
 </script>
+
+<FinancialOrbital />
 
 

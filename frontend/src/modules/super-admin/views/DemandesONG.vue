@@ -101,9 +101,20 @@
                 {{ demande.created_at ? new Date(demande.created_at).toLocaleDateString('fr-FR') : '-' }}
               </td>
               <td class="px-4 py-3">
-                <span class="inline-block px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-full">
-                  En attente
-                </span>
+                <div class="flex items-center gap-2">
+                  <button
+                    @click="approve(demande.id)"
+                    class="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                  >
+                    Approuver
+                  </button>
+                  <button
+                    @click="reject(demande.id)"
+                    class="px-3 py-1.5 rounded-md bg-red-600 text-white text-xs font-semibold hover:bg-red-700"
+                  >
+                    Rejeter
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -129,5 +140,12 @@ const { ongs, demandesONG, ongsActives, loading, error } = storeToRefs(store)
 onMounted(() => {
   store.fetchAll()
 })
+
+const approve = async (id) => {
+  await store.approveONG(id)
+}
+const reject = async (id) => {
+  await store.rejectONG(id)
+}
 </script>
 

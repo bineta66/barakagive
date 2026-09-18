@@ -187,6 +187,7 @@ import { useGerantStore } from "@/modules/gerant/stores/gerantStore.js"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import EmptyState from "@/components/ui/EmptyState.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const store = useGerantStore()
 const search = ref("")
@@ -243,4 +244,6 @@ onMounted(async () => {
   }
 })
 </script>
+
+<ExecutiveOrbitalIA />
 

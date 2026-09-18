@@ -17,12 +17,15 @@
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
 import { useBeneficiaires } from "@/composables/useBeneficiaires.js"
 import ZoneSummaryCard from "@/modules/chef-projet/components/beneficiaires/ZoneSummaryCard.vue"
 import UrgentBeneficiaries from "@/modules/chef-projet/components/beneficiaires/UrgentBeneficiaries.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 
 const {
   zoneSelectionnee,

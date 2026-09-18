@@ -9,6 +9,7 @@ import PartenairesGerant from "./views/PartenairesGerant.vue";
 import BailleursGerant from "./views/BailleursGerant.vue";
 import FinancesGerant from "./views/FinancesGerant.vue";
 import RapportsGerant from "./views/RapportsGerant.vue";
+import paymentRoutes from "./router/payment.js";
 
 const routes = [
   {
@@ -76,6 +77,7 @@ const routes = [
         name: "gerant-rapports",
         component: RapportsGerant,
       },
+      ...paymentRoutes,
     ],
   },
 ];

@@ -52,7 +52,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+<div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-bold uppercase text-gray-800 mb-2">Date de début *</label>
             <input
@@ -72,6 +72,21 @@
               required
             />
           </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-gray-800 mb-2">Statut *</label>
+            <select
+              v-model="form.statut"
+              class="w-full h-12 rounded-md border border-slate-300 px-4 text-sm"
+              required
+            >
+              <option value="BROUILLON">Brouillon</option>
+              <option value="PLANIFIER">Planifiée</option>
+              <option value="EN_COURS">En cours</option>
+              <option value="TERMINE">Terminée</option>
+              <option value="ANNULEE">Annulée</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -90,9 +105,11 @@
         >
           {{ submitting ? "Enregistrement..." : "Enregistrer les modifications" }}
         </button>
-      </form>
+</form>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -102,6 +119,7 @@ import { List } from "lucide-vue-next"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useCampaignStore } from "@/stores/campaign.js"
 import { useZoneStore } from "@/stores/zone.js"
 
@@ -120,17 +138,19 @@ const form = reactive({
   zone_ids: [],
   date_debut: "",
   date_fin: "",
+  statut: "PLANIFIER",
 })
 
 onMounted(async () => {
   loading.value = true
   try {
     await zoneStore.fetchZones()
-    const data = await campaignStore.fetchCampaign(route.params.id)
+const data = await campaignStore.fetchCampaign(route.params.id)
     form.nom = data.nom || ""
     form.description = data.description || ""
     form.date_debut = data.date_debut || ""
     form.date_fin = data.date_fin || ""
+    form.statut = data.statut || "PLANIFIER"
     form.zone_ids = (data.zones || []).map((z) => z.id)
   } catch (err) {
     feedback.type = "error"
@@ -144,12 +164,13 @@ const modifierCampagne = async () => {
   submitting.value = true
   feedback.message = ""
   try {
-    await campaignStore.updateCampaign(route.params.id, {
+await campaignStore.updateCampaign(route.params.id, {
       nom: form.nom,
       description: form.description,
       date_debut: form.date_debut,
       date_fin: form.date_fin,
       zone_ids: form.zone_ids,
+      statut: form.statut,
     })
     feedback.type = "success"
     feedback.message = "Campagne modifiée avec succès !"

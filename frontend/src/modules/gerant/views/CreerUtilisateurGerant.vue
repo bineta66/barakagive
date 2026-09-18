@@ -158,6 +158,7 @@ import { ArrowLeft, Mail, Phone } from "lucide-vue-next"
 import { useGerantStore } from "@/modules/gerant/stores/gerantStore.js"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const router = useRouter()
 const store = useGerantStore()
@@ -195,8 +196,10 @@ const soumettreFormulaire = async () => {
   } catch (err) {
     error.value = store.error || "Une erreur est survenue lors de la création de l'utilisateur."
   } finally {
-    loading.value = false
+loading.value = false
   }
+
 }
 </script>
 
+<ExecutiveOrbitalIA />

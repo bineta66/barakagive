@@ -28,6 +28,11 @@ export const useAuthStore = defineStore("auth", () => {
 
   const isAuthenticated = computed(() => !!accessToken.value)
   const role = computed(() => user.value?.role || null)
+  const isGerant = computed(() => user.value?.role === "GERANT")
+  const isFinance = computed(() => user.value?.role === "FINANCE")
+  const isChefProjet = computed(() => user.value?.role === "CHEF_PROJET")
+  const isSuperAdmin = computed(() => user.value?.role === "SUPER_ADMIN")
+  const isAgent = computed(() => user.value?.role === "AGENT")
   const nom = computed(() => {
     if (!user.value) return ""
     if (user.value.full_name) return user.value.full_name
@@ -143,6 +148,11 @@ export const useAuthStore = defineStore("auth", () => {
     error,
     isAuthenticated,
     role,
+    isGerant,
+    isFinance,
+    isChefProjet,
+    isSuperAdmin,
+    isAgent,
     nom,
     email,
     organizationId,

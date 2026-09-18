@@ -280,6 +280,7 @@ import StatusBadge from "@/components/ui/StatusBadge.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import EmptyState from "@/components/ui/EmptyState.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const store = useGerantStore()
 const { users, chefsProjet, responsablesFinance, agents, loading, error } = storeToRefs(store)
@@ -378,4 +379,6 @@ const getRoleBadgeClass = (role) => {
   }
 }
 </script>
+
+<ExecutiveOrbitalIA />
 

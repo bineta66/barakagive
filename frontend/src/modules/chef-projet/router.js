@@ -7,6 +7,7 @@ import ListeZones from "./views/zones/ListeZones.vue";
 import CreerZone from "./views/zones/CreerZone.vue";
 import ModifierZone from "./views/zones/ModifierZone.vue";
 import DetailZone from "./views/zones/DetailZone.vue";
+import ZoneAnalyseIA from "./views/zones/ZoneAnalyseIA.vue";
 import ListeCampagnes from "./views/campagnes/ListeCampagnes.vue";
 import CreerCampagne from "./views/campagnes/CreerCampagne.vue";
 import ModifierCampagne from "./views/campagnes/ModifierCampagne.vue";
@@ -66,6 +67,11 @@ const routes = [
         path: "zones/:id",
         name: "zones-detail",
         component: DetailZone,
+      },
+      {
+        path: "zones/analyse/:id",
+        name: "zones-analyse-ia",
+        component: ZoneAnalyseIA,
       },
       {
         path: "campagnes",

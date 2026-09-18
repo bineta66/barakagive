@@ -13,6 +13,12 @@
       </p>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
+
+<script setup>
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
+</script>
 
 

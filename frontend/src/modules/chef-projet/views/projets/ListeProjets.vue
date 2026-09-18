@@ -178,6 +178,8 @@
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -192,6 +194,7 @@ import {
 import TableauProjets from "@/modules/chef-projet/components/projets/TableauProjets.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useProjectStore } from "@/stores/project.js"
 import { useAuthStore } from "@/stores/auth.js"
 

@@ -213,6 +213,7 @@ import {
 import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
+import FinancialOrbital from '@/components/ia/FinancialOrbital.vue'
 import DepenseFormModal from '@/modules/finance/components/depenses/DepenseFormModal.vue'
 import JustificatifFormModal from '@/modules/finance/components/justificatifs/JustificatifFormModal.vue'
 
@@ -336,5 +337,7 @@ watch([search, filtreCategorie, filtreProjet], () => {
   currentPage.value = 1
 })
 </script>
+
+<FinancialOrbital />
 
 

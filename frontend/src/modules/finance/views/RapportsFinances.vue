@@ -159,6 +159,7 @@ import {
   TrendingUp,
 } from "lucide-vue-next"
 import { useFinanceStore } from "@/modules/finance/stores/financeStore.js"
+import FinancialOrbital from "@/components/ia/FinancialOrbital.vue"
 
 const store = useFinanceStore()
 const { formatMontant } = store
@@ -188,5 +189,7 @@ const badgeClass = (statut) => {
   }
 }
 </script>
+
+<FinancialOrbital />
 
 

@@ -26,10 +26,9 @@
       <div class="md:col-span-2"><p class="label">Objectif</p><p>{{ project.objectif }}</p></div>
       <div class="md:col-span-2"><p class="label">Description</p><p class="whitespace-pre-line">{{ project.description }}</p></div>
     </div>
-
-    <!-- Analyse budgétaire IA -->
-    <IABudgetCard :projetId="route.params.id" />
   </div>
+
+  <FinancialOrbital />
 </template>
 
 <script setup>
@@ -39,8 +38,8 @@ import { List } from "lucide-vue-next"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import IABudgetCard from "@/modules/gerant/components/ia/IABudgetCard.vue"
 import { financeService } from "@/modules/finance/services/financeService.js"
+import FinancialOrbital from "@/components/ia/FinancialOrbital.vue"
 
 const route = useRoute()
 const project = ref(null)
@@ -58,6 +57,8 @@ onMounted(async () => {
   }
 })
 </script>
+
+<FinancialOrbital />
 
 <style scoped>
 .label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #0f172a; margin-bottom: 0.25rem; }

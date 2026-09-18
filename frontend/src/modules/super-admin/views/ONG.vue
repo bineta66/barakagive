@@ -15,13 +15,7 @@
         >
           Actualiser
         </button>
-        <button
-          @click="ouvrirModalCreation"
-          class="px-4 py-2 bg-or hover:bg-[#6b4203] text-white text-sm font-semibold rounded-lg transition flex items-center gap-2 shadow-xs-sm"
-        >
-          <Plus :size="16" />
-          <span>Nouvelle ONG</span>
-        </button>
+    
       </div>
     </div>
 

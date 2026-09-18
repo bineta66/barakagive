@@ -8,7 +8,7 @@ export const useSuperAdminStore = defineStore("superAdmin", () => {
   const error = ref(null)
 
   const demandesONG = computed(() => {
-    return ongs.value.filter((o) => o.status === "PENDING")
+    return ongs.value.filter((o) => o.status === "EN_ATTENTE")
   })
 
   const ongsActives = computed(() => {
@@ -24,7 +24,7 @@ export const useSuperAdminStore = defineStore("superAdmin", () => {
     return {
       totalONG: total,
       ongActives: actives,
-      totalUtilisateurs: actives * 5, // Estimation basée sur les organisations actives
+      totalUtilisateurs: actives * 5,
       totalProjets: actives * 3,
       revenuMensuel: 0,
       tauxActivation: total > 0 ? Math.round((actives / total) * 100) : 0,
@@ -78,6 +78,34 @@ export const useSuperAdminStore = defineStore("superAdmin", () => {
     }
   }
 
+  const approveONG = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      await api.post(`/api/organizations/admin/${id}/approve/`)
+      await fetchAll().catch(() => {})
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const rejectONG = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      await api.post(`/api/organizations/admin/${id}/reject/`)
+      await fetchAll().catch(() => {})
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     ongs,
     demandesONG,
@@ -88,6 +116,9 @@ export const useSuperAdminStore = defineStore("superAdmin", () => {
     formatMontant,
     fetchAll,
     createONG,
+    approveONG,
+    rejectONG,
   }
 })
+
 

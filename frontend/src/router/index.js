@@ -32,6 +32,11 @@ const routes = [
     component: ActivationCompte,
   },
   {
+    path: "/activation/:token",
+    name: "activation-token",
+    component: ActivationCompte,
+  },
+  {
     path: "/activate",
     redirect: (to) => ({ path: "/activation-compte", query: to.query }),
   },
@@ -67,6 +72,7 @@ const publicPaths = [
   "/inscription",
   "/activation-compte",
   "/activate",
+  "/activation",
   "/reinitialisation",
 ];
 

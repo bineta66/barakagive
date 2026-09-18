@@ -117,6 +117,7 @@ import api, { getErrorMessage } from "@/services/api.js"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import EmptyState from "@/components/ui/EmptyState.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const authStore = useAuthStore()
 const store = useGerantStore()
@@ -150,4 +151,6 @@ onMounted(() => {
   chargerDonnees()
 })
 </script>
+
+<ExecutiveOrbitalIA />
 

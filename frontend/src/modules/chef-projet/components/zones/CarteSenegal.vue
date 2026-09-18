@@ -25,6 +25,7 @@
         fill-color="#DC2626"
         :fill-opacity="0.55"
         :weight="4"
+        @click="onZoneCircleClick(zone)"
       >
         <LTooltip v-if="mode === 'readonly'" permanent class="zone-tooltip">
           <div class="text-center">
@@ -172,6 +173,10 @@ const onFeatureClick = (event) => {
   if (mapInstance && layer.getBounds) {
     mapInstance.fitBounds(layer.getBounds(), { padding: [50, 50], maxZoom: 12 })
   }
+}
+
+const onZoneCircleClick = (zone) => {
+  emit("region-selected", { region: zone.region || "", departement: zone.departement || "" })
 }
 
 const onMapClick = (event) => {

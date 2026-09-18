@@ -85,6 +85,8 @@
       </div>
     </div>
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -95,6 +97,7 @@ import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useCampaignStore } from "@/stores/campaign.js"
 
 const route = useRoute()

@@ -24,29 +24,53 @@
 
     <LoadingSpinner v-if="zoneStore.loading && !zoneStore.zones.length" message="Chargement de la carte..." />
 
-    <!-- Carte -->
-    <div class="h-[calc(100vh-180px)] rounded-xl border border-slate-200/60 overflow-hidden">
-      <CarteSenegal
-        :geojson="geoJsonSenegal"
-        :zones="zoneStore.zones"
-        mode="readonly"
-      />
+    <div class="grid lg:grid-cols-3 gap-6">
+      <!-- Carte (2/3) -->
+      <div class="lg:col-span-2 h-[calc(100vh-180px)] rounded-xl border border-slate-200/60 overflow-hidden">
+        <CarteSenegal
+          :geojson="geoJsonSenegal"
+          :zones="zoneStore.zones"
+          mode="readonly"
+          @region-selected="onRegionSelected"
+        />
+      </div>
+
+      <!-- Zone Analysis Panel (1/3) -->
+      <div class="lg:col-span-1">
+        <ZoneAnalysisPanel
+          :selected-region="selectedRegion"
+          @zone-selected="goToZoneDetail"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from "vue"
+import { ref } from "vue"
 import { List, Plus } from "lucide-vue-next"
+import { useRouter } from "vue-router"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import CarteSenegal from "@/modules/chef-projet/components/zones/CarteSenegal.vue"
+import ZoneAnalysisPanel from "@/modules/chef-projet/components/zones/ZoneAnalysisPanel.vue"
 import { useZoneStore } from "@/stores/zone.js"
 import geoJsonSenegalRaw from "@/data/senegal-regions.geojson?raw"
 
+const router = useRouter()
 const zoneStore = useZoneStore()
 const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
+
+const selectedRegion = ref("")
+
+const onRegionSelected = (data) => {
+  selectedRegion.value = data.region
+}
+
+const goToZoneDetail = (zoneId) => {
+  router.push(`/chef-projet/zones/analyse/${zoneId}`)
+}
 
 onMounted(async () => {
   try {

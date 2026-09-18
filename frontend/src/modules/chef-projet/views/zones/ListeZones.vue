@@ -45,8 +45,10 @@
       </div>
     </div>
 
-    <TableauZones :zones="zonesFiltrees" @delete="onDelete" />
+<TableauZones :zones="zonesFiltrees" @delete="onDelete" />
   </div>
+
+  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -55,6 +57,7 @@ import { Plus } from "lucide-vue-next"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import TableauZones from "@/modules/chef-projet/components/zones/TableauZones.vue"
 import { useZoneStore } from "@/stores/zone.js"
 
