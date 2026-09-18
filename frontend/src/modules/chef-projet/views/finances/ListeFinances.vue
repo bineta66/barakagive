@@ -67,6 +67,9 @@
       </select>
     </div>
 
+    <!-- Analyse budgétaire IA -->
+    <IABudgetCard :projetId="firstFinanceProjectId" />
+
     <!-- Tableau -->
     <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
       <table class="w-full">
@@ -164,6 +167,7 @@ import { ref, computed, watch } from "vue"
 import { Wallet, Activity, PiggyBank, Search, Eye } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
 import StatutProjet from "@/modules/chef-projet/components/projets/StatutProjet.vue"
+import IABudgetCard from "@/modules/gerant/components/ia/IABudgetCard.vue"
 import { useFinances } from "@/composables/useFinances.js"
 
 const {
@@ -180,6 +184,8 @@ const {
   regions,
   reinitialiserFiltres,
 } = useFinances()
+
+const firstFinanceProjectId = computed(() => financesFiltrees.value[0]?.id || null)
 
 watch([recherche, filtreStatut, filtreProjet, filtreRegion], () => {
   pageCourante.value = 1

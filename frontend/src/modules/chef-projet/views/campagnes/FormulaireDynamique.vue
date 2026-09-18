@@ -48,18 +48,53 @@
     <LoadingSpinner v-if="loadingInit" message="Chargement du formulaire de campagne..." />
     <AlertMessage v-if="feedback.message" :type="feedback.type" :message="feedback.message" class="w-full mb-6" />
 
-    <div v-if="!loadingInit" class="self-stretch flex flex-col lg:flex-row justify-start items-start gap-8">
-      <FormBuilder
-        :questions="questions"
-        @ajouter-question="ouvrirModal"
-        @mettre-a-jour="mettreAJourQuestion"
-        @supprimer="supprimerQuestion"
-        @dupliquer="dupliquerQuestion"
-        @ajouter-option="ajouterOption"
-        @supprimer-option="supprimerOption"
-      />
+    <div v-if="!loadingInit" class="self-stretch flex flex-col gap-6">
+      <div v-if="formsList.length > 1 || showNewFormButton" class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-xs-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-sm font-bold uppercase text-slate-900">Formulaires de cette campagne</h3>
+            <p class="text-xs text-gray-500 mt-1">
+              Une campagne peut avoir plusieurs versions de formulaire.
+            </p>
+          </div>
+          <button
+            type="button"
+            @click="createNewForm"
+            :disabled="creatingForm"
+            class="px-3 py-2 bg-bleu-nuit text-white text-xs font-semibold rounded-lg hover:bg-[#01111eff] disabled:opacity-50 transition"
+          >
+            {{ creatingForm ? 'Création...' : 'Nouveau formulaire' }}
+          </button>
+        </div>
 
-      <ApercuFormulaire :questions="questions" />
+        <div v-if="formsList.length" class="flex flex-wrap gap-2">
+          <button
+            v-for="form in formsList"
+            :key="form.id"
+            type="button"
+            @click="selectForm(form)"
+            class="px-3 py-2 rounded-lg border text-xs font-semibold transition"
+            :class="currentForm?.id === form.id ? 'bg-bleu-nuit text-white border-bleu-nuit' : 'bg-white text-slate-700 border-slate-200 hover:border-bleu-nuit'"
+          >
+            {{ form.nom }} <span class="font-normal opacity-80">({{ form.statut === 'PUBLIE' ? 'Publié' : 'Brouillon' }})</span>
+          </button>
+        </div>
+        <p v-else class="text-xs text-gray-500">Aucun formulaire pour cette campagne.</p>
+      </div>
+
+      <div v-if="currentForm" class="self-stretch flex flex-col lg:flex-row justify-start items-start gap-8">
+        <FormBuilder
+          :questions="questions"
+          @ajouter-question="ouvrirModal"
+          @mettre-a-jour="mettreAJourQuestion"
+          @supprimer="supprimerQuestion"
+          @dupliquer="dupliquerQuestion"
+          @ajouter-option="ajouterOption"
+          @supprimer-option="supprimerOption"
+        />
+
+        <ApercuFormulaire :questions="questions" />
+      </div>
     </div>
 
     <TypeQuestionModal
@@ -92,6 +127,9 @@ const loadingInit = ref(true)
 const publishing = ref(false)
 const modalOuvert = ref(false)
 const currentForm = ref(null)
+const formsList = ref([])
+const creatingForm = ref(false)
+const showNewFormButton = ref(false)
 const feedback = reactive({ type: "success", message: "" })
 
 const {
@@ -112,28 +150,18 @@ const chargerFormulaire = async () => {
   feedback.message = ""
   try {
     const forms = await formStore.fetchForms()
-    let found = forms.find((f) => f.campagne?.id === campagneId)
+    formsList.value = forms.filter((f) => String(f.campagne?.id) === String(campagneId))
 
-    if (!found) {
-      let campagneName = "Campagne"
-      try {
-        const camp = await campaignStore.fetchCampaign(campagneId)
-        campagneName = camp.nom
-      } catch (e) {
-        const existing = campaignStore.campaigns.find((c) => String(c.id) === String(campagneId))
-        campagneName = existing?.nom || campagneName
-      }
-
-      found = await formStore.createForm({
-        campagne_id: campagneId,
-        nom: `Formulaire de collecte - ${campagneName}`,
-        fields: [],
-      })
-      titreFormulaire.value = found?.nom || `Formulaire de collecte - ${campagneName}`
-    } else {
-      titreFormulaire.value = found.nom
+    if (formsList.value.length === 0) {
+      showNewFormButton.value = true
+      await createNewForm()
+      return
     }
 
+    showNewFormButton.value = true
+    const found = formsList.value[0]
+    currentForm.value = found
+    titreFormulaire.value = found?.nom || "Formulaire dynamique"
     const fullForm = await formStore.fetchForm(found.id)
     currentForm.value = fullForm
     loadFromBackendFields(fullForm.fields || [], fullForm.id)
@@ -142,6 +170,56 @@ const chargerFormulaire = async () => {
     feedback.message = formStore.error || "Erreur lors du chargement du formulaire."
   } finally {
     loadingInit.value = false
+  }
+}
+
+const createNewForm = async () => {
+  if (creatingForm.value) return
+  creatingForm.value = true
+  feedback.message = ""
+  try {
+    let campagneName = "Campagne"
+    try {
+      const camp = await campaignStore.fetchCampaign(campagneId)
+      campagneName = camp.nom
+    } catch (e) {
+      const existing = campaignStore.campaigns.find((c) => String(c.id) === String(campagneId))
+      campagneName = existing?.nom || campagneName
+    }
+
+    const found = await formStore.createForm({
+      campagne_id: campagneId,
+      nom: `Formulaire de collecte - ${campagneName}`,
+      fields: [],
+    })
+
+    await formStore.fetchForms().catch(() => {})
+    formsList.value = formStore.forms.filter((f) => String(f.campagne?.id) === String(campagneId))
+
+    currentForm.value = found
+    titreFormulaire.value = found?.nom || `Formulaire de collecte - ${campagneName}`
+    loadFromBackendFields([], found.id)
+    feedback.type = "success"
+    feedback.message = "Nouveau formulaire créé."
+  } catch (err) {
+    feedback.type = "error"
+    feedback.message = formStore.error || "Erreur lors de la création du formulaire."
+  } finally {
+    creatingForm.value = false
+  }
+}
+
+const selectForm = async (form) => {
+  if (!form) return
+  feedback.message = ""
+  try {
+    const fullForm = await formStore.fetchForm(form.id)
+    currentForm.value = fullForm
+    titreFormulaire.value = fullForm?.nom || "Formulaire dynamique"
+    loadFromBackendFields(fullForm.fields || [], fullForm.id)
+  } catch (err) {
+    feedback.type = "error"
+    feedback.message = formStore.error || "Erreur lors du chargement du formulaire."
   }
 }
 

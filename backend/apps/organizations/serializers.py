@@ -1,9 +1,12 @@
 from django.db import transaction
+from django.utils import timezone
 
 from rest_framework import serializers
 
-from .models import Organization
+from .models import Organization, Subscription
+from apps.accounts.models import User, ActivationToken
 from apps.accounts.services import create_gerant_for_organization
+from apps.accounts.tasks import send_invitation_email
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -13,6 +16,11 @@ class OrganizationSerializer(serializers.ModelSerializer):
 
 
 class RegisterOrganizationSerializer(serializers.ModelSerializer):
+    # Documents
+    document_receipt = serializers.FileField(write_only=True, required=True)
+    document_ninea = serializers.FileField(write_only=True, required=True)
+    document_statutes = serializers.FileField(write_only=True, required=True)
+
     # Informations du premier Gérant
     manager_first_name = serializers.CharField(write_only=True)
     manager_last_name = serializers.CharField(write_only=True)
@@ -31,8 +39,9 @@ class RegisterOrganizationSerializer(serializers.ModelSerializer):
             "country",
             "intervention_domain",
             "description",
-            "logo",
-
+            "document_receipt",
+            "document_ninea",
+            "document_statutes",
             "manager_first_name",
             "manager_last_name",
             "manager_email",
@@ -40,7 +49,6 @@ class RegisterOrganizationSerializer(serializers.ModelSerializer):
         ]
 
     def validate_manager_email(self, value):
-        from apps.accounts.models import User
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 "Cet email est déjà utilisé."
@@ -49,6 +57,9 @@ class RegisterOrganizationSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        validated_data.pop("document_receipt", None)
+        validated_data.pop("document_ninea", None)
+        validated_data.pop("document_statutes", None)
 
         manager_data = {
             "first_name": validated_data.pop("manager_first_name"),
@@ -57,14 +68,22 @@ class RegisterOrganizationSerializer(serializers.ModelSerializer):
             "phone": validated_data.pop("manager_phone"),
         }
 
-        # Création de l'ONG
         organization = Organization.objects.create(
             **validated_data,
-            status=Organization.Status.PENDING,
+            status=Organization.Status.EN_ATTENTE,
+            is_active=False,
         )
 
-        # Création automatique du Gérant + envoi de l'email d'activation
-        create_gerant_for_organization(
+        documents = self.context.get("documents", {})
+        if documents.get("receipt"):
+            organization.document_receipt = documents["receipt"]
+        if documents.get("ninea"):
+            organization.document_ninea = documents["ninea"]
+        if documents.get("statutes"):
+            organization.document_statutes = documents["statutes"]
+        organization.save(update_fields=["document_receipt", "document_ninea", "document_statutes", "updated_at"])
+
+        user = create_gerant_for_organization(
             organization=organization,
             manager_first_name=manager_data["first_name"],
             manager_last_name=manager_data["last_name"],
@@ -72,4 +91,4 @@ class RegisterOrganizationSerializer(serializers.ModelSerializer):
             manager_phone=manager_data["phone"],
         )
 
-        return organization
+        return organization, user

@@ -45,8 +45,8 @@ export function useBeneficiaires() {
       nin: b.nin,
       region: b.zone?.region || b.region || "Dakar",
       zone: b.zone?.nom || b.zone || "Zone générale",
-      statut: (b.ai_score || 0) >= 80 ? "Critique" : (b.ai_score || 0) >= 50 ? "Élevé" : "Normal",
-      scoreIA: b.ai_score || 50,
+      statut: (Number.isFinite(b.ai_score) ? b.ai_score : 0) >= 80 ? "Critique" : (Number.isFinite(b.ai_score) ? b.ai_score : 0) >= 50 ? "Élevé" : "Normal",
+      scoreIA: Number.isFinite(b.ai_score) ? b.ai_score : 50,
       vulnerabilite: b.vulnerability_criteria || "Non spécifié",
     }
   }

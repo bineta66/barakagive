@@ -45,6 +45,16 @@
       </div>
     </div>
 
+    <!-- IA Analysis Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <IAPrioritisationCard
+        :campagneId="firstGerantCampaignId"
+        :projetId="firstGerantProjetId"
+        :zones="zonesForGerantIA"
+      />
+      <IABudgetCard :projetId="firstGerantProjetId" />
+    </div>
+
     <!-- Trajectoire budgétaire - read-only chart -->
     <div class="bg-white border border-slate-200/60 rounded-xl p-6">
       <div class="flex justify-between items-center mb-6">
@@ -179,13 +189,32 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { PiggyBank, Receipt, Banknote, Activity } from 'lucide-vue-next'
+import { PiggyBank, Receipt, Banknote, Activity } from "lucide-vue-next"
 import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
+import IAPrioritisationCard from "@/modules/gerant/components/ia/IAPrioritisationCard.vue"
+import IABudgetCard from "@/modules/gerant/components/ia/IABudgetCard.vue"
+import { useZoneStore } from "@/stores/zone.js"
 
 const store = useGerantStore()
+const zoneStore = useZoneStore()
 const { formatMontant } = store
 
 const statistiques = computed(() => store.statistiques)
+
+const firstGerantCampaignId = computed(() => store.campaigns?.[0]?.id || null)
+const firstGerantProjetId = computed(() => {
+  const first = store.campaigns?.[0]
+  return first?.projet?.id || first?.projet_id || store.projets?.[0]?.id || null
+})
+const zonesForGerantIA = computed(() =>
+  zoneStore.zones.map((z) => ({
+    nom: z.nom,
+    urgence: "Moyenne",
+    score_total: 0,
+    beneficiaires_prioritaires: 0,
+    top5: [],
+  }))
+)
 
 const chartWidth = 800
 const chartHeight = 320

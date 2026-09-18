@@ -87,6 +87,9 @@
       </div>
     </div>
 
+    <!-- Analyse budgétaire IA -->
+    <IABudgetCard :projetId="route.params.id" />
+
     <!-- Campagnes associées -->
     <div v-if="projet" class="bg-white border border-slate-200/60 rounded-xl p-6">
       <div class="flex justify-between items-center mb-4">
@@ -180,6 +183,7 @@ import { useRoute } from "vue-router"
 import { FileDown, List, Download } from "lucide-vue-next"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
+import IABudgetCard from "@/modules/gerant/components/ia/IABudgetCard.vue"
 import { useFinances } from "@/composables/useFinances.js"
 
 const route = useRoute()

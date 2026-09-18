@@ -1,14 +1,13 @@
-import uuid
 import secrets
 import string
-from datetime import timedelta
+import uuid
 
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.organizations.models import Organization
+from apps.organizations.models import Organization, Subscription
 from .models import User, ActivationToken
 from .tasks import send_invitation_email
 
@@ -21,16 +20,16 @@ def create_activation_token(user):
     """
     return ActivationToken.objects.create(
         user=user,
-        expires_at=timezone.now() + timedelta(days=TOKEN_EXPIRY_DAYS),
+        expires_at=timezone.now() + timezone.timedelta(days=TOKEN_EXPIRY_DAYS),
     )
 
 
-def send_activation_email(user, activation_token):
+def send_activation_email(user, activation_token, subject_override=None, html_override=None):
     """
     Envoie l'email contenant le UUID du token.
     """
     activation_link = (
-        f"{settings.FRONTEND_URL}/activation-compte?token={activation_token.id}"
+        f"{settings.FRONTEND_URL}/activation/{activation_token.id}"
     )
 
     send_invitation_email.delay(
@@ -38,6 +37,8 @@ def send_activation_email(user, activation_token):
         first_name=user.first_name,
         activation_link=activation_link,
         temporary_password=getattr(user, "_temporary_password", None),
+        subject_override=subject_override,
+        html_override=html_override,
     )
 
 
@@ -65,7 +66,7 @@ def create_gerant_for_organization(
         password=temporary_password,
     )
 
-    gerant.status = User.Status.INVITED
+    gerant.status = User.Status.EN_ATTENTE
     gerant.is_active = False
     gerant.must_change_password = True
     gerant.last_invited_at = timezone.now()
@@ -182,9 +183,18 @@ def activate_account(token, password):
     user.status = User.Status.ACTIVE
     user.is_active = True
     if user.organization:
-        user.organization.status = user.organization.Status.VALIDE
+        user.organization.status = Organization.Status.ACTIVE
         user.organization.is_active = True
-        user.organization.save(update_fields=["status", "is_active"])
+        user.organization.save(update_fields=["status", "is_active", "updated_at"])
+
+        Subscription.objects.get_or_create(
+            organization=user.organization,
+            defaults={
+                "status": Subscription.Status.TRIAL,
+                "trial_start": timezone.now().date(),
+                "trial_end": timezone.now().date() + timezone.timedelta(days=30),
+            },
+        )
     user.save(update_fields=["password", "status", "is_active", "must_change_password"])
 
     activation.used = True

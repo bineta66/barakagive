@@ -49,6 +49,9 @@
       </div>
     </div>
 
+    <!-- Analyse budgétaire IA -->
+    <IABudgetCard :projetId="firstBudgetProjectId" />
+
     <!-- Filtres -->
     <div class="bg-white border border-slate-200/60 rounded-xl p-4 grid md:grid-cols-4 gap-3">
       <div class="relative">
@@ -180,6 +183,7 @@ import {
   Search, Eye, ChevronLeft, ChevronRight, Plus
 } from 'lucide-vue-next'
 import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
+import IABudgetCard from '@/modules/gerant/components/ia/IABudgetCard.vue'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
@@ -189,6 +193,8 @@ const store = useFinanceStore()
 const { formatMontant } = store
 
 const stat = computed(() => store.budgetsStatistiques)
+
+const firstBudgetProjectId = computed(() => store.budgets[0]?.projetId || store.projetsAssignes[0]?.id || null)
 
 const search = ref('')
 const filtreStatut = ref('')

@@ -103,6 +103,14 @@
               <p class="text-xs text-gray-400">Synthèse générée à partir des données terrain réelles.</p>
             </div>
           </div>
+
+          <!-- Carte IA de priorisation -->
+          <IAPrioritisationCard
+            :campagneId="firstCampaignId"
+            :projetId="firstProjetId"
+            :zones="zonesForIA"
+            class="mt-4"
+          />
         </div>
       </div>
     </div>
@@ -114,6 +122,7 @@ import { ref, computed, onMounted } from "vue"
 import CarteSenegal from "@/modules/chef-projet/components/zones/CarteSenegal.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
+import IAPrioritisationCard from "@/modules/gerant/components/ia/IAPrioritisationCard.vue"
 import geoJsonRaw from "@/data/senegal-regions.geojson?raw"
 import { useBeneficiaryStore } from "@/stores/beneficiary.js"
 import { useZoneStore } from "@/stores/zone.js"
@@ -189,8 +198,8 @@ const topZones = computed(() => {
   const list = regionZones.value.map((z) => {
     const benefs = beneficiaryStore.beneficiaries.filter((b) => (b.zone?.id || b.zone_id) === z.id)
     const avgScore = benefs.length
-      ? Math.round(benefs.reduce((acc, b) => acc + (b.ai_score || 50), 0) / benefs.length)
-      : 50
+      ? Math.round(benefs.reduce((acc, b) => acc + (Number.isFinite(b.ai_score) ? b.ai_score : 0), 0) / benefs.length)
+      : 0
     return {
       ...z,
       beneficiairesCount: benefs.length,
@@ -198,7 +207,9 @@ const topZones = computed(() => {
     }
   })
 
-  return list.sort((a, b) => b.beneficiairesCount - a.beneficiairesCount).slice(0, 5)
+  return list
+    .sort((a, b) => b.scoreIA - a.scoreIA || b.beneficiairesCount - a.beneficiairesCount)
+    .slice(0, 5)
 })
 
 const onRegionSelected = (payload) => {
@@ -221,5 +232,20 @@ const evalText = computed(() => {
   text += "Le déploiement des campagnes et la distribution de secours peuvent se poursuivre selon le planning établi."
   return text
 })
+
+const firstCampaignId = computed(() => campaignStore.campaigns?.[0]?.id || null)
+const firstProjetId = computed(() => {
+  const first = campaignStore.campaigns?.[0]
+  return first?.projet?.id || first?.projet_id || null
+})
+const zonesForIA = computed(() =>
+  zoneStore.zones.map((z) => ({
+    nom: z.nom,
+    urgence: "Moyenne",
+    score_total: 0,
+    beneficiaires_prioritaires: 0,
+    top5: [],
+  }))
+)
 </script>
 

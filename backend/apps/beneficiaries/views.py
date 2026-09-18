@@ -27,6 +27,7 @@ from .services import (
     update_beneficiary,
     sync_pending_beneficiaries,
     update_ai_score,
+    build_zone_ranking,
     BeneficiaryError,
 )
 
@@ -341,3 +342,41 @@ class BeneficiaryAIScoreView(APIView):
             "ai_score": str(beneficiary.ai_score),
             "message": "Score IA mis à jour.",
         })
+
+
+@extend_schema(tags=["Bénéficiaires"])
+class ZoneRankingView(APIView):
+    """
+    GET /api/beneficiaries/zone-ranking/?campaign_id=<uuid>
+    Retourne le classement des zones d'une campagne :
+    - score_total
+    - beneficiaires_prioritaires
+    - top5 bénéficiaires par zone avec score + raisons
+    """
+
+    permission_classes = [IsAuthenticated, IsAgentOrChefProjetOrGerant]
+
+    def get(self, request):
+        campaign_id = request.query_params.get("campaign_id")
+        if not campaign_id:
+            return Response(
+                {"detail": "Le paramètre campaign_id est requis."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            campaign = Campaign.objects.select_related("organization").get(id=campaign_id)
+        except Campaign.DoesNotExist:
+            return Response(
+                {"detail": "Campagne non trouvée."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if campaign.organization != request.user.organization:
+            return Response(
+                {"detail": "Cette campagne n'appartient pas à votre ONG."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        ranking = build_zone_ranking(campaign)
+        return Response(ranking)

@@ -15,6 +15,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         AGENT = "AGENT", "Agent Terrain"
 
     class Status(models.TextChoices):
+        EN_ATTENTE = "EN_ATTENTE", "En attente"
+        EN_ATTENTE_ACTIVATION = "EN_ATTENTE_ACTIVATION", "En attente d'activation"
         INVITED = "INVITED", "Invitation envoyée"
         ACTIVE = "ACTIVE", "Actif"
         SUSPENDED = "SUSPENDED", "Suspendu"
@@ -32,9 +34,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
 
     status = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=Status.choices,
-        default=Status.INVITED
+        default=Status.EN_ATTENTE
     )
 
     # ONG d'appartenance

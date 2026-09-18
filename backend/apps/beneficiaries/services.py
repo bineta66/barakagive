@@ -74,10 +74,43 @@ def _extraire_raisons(beneficiary):
         for response in responses:
             valeur = _extraire_valeur_reponse(response)
             if _est_reponse_vulnerable(valeur):
-                raisons.append(response.question.label)
+                label = response.question.label
+                valeur_lisible = _formatter_valeur(response, valeur)
+                if valeur_lisible:
+                    raisons.append(f"{label} : {valeur_lisible}")
+                else:
+                    raisons.append(label)
     except Exception:
         pass
     return raisons[:3]
+
+
+def _formatter_valeur(response, valeur):
+    """
+    Formate la valeur d'une réponse pour l'afficher dans les raisons.
+    """
+    if valeur is None:
+        return None
+
+    if isinstance(valeur, bool):
+        return "Oui" if valeur else "Non"
+
+    if isinstance(valeur, (int, float)):
+        return str(valeur)
+
+    if isinstance(valeur, str):
+        texte = valeur.strip()
+        return texte or None
+
+    if isinstance(valeur, list):
+        if not valeur:
+            return None
+        return ", ".join(str(v) for v in valeur)
+
+    if isinstance(valeur, dict):
+        return str(valeur)
+
+    return str(valeur)
 
 
 def validate_agent_permissions(user, campaign, zone, formulaire):
@@ -337,6 +370,8 @@ def create_beneficiary_with_responses(validated_data, user):
             question = questions[question_id]
             response = store_response(beneficiary, formulaire, question, value)
             created_responses.append(response)
+
+        beneficiary = update_ai_score(beneficiary)
 
     return beneficiary, created_responses, False
 

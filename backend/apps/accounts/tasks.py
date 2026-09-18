@@ -5,7 +5,14 @@ from sib_api_v3_sdk.rest import ApiException
 
 
 @shared_task
-def send_invitation_email(recipient_email, first_name, activation_link, temporary_password=None):
+def send_invitation_email(
+    recipient_email,
+    first_name,
+    activation_link,
+    temporary_password=None,
+    subject_override=None,
+    html_override=None,
+):
 
     configuration = sib_api_v3_sdk.Configuration()
     configuration.api_key["api-key"] = settings.BREVO_API_KEY
@@ -14,27 +21,31 @@ def send_invitation_email(recipient_email, first_name, activation_link, temporar
         sib_api_v3_sdk.ApiClient(configuration)
     )
 
-    html = f"""
-    <h2>Bienvenue sur BarakaGive</h2>
+    subject = subject_override or "Activation de votre compte BarakaGive"
+    if html_override:
+        html = html_override
+    else:
+        html = f"""
+        <h2>Bienvenue sur BarakaGive</h2>
 
-    <p>Bonjour {first_name},</p>
+        <p>Bonjour {first_name},</p>
 
-    <p>Votre demande d'inscription a bien été enregistrée.</p>
-    {f'<p><strong>Mot de passe temporaire :</strong> {temporary_password}</p>' if temporary_password else ''}
+        <p>Votre demande d'inscription a bien été enregistrée.</p>
+        {f'<p><strong>Mot de passe temporaire :</strong> {temporary_password}</p>' if temporary_password else ''}
 
-    <p>Cliquez sur le lien ci-dessous pour activer votre compte :</p>
+        <p>Cliquez sur le lien ci-dessous pour activer votre compte :</p>
 
-    <p>
-        <a href="{activation_link}"
-           style="background:#744D03; color:white; padding:12px 20px; text-decoration:none; border-radius:6px;">
-           Activer mon compte
-        </a>
-    </p>
+        <p>
+            <a href="{activation_link}"
+               style="background:#744D03; color:white; padding:12px 20px; text-decoration:none; border-radius:6px;">
+               Activer mon compte
+            </a>
+        </p>
 
-    <p>Ce lien est valable pendant 24 heures.</p>
+        <p>Ce lien est valable pendant 24 heures.</p>
 
-    <p>L'équipe BarakaGive</p>
-    """
+        <p>L'équipe BarakaGive</p>
+        """
 
     sender = {
         "name": "BarakaGive360",
@@ -49,7 +60,7 @@ def send_invitation_email(recipient_email, first_name, activation_link, temporar
     email_data = sib_api_v3_sdk.SendSmtpEmail(
         sender=sender,
         to=to,
-        subject="Activation de votre compte BarakaGive",
+        subject=subject,
         html_content=html,
     )
 

@@ -59,7 +59,7 @@ class Campaign(models.Model):
     statut = models.CharField(
         max_length=20,
         choices=Statut.choices,
-        default=Statut.BROUILLON,
+        default=Statut.EN_COURS,
     )
 
     created_by = models.ForeignKey(

@@ -58,11 +58,12 @@ INSTALLED_APPS = [
      "apps.campaigns",
      "apps.forms",
      "apps.beneficiaries",
-     "apps.finance",
-     "apps.donors",
-      "apps.reports",
-      "apps.ia",
-  ]
+"apps.finance",
+       "apps.donors",
+        "apps.reports",
+        "apps.ia",
+        "apps.payment",
+    ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -178,7 +179,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "backend", "backend:8000", "0.0.0.0", "172.18.0.6"]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -193,17 +194,27 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Africa/Dakar"
 
 CELERY_BEAT_SCHEDULE = {
-    "ia-analyses-every-6-hours": {
-        "task": "apps.ia.tasks.run_ia_analyses",
-        "schedule": 21600.0,
-    },
     "update-campaign-statuses-daily": {
         "task": "apps.campaigns.tasks.update_campaign_statuses",
         "schedule": 86400.0,
     },
+    "ia-analyses-every-6-hours": {
+        "task": "apps.ia.tasks.run_ia_analyses",
+        "schedule": 21600.0,
+    },
+    "expire-trials-daily": {
+        "task": "apps.payment.tasks.expire_trials",
+        "schedule": 86400.0,
+    },
+    "check-expiring-subscriptions-daily": {
+        "task": "apps.payment.tasks.check_expiring_subscriptions",
+        "schedule": 86400.0,
+    },
 }
 
-IA_SERVICE_URL = os.getenv("IA_SERVICE_URL", "http://ia_service:8000")
+# IA Service
+IA_SERVICE_URL = os.getenv("IA_SERVICE_URL", "http://ia_service:8001")
+
 # Email (Brevo API)
 # ==========================
 # Brevo API
@@ -212,3 +223,11 @@ IA_SERVICE_URL = os.getenv("IA_SERVICE_URL", "http://ia_service:8000")
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")
+
+# PayTech Payment
+# ==========================
+PAYTECH_API_KEY = os.getenv("PAYTECH_API_KEY", "")
+PAYTECH_API_SECRET = os.getenv("PAYTECH_API_SECRET", "")
+PAYTECH_SUCCESS_URL = os.getenv("PAYTECH_SUCCESS_URL", "http://localhost:5173/payment/success")
+PAYTECH_CANCEL_URL = os.getenv("PAYTECH_CANCEL_URL", "http://localhost:5173/payment/cancel")
+PAYTECH_IPN_URL = os.getenv("PAYTECH_IPN_URL", "http://localhost:8000/api/payment/webhook/")

@@ -37,6 +37,7 @@ class ActivateAccountView(generics.GenericAPIView):
     """
     serializer_class = ActivateAccountSerializer
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def get(self, request):
         token = request.query_params.get("token")
@@ -80,6 +81,7 @@ class ActivateAccountView(generics.GenericAPIView):
 class RegisterAuthView(generics.GenericAPIView):
     serializer_class = RegisterAuthSerializer
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -110,6 +112,7 @@ class ChangePasswordView(generics.GenericAPIView):
 class ResendActivationView(generics.GenericAPIView):
     serializer_class = ResendActivationSerializer
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
