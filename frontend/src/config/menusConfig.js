@@ -17,7 +17,8 @@ import {
   CreditCard,
   Smartphone,
   Cloud,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from "lucide-vue-next";
 
 export const menusConfig = {
@@ -41,11 +42,11 @@ export const menusConfig = {
 
   "Responsable Finance": [
     { nom: "Tableau de bord", route: "/finance/dashboard", icon: LayoutDashboard },
-    { nom: "Projets assignés", route: "/finance/projets", icon: FolderKanban },
     { nom: "Budgets", route: "/finance/budgets", icon: Wallet },
     { nom: "Dons & Financements", route: "/finance/dons", icon: Banknote },
     { nom: "Dépenses", route: "/finance/depenses", icon: Receipt },
     { nom: "Justificatifs", route: "/finance/justificatifs", icon: ClipboardList },
+    { nom: "Assistant Financier IA", route: "/finance/ai-assistant", icon: Sparkles },
     { nom: "Rapports financiers", route: "/finance/rapports", icon: BarChart3 },
   ],
 

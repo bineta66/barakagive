@@ -1,11 +1,11 @@
 import DashboardLayout from "@/components/layout/DashboardLayout.vue";
-import FinanceDashboard from "./views/FinanceDashboard.vue";
-import Budgets from "./views/Budgets.vue";
-import Dons from "./views/Dons.vue";
-import Depenses from "./views/Depenses.vue";
-import Justifications from "./views/Justifications.vue";
-import FinanceAIAssistant from "./views/FinanceAIAssistant.vue";
-import FinanceReports from "./views/FinanceReports.vue";
+import FinanceDashboard from "@/module/finance/FinanceDashboard.vue";
+import BudgetList from "@/module/finance/BudgetList.vue";
+import DonationList from "@/module/finance/DonationList.vue";
+import ExpenseList from "@/module/finance/ExpenseList.vue";
+import JustificationList from "@/module/finance/JustificationList.vue";
+import FinanceAIAssistant from "@/module/finance/FinanceAIAssistant.vue";
+import FinanceReports from "@/module/finance/FinanceReports.vue";
 
 const routes = [
   {
@@ -19,24 +19,34 @@ const routes = [
         component: FinanceDashboard,
       },
       {
+        path: "projets",
+        name: "finance-projets",
+        component: BudgetList,
+      },
+      {
         path: "budgets",
         name: "finance-budgets",
-        component: Budgets,
+        component: BudgetList,
       },
       {
         path: "dons",
         name: "finance-dons",
-        component: Dons,
+        component: DonationList,
       },
       {
         path: "depenses",
         name: "finance-depenses",
-        component: Depenses,
+        component: ExpenseList,
       },
       {
         path: "justifications",
         name: "finance-justifications",
-        component: Justifications,
+        component: JustificationList,
+      },
+      {
+        path: "justificatifs",
+        name: "finance-justificatifs",
+        component: JustificationList,
       },
       {
         path: "ai-assistant",
