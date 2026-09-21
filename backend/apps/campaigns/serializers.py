@@ -33,7 +33,20 @@ class AgentAssignmentInputSerializer(serializers.Serializer):
 
     agent_id = serializers.IntegerField()
     zone = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    zones = serializers.ListField(
+        child=serializers.CharField(max_length=150),
+        required=False,
+        default=list,
+    )
     objectif = serializers.IntegerField(min_value=0, default=0)
+
+    def validate(self, attrs):
+        zones = [z.strip() for z in attrs.get("zones", []) if str(z).strip()]
+        legacy = (attrs.get("zone") or "").strip()
+        if legacy and legacy not in zones:
+            zones.insert(0, legacy)
+        attrs["zones"] = zones
+        return attrs
 
 
 class AgentCampagneSerializer(serializers.ModelSerializer):
@@ -42,24 +55,39 @@ class AgentCampagneSerializer(serializers.ModelSerializer):
     projet = serializers.CharField(source="projet.name", read_only=True)
     image = serializers.SerializerMethodField()
     zone = serializers.SerializerMethodField()
+    zones = serializers.SerializerMethodField()
     objectif = serializers.SerializerMethodField()
+    objectif_total = serializers.SerializerMethodField()
     collectes = serializers.IntegerField(read_only=True)
     statut = serializers.CharField(read_only=True)
 
     class Meta:
         model = Campaign
-        fields = ["id", "nom", "projet", "image", "date_fin", "zone", "objectif", "collectes", "statut"]
+        fields = [
+            "id", "nom", "projet", "image", "date_fin",
+            "zone", "zones", "objectif", "objectif_total", "collectes", "statut",
+        ]
+
+    def _assignments(self, obj):
+        """Affectations de l'agent pour cette campagne (une par zone)."""
+        agent = self.context.get("agent")
+        queryset = obj.affectations.all()
+        if agent is not None:
+            queryset = queryset.filter(agent=agent)
+        return list(queryset)
 
     def get_image(self, obj):
         return None
-
+    def get_zones(self, obj):
+        return [assignment.zone for assignment in self._assignments(obj)]
     def get_zone(self, obj):
-        assignment = obj.affectations.all().first()
-        return assignment.zone if assignment else None
-
+        assignments = self._assignments(obj)
+        return assignments[0].zone if assignments else None
     def get_objectif(self, obj):
-        assignment = obj.affectations.all().first()
-        return assignment.objectif_beneficiaires if assignment else 0
+        assignments = self._assignments(obj)
+        return assignments[0].objectif_beneficiaires if assignments else 0
+    def get_objectif_total(self, obj):
+        return sum(a.objectif_beneficiaires for a in self._assignments(obj))
 
 
 class AgentDashboardSerializer(serializers.Serializer):
@@ -69,6 +97,16 @@ class AgentDashboardSerializer(serializers.Serializer):
     objectif_total = serializers.IntegerField()
     progression = serializers.FloatField()
 
+
+class AgentZonesAssignmentSerializer(serializers.Serializer):
+    """Requete d'affectation d'un agent a une ou plusieurs zones."""
+
+    agent_id = serializers.IntegerField()
+    zones = serializers.ListField(
+        child=serializers.CharField(max_length=150),
+        allow_empty=False,
+    )
+    objectif = serializers.IntegerField(min_value=0, default=0)
 
 class ZoneSummarySerializer(serializers.ModelSerializer):
     """Sérialiseur minimal pour les zones dans les listes."""
@@ -212,7 +250,7 @@ class CampaignCreateSerializer(serializers.Serializer):
         date_fin = attrs.get("date_fin")
         if date_debut and date_fin and date_fin <= date_debut:
             raise serializers.ValidationError({
-                "date_fin": "La date de fin doit être postérieure à la date de début."
+                """date_fin": "La date de fin doit être postérieure à la date de début."""
             })
         return attrs
 
@@ -244,7 +282,7 @@ class CampaignUpdateSerializer(serializers.Serializer):
 
         if date_debut and date_fin and date_fin <= date_debut:
             raise serializers.ValidationError({
-                "date_fin": "La date de fin doit être postérieure à la date de début."
+                """date_fin": "La date de fin doit être postérieure à la date de début."""
             })
 
         return attrs

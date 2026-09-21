@@ -9,6 +9,8 @@ from apps.projects.models import Project
 from apps.zones.models import Zone
 from .models import Campaign
 from .serializers import (
+    AgentZonesAssignmentSerializer,
+    CampagneAffectationSerializer,
     CampaignListSerializer,
     CampaignDetailSerializer,
     CampaignCreateSerializer,
@@ -113,9 +115,11 @@ class CampaignDetailView(APIView):
             if user.role != "SUPER_ADMIN":
                 queryset = queryset.filter(organization=user.organization)
             if user.role == "AGENT":
-                queryset = queryset.filter(affectations__agent=user)
+                # Un agent peut avoir plusieurs affectations (une par zone),
+                # d'ou le distinct pour eviter les doublons de jointure.
+                queryset = queryset.filter(affectations__agent=user).distinct()
             return queryset.get()
-        except Campaign.DoesNotExist:
+        except (Campaign.DoesNotExist, Campaign.MultipleObjectsReturned):
             return None
 
     def get_permissions(self):
@@ -213,3 +217,125 @@ class CampaignDetailView(APIView):
 
         campaign.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@extend_schema(tags=["Campagnes"])
+class CampaignAgentZonesView(APIView):
+    """
+    GET /api/campaigns/{pk}/agents/zones/
+    PUT /api/campaigns/{pk}/agents/zones/
+
+    GET : liste les affectations de la campagne, regroupees par agent.
+    PUT : affecte un agent terrain a une ou plusieurs zones de la campagne.
+    Corps attendu :
+        {"agent_id": 42, "zones": ["Dakar Nord", "Dakar Sud"], "objectif": 50}
+
+    L'appel definit l'ensemble des zones de l'agent : les zones absentes de la
+    liste voient leur affectation supprimee.
+    """
+
+    permission_classes = [IsChefProjetOrGerant, CanManageCampaign]
+
+    def get(self, request, pk):
+        # Liste les affectations de la campagne, regroupees par agent.
+        # Un agent peut intervenir dans plusieurs zones.
+        campaign = CampaignDetailView().get_object(pk, request.user)
+        if not campaign:
+            return Response(
+                {"detail": "Campagne non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        self.check_object_permissions(request, campaign)
+
+        from apps.campaigns.models import CampagneAffectation
+        affectations = (
+            CampagneAffectation.objects
+            .filter(campagne=campaign)
+            .select_related("agent")
+            .order_by("agent__last_name", "agent__first_name", "zone")
+        )
+
+        par_agent = {}
+        for affectation in affectations:
+            agent = affectation.agent
+            key = str(agent.id)
+            if key not in par_agent:
+                par_agent[key] = {
+                    "agent": {
+                        "id": str(agent.id),
+                        "full_name": agent.full_name,
+                        "email": agent.email,
+                    },
+                    "zones": [],
+                    "objectif": affectation.objectif_beneficiaires,
+                    "statut": affectation.statut,
+                }
+            par_agent[key]["zones"].append(affectation.zone)
+
+        zones_campagne = list(
+            campaign.zones.values_list("nom", flat=True).order_by("nom")
+        )
+
+        return Response(
+            {
+                "campagne": str(campaign.id),
+                "zones_campagne": zones_campagne,
+                "affectations": list(par_agent.values()),
+            }
+        )
+
+    def put(self, request, pk):
+        from apps.accounts.models import User
+        from .services import assign_agent_zones
+
+        campaign = CampaignDetailView().get_object(pk, request.user)
+        if not campaign:
+            return Response(
+                {"detail": "Campagne non trouvée."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        self.check_object_permissions(request, campaign)
+
+        serializer = AgentZonesAssignmentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        try:
+            agent = User.objects.get(
+                id=data["agent_id"],
+                organization=campaign.organization,
+            )
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Agent introuvable dans cette ONG."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            affectations = assign_agent_zones(
+                campaign=campaign,
+                agent=agent,
+                zone_names=data["zones"],
+                objectif=data.get("objectif", 0),
+                user=request.user,
+            )
+        except ValueError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {
+                "agent": {
+                    "id": agent.id,
+                    "full_name": agent.full_name,
+                    "email": agent.email,
+                },
+                "zones": [a.zone for a in affectations],
+                "affectations": CampagneAffectationSerializer(
+                    affectations, many=True
+                ).data,
+            }
+        )

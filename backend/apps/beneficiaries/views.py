@@ -28,6 +28,9 @@ from .services import (
     sync_pending_beneficiaries,
     update_ai_score,
     build_zone_ranking,
+    build_region_priorities,
+    build_all_regions_scores,
+    get_zone_beneficiaries_table_data,
     BeneficiaryError,
 )
 
@@ -83,6 +86,14 @@ class BeneficiaryListCreateView(APIView):
             ).select_related(
                 "campagne", "zone", "created_by"
             ).order_by("-created_at")
+
+        zone_id = request.query_params.get("zone") or request.query_params.get("zone_id")
+        if zone_id:
+            beneficiaries = beneficiaries.filter(zone_id=zone_id)
+
+        campaign_id = request.query_params.get("campagne") or request.query_params.get("campaign_id")
+        if campaign_id:
+            beneficiaries = beneficiaries.filter(campagne_id=campaign_id)
 
         serializer = BeneficiaryListSerializer(beneficiaries, many=True)
         return Response(serializer.data)
@@ -339,7 +350,7 @@ class BeneficiaryAIScoreView(APIView):
 
         return Response({
             "id": beneficiary.id,
-            "ai_score": str(beneficiary.ai_score),
+            "ai_score": str(beneficiary.score_vulnerabilite),
             "message": "Score IA mis à jour.",
         })
 
@@ -380,3 +391,102 @@ class ZoneRankingView(APIView):
 
         ranking = build_zone_ranking(campaign)
         return Response(ranking)
+
+
+@extend_schema(tags=["Carte des Priorités"])
+class ProjectRegionsView(APIView):
+    """
+    GET /api/projets/{project_id}/regions/
+    Retourne toutes les régions avec leur score agrégé pour coloriser la carte SVG.
+    Accessible uniquement au Chef de projet.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id):
+        from apps.projects.models import Project
+
+        try:
+            project = Project.objects.select_related(
+                "chef_projet", "organization"
+            ).get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response(
+                {"detail": "Projet introuvable."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if project.organization != request.user.organization:
+            return Response(
+                {"detail": "Ce projet n'appartient pas à votre ONG."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if request.user.role == "CHEF_PROJET" and project.chef_projet != request.user:
+            return Response(
+                {"detail": "Vous n'êtes pas chef de ce projet."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        regions = build_all_regions_scores(project)
+        return Response(regions)
+
+
+@extend_schema(tags=["Carte des Priorités"])
+class RegionPrioritiesView(APIView):
+    """
+    GET /api/projets/{project_id}/regions/{region_name}/priorites/
+    Retourne le détail complet d'une région :
+    - résumé automatique
+    - zones classées par score moyen décroissant
+    - bénéficiaires avec critères détaillés
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id, region_name):
+        from apps.projects.models import Project
+
+        try:
+            project = Project.objects.select_related(
+                "chef_projet", "organization"
+            ).get(pk=project_id)
+        except Project.DoesNotExist:
+            return Response(
+                {"detail": "Projet introuvable."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if project.organization != request.user.organization:
+            return Response(
+                {"detail": "Ce projet n'appartient pas à votre ONG."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if request.user.role == "CHEF_PROJET" and project.chef_projet != request.user:
+            return Response(
+                {"detail": "Vous n'êtes pas chef de ce projet."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        data = build_region_priorities(project, region_name)
+        return Response(data)
+
+
+@extend_schema(tags=["Bénéficiaires"])
+class ZoneBeneficiariesTableView(APIView):
+    """
+    GET /api/beneficiaries/zone/<uuid:zone_id>/
+    Retourne la liste complète des bénéficiaires de la zone avec leurs scores,
+    informations personnelles et critères d'évaluation répondus.
+    """
+    permission_classes = [IsAuthenticated, IsAgentOrChefProjetOrGerant]
+
+    def get(self, request, zone_id):
+        try:
+            data = get_zone_beneficiaries_table_data(zone_id, request.user)
+            return Response(data)
+        except BeneficiaryError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": f"Erreur serveur : {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

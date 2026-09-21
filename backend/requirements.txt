@@ -29,3 +29,5 @@ tzlocal==5.4.4
 vine==5.1.0
 wcwidth==0.8.3
 python-dotenv==1.1.1
+reportlab==4.4.1
+openpyxl==3.1.5

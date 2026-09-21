@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <div class="flex justify-between items-center pb-4">
       <div>
@@ -24,8 +24,6 @@
 
 <CarteInfoZone v-if="zone && !loading" :zone="zone" />
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -35,7 +33,6 @@ import { List } from "lucide-vue-next"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import CarteInfoZone from "@/modules/chef-projet/components/zones/CarteInfoZone.vue"
 import { useZoneStore } from "@/stores/zone.js"
 

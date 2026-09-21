@@ -52,7 +52,10 @@ class AgentCampaignListView(APIView):
             )
             .distinct()
         )
-        return Response(AgentCampagneSerializer(campaigns, many=True).data)
+        context = {"agent": request.user}
+        return Response(
+            AgentCampagneSerializer(campaigns, many=True, context=context).data
+        )
 
 
 class AgentDashboardView(APIView):
@@ -118,13 +121,19 @@ class AgentCampaignBeneficiaryCreateView(APIView):
         data = request.data.copy()
         data["campagne_id"] = str(pk)
         if not data.get("zone_id"):
-            assignment = campaign.affectations.get(agent=request.user)
-            zone = Zone.objects.filter(
-                organization=request.user.organization,
-                nom=assignment.zone,
-            ).first()
-            if zone:
-                data["zone_id"] = str(zone.id)
+            # Un agent peut etre affecte a plusieurs zones : on retient la
+            # premiere affectation comme zone par defaut.
+            assigned_zone_names = list(
+                campaign.affectations.filter(agent=request.user)
+                .values_list("zone", flat=True)
+            )
+            if assigned_zone_names:
+                zone = Zone.objects.filter(
+                    organization=request.user.organization,
+                    nom=assigned_zone_names[0],
+                ).first()
+                if zone:
+                    data["zone_id"] = str(zone.id)
         serializer = BeneficiaryCreateSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         try:

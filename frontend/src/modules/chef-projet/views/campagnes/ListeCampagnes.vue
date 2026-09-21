@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
     <div class="flex justify-between items-center pb-4">
@@ -183,8 +183,6 @@
       </div>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -193,7 +191,6 @@ import { RouterLink } from "vue-router"
 import StatusBadge from "@/components/ui/StatusBadge.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useCampagnes } from "@/composables/useCampagnes.js"
 import { useProjectStore } from "@/stores/project.js"
 import { Plus, ClipboardList, Activity, CheckCircle, Search, Eye, Pencil, Archive, FileText } from "lucide-vue-next"

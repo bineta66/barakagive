@@ -1,18 +1,17 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException
-from app.schemas import RegionZonesResponse, ZoneDetailResponse
+from app.schemas import RegionZonesResponse, ZoneDetailResponse, RegionAnalysisRequest, RegionAnalysisResponse
 from app.services.gemini_service import gemini_service
 
 router = APIRouter()
 
 
-@router.post("/regions/{region_id}/analyze", response_model=RegionZonesResponse)
-async def analyze_region_zones(region_id: str, request: dict):
-    """Analyse des zones pour une région - Chef de Projet"""
+@router.post("/regions/{region_id}/analyze", response_model=RegionAnalysisResponse)
+async def analyze_region_zones(region_id: str, request: RegionAnalysisRequest):
+    """Analyse des zones pour une région - Chef de Projet (IA)"""
     try:
-        data = request
-        data["region"] = region_id
-        result = gemini_service.analyze_zones(data)
+        data = request.model_dump()
+        result = gemini_service.analyze_region(data)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

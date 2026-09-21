@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-100">
@@ -149,7 +149,7 @@
                     <Eye :size="16" />
                   </button>
 
-                  <!-- Activer / Désactiver (ICONE SEULEMENT) -->
+                  <!-- Activer / Désactiver -->
                   <button
                     v-if="u.role !== 'GERANT'"
                     @click="basculerStatut(u)"
@@ -280,7 +280,6 @@ import StatusBadge from "@/components/ui/StatusBadge.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import EmptyState from "@/components/ui/EmptyState.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const store = useGerantStore()
 const { users, chefsProjet, responsablesFinance, agents, loading, error } = storeToRefs(store)
@@ -379,6 +378,3 @@ const getRoleBadgeClass = (role) => {
   }
 }
 </script>
-
-<ExecutiveOrbitalIA />
-

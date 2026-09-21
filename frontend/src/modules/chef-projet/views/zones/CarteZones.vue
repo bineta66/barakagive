@@ -39,7 +39,6 @@
       <div class="lg:col-span-1">
         <ZoneAnalysisPanel
           :selected-region="selectedRegion"
-          @zone-selected="goToZoneDetail"
         />
       </div>
     </div>
@@ -47,9 +46,8 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, onMounted } from "vue"
 import { List, Plus } from "lucide-vue-next"
-import { useRouter } from "vue-router"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
@@ -58,7 +56,6 @@ import ZoneAnalysisPanel from "@/modules/chef-projet/components/zones/ZoneAnalys
 import { useZoneStore } from "@/stores/zone.js"
 import geoJsonSenegalRaw from "@/data/senegal-regions.geojson?raw"
 
-const router = useRouter()
 const zoneStore = useZoneStore()
 const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
 
@@ -66,10 +63,6 @@ const selectedRegion = ref("")
 
 const onRegionSelected = (data) => {
   selectedRegion.value = data.region
-}
-
-const goToZoneDetail = (zoneId) => {
-  router.push(`/chef-projet/zones/analyse/${zoneId}`)
 }
 
 onMounted(async () => {

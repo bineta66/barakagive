@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
-    <div class="flex justify-between items-center  pb-4">
+    <div class="flex justify-between items-center pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Bailleurs</h1>
         <p class="text-xs text-gray-500 mt-1">
@@ -62,15 +62,15 @@
       </div>
 
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Tous les statuts</option>
-        <option>Reçu</option>
-        <option>En attente</option>
+        <option value="">Tous les statuts</option>
+        <option value="Reçu">Reçu</option>
+        <option value="En attente">En attente</option>
       </select>
 
       <select v-model="filtreType" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Tous les types</option>
-        <option>International</option>
-        <option>National</option>
+        <option value="">Tous les types</option>
+        <option value="International">International</option>
+        <option value="National">National</option>
       </select>
 
       <BoutonTertiary @click="resetFilters">
@@ -151,7 +151,7 @@
               'px-2.5 py-1 rounded text-sm font-medium transition-colors',
               page === currentPage
                 ? 'bg-or text-white'
-                  : 'text-bleu-nuit hover:bg-bleu-nuit/10'
+                : 'text-bleu-nuit hover:bg-bleu-nuit/10'
             ]"
           >
             {{ page }}
@@ -187,8 +187,8 @@ import {
 import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
+import StatusBadge from '@/components/ui/StatusBadge.vue'
 import BailleurFormModal from '@/modules/gerant/components/bailleurs/BailleurFormModal.vue'
-import ExecutiveOrbitalIA from '@/components/ia/ExecutiveOrbitalIA.vue'
 
 const store = useGerantStore()
 const { formatMontant } = store
@@ -218,7 +218,7 @@ const bailleursFinance = computed(() => {
 })
 
 const bailleursRecus = computed(() =>
-  store.bailleurs.filter(b => b.statut === 'Reçu' || b.statut === 'Reçu').length
+  store.bailleurs.filter(b => b.statut === 'Reçu').length
 )
 const bailleursEnAttente = computed(() =>
   store.bailleurs.filter(b => b.statut === 'En attente').length
@@ -235,7 +235,7 @@ const bailleurFinances = computed(() => {
 const filteredBailleurs = computed(() => {
   return store.bailleurs.filter(b => {
     const matchesSearch = b.nom.toLowerCase().includes(search.value.toLowerCase()) ||
-      b.contact.toLowerCase().includes(search.value.toLowerCase())
+      (b.contact && b.contact.toLowerCase().includes(search.value.toLowerCase()))
     const matchesStatut = filtreStatut.value ? b.statut === filtreStatut.value : true
     const matchesType = filtreType.value ? b.type === filtreType.value : true
     return matchesSearch && matchesStatut && matchesType
@@ -301,26 +301,7 @@ const supprimerBailleur = (bailleur) => {
   }
 }
 
-const badgeClass = (statut) => {
-  switch (statut) {
-    case 'Reçu':
-      return 'bg-bleu-nuit/10 text-bleu-nuit'
-    case 'En attente':
-      return 'bg-or/10 text-or'
-    default:
-      return 'bg-gray-100 text-gray-600'
-  }
-}
-
 watch([search, filtreStatut, filtreType], () => {
   currentPage.value = 1
 })
 </script>
-
-<ExecutiveOrbitalIA />
-
-
-
-
-
-

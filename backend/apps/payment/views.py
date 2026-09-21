@@ -34,6 +34,12 @@ class SubscriptionStatusView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        if not user.organization:
+            return Response(
+                {"detail": "Aucune organisation associée à ce compte."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         subscription = get_or_create_active_subscription(user)
         serializer = SubscriptionStatusSerializer(subscription)
         return Response(serializer.data)
@@ -52,6 +58,12 @@ class SubscriptionDetailView(APIView):
         if user.role != "GERANT":
             return Response(
                 {"detail": "Seul le Gérant peut accéder à l'abonnement."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not user.organization:
+            return Response(
+                {"detail": "Aucune organisation associée à ce compte."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -170,6 +182,12 @@ class TransactionHistoryView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        if not user.organization:
+            return Response(
+                {"detail": "Aucune organisation associée à ce compte."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         subscription = get_or_create_active_subscription(user)
         transactions = subscription.transactions.all()
         serializer = TransactionSerializer(transactions, many=True)
@@ -190,6 +208,12 @@ class SubscriptionCheckView(APIView):
         if user.role != "GERANT":
             return Response(
                 {"detail": "Seul le Gérant peut accéder."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not user.organization:
+            return Response(
+                {"detail": "Aucune organisation associée à ce compte."},
                 status=status.HTTP_403_FORBIDDEN,
             )
 

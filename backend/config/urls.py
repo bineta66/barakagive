@@ -23,7 +23,19 @@ urlpatterns = [
     path("api/beneficiaries/", include("apps.beneficiaries.urls")),
     path("api/finance/", include("apps.finance.urls")),
     path("api/ia/", include("apps.ia.urls")),
+    path("api/assistant/dashboard/", __import__("apps.ia.views", fromlist=["AssistantDashboardView"]).AssistantDashboardView.as_view(), name="assistant-dashboard"),
     path("api/payment/", include("apps.payment.urls")),
+    path("api/reports/", include("apps.reports.urls")),
+    # Carte des Priorités — endpoints régions
+    path("api/projets/<int:project_id>/regions/",
+         __import__("apps.beneficiaries.views", fromlist=["ProjectRegionsView"]).ProjectRegionsView.as_view(),
+         name="project-regions"),
+    path("api/projets/<int:project_id>/regions/<str:region_name>/priorites/",
+         __import__("apps.beneficiaries.views", fromlist=["RegionPrioritiesView"]).RegionPrioritiesView.as_view(),
+         name="region-priorities"),
+    path("api/zones/<uuid:zone_id>/beneficiaires/",
+         __import__("apps.beneficiaries.views", fromlist=["ZoneBeneficiariesTableView"]).ZoneBeneficiariesTableView.as_view(),
+         name="zone-beneficiaires-table"),
 
     # API Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

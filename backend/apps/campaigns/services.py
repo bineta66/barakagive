@@ -165,9 +165,19 @@ def create_campaign(validated_data, user):
         zones = validate_zones_for_organization(zone_ids, organization)
         campaign.zones.set(zones)
 
+    # Un agent peut etre affecte a plusieurs zones : le meme agent_id peut
+    # donc apparaitre plusieurs fois, avec une zone differente a chaque fois.
+    # On refuse uniquement les doublons (agent, zone) strictement identiques.
+    seen_pairs = set()
+    for item in agent_assignments:
+        key = (str(item["agent_id"]), (item.get("zone") or "").strip())
+        if key in seen_pairs:
+            raise ValueError(
+                f"L'agent {key[0]} est déj\u00e0 affecté à la zone '{key[1]}'."
+            )
+        seen_pairs.add(key)
+
     agent_ids = [str(item["agent_id"]) for item in agent_assignments]
-    if len(agent_ids) != len(set(agent_ids)):
-        raise ValueError("Un agent ne peut être affecté qu'une seule fois à la campagne.")
 
     numeric_agent_ids = []
     for aid in agent_ids:
@@ -193,18 +203,109 @@ def create_campaign(validated_data, user):
         agent = agents.get(agent_id)
         if not agent:
             raise ValueError(f"Agent introuvable : {agent_id}")
-        zone_name = assignment["zone"]
-        if zone_name:
-            if not campaign.zones.filter(nom=zone_name).exists():
-                raise ValueError(f"La zone '{zone_name}' ne fait pas partie de la campagne.")
-        else:
-            zone_name = campaign.zones.values_list("nom", flat=True).first() or ""
-        CampagneAffectation.objects.create(
-            campagne=campaign,
-            agent=agent,
-            zone=zone_name,
-            objectif_beneficiaires=assignment["objectif"],
-            created_by=user,
-        )
+
+        # Une affectation est creee par zone affectee a l'agent.
+        zone_names = list(assignment.get("zones") or [])
+        if not zone_names:
+            fallback = (assignment.get("zone") or "").strip()
+            if fallback:
+                zone_names = [fallback]
+        if not zone_names:
+            zone_names = [
+                campaign.zones.values_list("nom", flat=True).first() or ""
+            ]
+
+        for zone_name in zone_names:
+            if zone_name and not campaign.zones.filter(nom=zone_name).exists():
+                raise ValueError(
+                    f"La zone '{zone_name}' ne fait pas partie de la campagne."
+                )
+            CampagneAffectation.objects.create(
+                campagne=campaign,
+                agent=agent,
+                zone=zone_name,
+                objectif_beneficiaires=assignment["objectif"],
+                created_by=user,
+            )
 
     return campaign
+
+@transaction.atomic
+def assign_agent_zones(campaign, agent, zone_names, objectif=0, user=None):
+    """
+    Affecte un agent terrain a une ou plusieurs zones d'une campagne.
+
+    Cette fonction est idempotente : les zones deja affectees sont conservees,
+    les nouvelles sont creees. Les affectations existantes non listees sont
+    supprimees (l'appel definit l'ensemble des zones de l'agent).
+
+    Args:
+        campaign: Instance de Campaign
+        agent: Instance de User (role AGENT)
+        zone_names: Iterable de noms de zones
+        objectif: Objectif de beneficiaires (applique a chaque zone)
+        user: Utilisateur a l'origine de l'operation
+
+    Returns:
+        list[CampagneAffectation]: Les affectations de l'agent pour la campagne
+
+    Raises:
+        ValueError: Si l'agent ou une zone est invalide
+    """
+    from apps.accounts.models import User
+    from apps.campaigns.models import CampagneAffectation
+
+    if agent.role != User.Role.AGENT:
+        raise ValueError("Seul un agent terrain peut etre affecte a des zones.")
+
+    if agent.organization != campaign.organization:
+        raise ValueError("L'agent n'appartient pas a l'ONG de la campagne.")
+
+    # Nettoyage / deduplication des noms de zones
+    cleaned = []
+    for name in zone_names or []:
+        name = (name or "").strip()
+        if name and name not in cleaned:
+            cleaned.append(name)
+
+    if not cleaned:
+        raise ValueError("Au moins une zone doit etre affectee a l'agent.")
+
+    # Toutes les zones doivent faire partie de la campagne
+    campaign_zone_names = list(campaign.zones.values_list("nom", flat=True))
+    invalid = [n for n in cleaned if n not in campaign_zone_names]
+    if invalid:
+        raise ValueError(
+            f"Ces zones ne font pas partie de la campagne : {invalid}"
+        )
+
+    existing = {
+        a.zone: a
+        for a in CampagneAffectation.objects.filter(
+            campagne=campaign, agent=agent
+        )
+    }
+
+    # Supprimer les affectations qui ne sont plus demandees
+    for zone_name, affectation in existing.items():
+        if zone_name not in cleaned:
+            affectation.delete()
+
+    # Creer / mettre a jour les affectations demandees
+    for zone_name in cleaned:
+        affectation = existing.get(zone_name)
+        if affectation is None:
+            CampagneAffectation.objects.create(
+                campagne=campaign,
+                agent=agent,
+                zone=zone_name,
+                objectif_beneficiaires=objectif,
+                created_by=user or agent,
+            )
+        elif affectation.objectif_beneficiaires != objectif:
+            affectation.objectif_beneficiaires = objectif
+            affectation.save(update_fields=["objectif_beneficiaires"])
+
+    return list(
+        CampagneAffectation.objects.filter(campagne=campaign, agent=agent)
+    )

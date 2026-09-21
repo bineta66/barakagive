@@ -39,18 +39,32 @@ class GeminiService:
                 }
             )
 
+    def _score_to_urgence(self, score: float) -> str:
+        """Convert numeric score to urgency level."""
+        if score >= 80:
+            return "Très élevée"
+        elif score >= 60:
+            return "Élevée"
+        elif score >= 40:
+            return "Moyenne"
+        elif score >= 20:
+            return "Faible"
+        return "Faible"
+
     def _call_gemini(self, prompt: str) -> str:
         if not self.model:
-            return self._mock_response(prompt)
+            return self._mock_response(prompt, {})
         try:
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
-            return self._mock_response(prompt)
+            return self._mock_response(prompt, {})
 
-    def _mock_response(self, prompt: str) -> str:
+    def _mock_response(self, prompt: str, data: Dict[str, Any] = None, zone_id: str = None) -> str:
         """Return mock response when Gemini is not configured"""
+        if data is None:
+            data = {}
         if "executive" in prompt.lower():
             return json.dumps({
                 "resume": "L'analyse des campagnes actives révèle une situation globalement stable. Deux zones nécessitent une attention particulière.",
@@ -84,34 +98,73 @@ class GeminiService:
                 ]
             })
         elif "zone" in prompt.lower() and "priorit" in prompt.lower():
+            # Extract zones from payload data
+            zones_from_data = data.get("zones", [])
+            if not zones_from_data:
+                zones_from_data = data.get("zones_data", [])
+            
+            zones_prioritaires = []
+            for i, zone in enumerate(zones_from_data):
+                zones_prioritaires.append({
+                    "id": str(zone.get("id", f"zone-{i+1}")),
+                    "nom": zone.get("nom", f"Zone {i+1}"),
+                    "region": zone.get("region", ""),
+                    "departement": zone.get("departement", zone.get("region", "")),
+                    "score_total": float(zone.get("score_moyen", zone.get("score_total", 50.0))),
+                    "beneficiaires": int(zone.get("beneficiaires", 0)),
+                    "niveau_urgence": self._score_to_urgence(zone.get("score_moyen", zone.get("score_total", 50.0)))
+                })
+            
+            # Sort by score descending
+            zones_prioritaires.sort(key=lambda x: x["score_total"], reverse=True)
+            
+            region = zones_from_data[0].get("region", "") if zones_from_data else ""
             return json.dumps({
-                "region": "Kaolack",
-                "zones_prioritaires": [
-                    {"id": "zone-001", "nom": "Kaolack Centre", "region": "Kaolack", "departement": "Kaolack", "score_total": 92.3, "beneficiaires": 450, "niveau_urgence": "Très élevée"},
-                    {"id": "zone-002", "nom": "Kaolack Nord", "region": "Kaolack", "departement": "Kaolack", "score_total": 78.5, "beneficiaires": 320, "niveau_urgence": "Élevée"},
-                    {"id": "zone-003", "nom": "Kaolack Sud", "region": "Kaolack", "departement": "Kaolack", "score_total": 55.2, "beneficiaires": 180, "niveau_urgence": "Moyenne"},
-                    {"id": "zone-004", "nom": "Nioro", "region": "Kaolack", "departement": "Nioro", "score_total": 42.1, "beneficiaires": 120, "niveau_urgence": "Faible"},
-                    {"id": "zone-005", "nom": "Guinguinéo", "region": "Kaolack", "departement": "Guinguinéo", "score_total": 38.7, "beneficiaires": 95, "niveau_urgence": "Faible"}
-                ]
+                "region": region,
+                "zones_prioritaires": zones_prioritaires
             })
         elif "zone_detail" in prompt.lower() or ("zone" in prompt.lower() and "detail" in prompt.lower()):
+            # Find the specific zone from payload
+            zones_from_data = data.get("zones", [])
+            if not zones_from_data:
+                zones_from_data = data.get("zones_data", [])
+            
+            target_zone = None
+            for zone in zones_from_data:
+                if str(zone.get("id", "")) == str(zone_id) or zone.get("nom") == zone_id:
+                    target_zone = zone
+                    break
+            
+            if not target_zone and zones_from_data:
+                target_zone = zones_from_data[0]
+            
+            if not target_zone:
+                return json.dumps({"message": "Zone non trouvée"})
+            
+            score = float(target_zone.get("score_moyen", target_zone.get("score_total", 50.0)))
+            beneficiaires = int(target_zone.get("beneficiaires", 0))
+            
+            # Generate mock top 5 based on zone data
+            top5 = []
+            for i in range(min(5, beneficiaires)):
+                top5.append({
+                    "nom": f"Bénéficiaire {i+1}",
+                    "prenom": "",
+                    "score": max(50, score - i * 3),
+                    "vulnerabilite": self._score_to_urgence(max(50, score - i * 3))
+                })
+            
             return json.dumps({
-                "id": "zone-001",
-                "nom": "Kaolack Centre",
-                "region": "Kaolack",
-                "departement": "Kaolack",
-                "niveau": "Très élevée",
-                "score_total": 92.3,
-                "beneficiaires": 450,
-                "justification": "Cette zone concentre le plus grand nombre de bénéficiaires vulnérables avec un taux de couverture insuffisant. Les indicateurs de sécurité alimentaire sont critiques.",
-                "recommandation": "Déployer immédiatement une équipe mobile pour distribution d'urgence. Coordonner avec les autorités locales pour l'accès sécurisé.",
-                "top5_beneficiaires": [
-                    {"nom": "Diop", "prenom": "Fatou", "score": 98.5, "vulnerabilite": "Critique"},
-                    {"nom": "Sarr", "prenom": "Moussa", "score": 95.2, "vulnerabilite": "Critique"},
-                    {"nom": "Ndiaye", "prenom": "Awa", "score": 93.7, "vulnerabilite": "Élevée"},
-                    {"nom": "Ba", "prenom": "Oumar", "score": 91.4, "vulnerabilite": "Élevée"},
-                    {"nom": "Fall", "prenom": "Khady", "score": 89.8, "vulnerabilite": "Élevée"}
-                ]
+                "id": str(target_zone.get("id", zone_id)),
+                "nom": target_zone.get("nom", "Zone"),
+                "region": target_zone.get("region", ""),
+                "departement": target_zone.get("departement", target_zone.get("region", "")),
+                "niveau": self._score_to_urgence(score),
+                "score_total": score,
+                "beneficiaires": beneficiaires,
+                "justification": f"Analyse basée sur {beneficiaires} bénéficiaires avec score moyen {score:.1f}.",
+                "recommandation": "Adapter les interventions selon le niveau de vulnérabilité identifié.",
+                "top5_beneficiaires": top5
             })
         elif "finance" in prompt.lower() or "budget" in prompt.lower():
             return json.dumps({
@@ -166,7 +219,7 @@ Si aucune donnée ou aucune urgence: alert="GREEN", resume="Aucune urgence strat
             return json.loads(response)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse Gemini executive response: {e}")
-            return self._mock_response("executive")
+            return self._mock_response("executive", data)
 
     def analyze_zones(self, data: Dict[str, Any]) -> Dict[str, Any]:
         prompt = f"""
@@ -196,7 +249,7 @@ Trie par score décroissant.
             return json.loads(response)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse Gemini zones response: {e}")
-            return self._mock_response("zone")
+            return self._mock_response("zone", data)
 
     def analyze_zone_detail(self, data: Dict[str, Any], zone_id: str) -> Dict[str, Any]:
         prompt = f"""
@@ -235,7 +288,7 @@ Si zone non trouvée: retourner {{"message": "Zone non trouvée"}}
             return json.loads(response)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse Gemini zone detail response: {e}")
-            return self._mock_response("zone_detail")
+            return self._mock_response("zone_detail", data, zone_id)
 
     def analyze_finance(self, data: Dict[str, Any]) -> Dict[str, Any]:
         prompt = f"""
@@ -277,7 +330,129 @@ CRITÈRES ALERTE FINANCE:
             return json.loads(response)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse Gemini finance response: {e}")
-            return self._mock_response("finance")
+            return self._mock_response("finance", data)
+
+    def analyze_region(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyse d'une région par l'IA (Gemini).
+        Reçoit les zones avec scores calculés par Django et retourne une analyse humaine.
+        """
+        prompt = f"""
+Tu es un expert en analyse humanitaire pour BarakaGive.
+Tu rédiges l'analyse pour le Chef de Projet.
+
+DONNÉES REÇUES (scores calculés par Django, NE JAMAIS recalculer):
+{json.dumps(data, ensure_ascii=False, indent=2)}
+
+TÂCHE: Génère une analyse humaine et des recommandations pour cette région.
+
+RÈGLES STRICTES:
+1. Utilise UNIQUEMENT les données fournies. N'invente aucun chiffre.
+2. NE RECALCULE JAMAIS les scores - ils viennent de Django.
+3. Retourne UNIQUEMENT un JSON valide (pas de markdown, pas de texte explicatif).
+4. Structure de réponse EXACTE:
+{{
+  "executive_summary": "La région de {{region}} compte {{total_beneficiaries}} bénéficiaires répartis dans {{zones_count}} zones. {{zone_max}} présente le niveau de vulnérabilité le plus élevé avec un score moyen de {{score_max}}/100.",
+  "zone_analysis": [
+    {{"zone": "{{nom_zone_1}}", "summary": "Analyse factuelle de cette zone basée sur son score et son nombre de bénéficiaires."}},
+    {{"zone": "{{nom_zone_2}}", "summary": "Analyse factuelle de cette zone basée sur son score et son nombre de bénéficiaires."}}
+  ],
+  "recommendations": [
+    "Action concrète prioritaire pour la zone la plus vulnérable.",
+    "Action pour la zone suivante.",
+    "Action de suivi pour les zones moins critiques."
+  ],
+  "generated_at": "2026-09-18T12:00:00Z"
+}}
+
+CONSIGNES DE RÉDACTION:
+- executive_summary: 2-3 phrases max, factuel, cite les chiffres clés.
+- zone_analysis: Une entrée par zone fournie, dans l'ordre reçu (déjà triées par score décroissant).
+  Le summary doit expliquer POURQUOI cette zone a ce niveau (score + nb bénéficiaires).
+- recommendations: 3 actions concrètes, ordonnées par priorité.
+- generated_at: Date ISO 8601 UTC (sera ajoutée automatiquement si manquante).
+
+NIVEAUX DE VULNÉRABILITÉ (pour référence, ne pas recalculer):
+- TRES_ELEVEE (score >= 80): Vulnérabilité critique, intervention urgente
+- ELEVEE (score 60-79): Vulnérabilité forte, intervention prioritaire
+- MOYENNE (score 40-59): Vulnérabilité modérée, suivi rapproché
+- FAIBLE (score 20-39): Vulnérabilité limitée, surveillance
+- AUCUNE_DONNEE (score 0, 0 bénéficiaires): Pas de données collectées
+
+EXEMPLE:
+Si zones = [
+  {{"name": "Kaolack Centre", "score": 88, "beneficiaries": 32, "level": "TRES_ELEVEE"}},
+  {{"name": "Medina", "score": 66, "beneficiaries": 21, "level": "ELEVEE"}},
+  {{"name": "Ndorong", "score": 38, "beneficiaries": 12, "level": "FAIBLE"}}
+]
+Alors executive_summary = "La région de Kaolack compte 65 bénéficiaires répartis dans 3 zones. Kaolack Centre présente le niveau de vulnérabilité le plus élevé avec un score moyen de 88/100."
+"""
+        if not self.model:
+            return self._mock_region_response(data)
+
+        response = self._call_gemini(prompt)
+        try:
+            result = json.loads(response)
+            # Ensure required fields exist
+            if not isinstance(result, dict) or "executive_summary" not in result or "zone_analysis" not in result:
+                return self._mock_region_response(data)
+            # Ensure generated_at is present
+            if "generated_at" not in result:
+                result["generated_at"] = datetime.utcnow().isoformat() + "Z"
+            return result
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Gemini region response: {e}")
+            return self._mock_region_response(data)
+
+    def _mock_region_response(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Mock response for region analysis when Gemini is not configured"""
+        zones = data.get("zones", [])
+        region = data.get("region", "Inconnue")
+        campaign = data.get("campaign", "Campagne")
+        total_beneficiaries = data.get("total_beneficiaries", 0)
+        zones_count = data.get("zones_count", len(zones))
+        
+        if zones:
+            zone_max = zones[0]["name"]
+            score_max = zones[0]["score"]
+        else:
+            zone_max = "Aucune"
+            score_max = 0
+        
+        executive_summary = (
+            f"La région de {region} compte {total_beneficiaries} bénéficiaires "
+            f"répartis dans {zones_count} zones. "
+            f"{zone_max} présente le niveau de vulnérabilité le plus élevé avec un score moyen de {score_max}/100."
+        )
+        
+        zone_analysis = []
+        for zone in zones:
+            level = zone.get("level", "FAIBLE")
+            if level == "TRES_ELEVEE":
+                summary = f"Cette zone est prioritaire en raison du nombre important de ménages très vulnérables (score: {zone['score']}/100, {zone['beneficiaries']} bénéficiaires)."
+            elif level == "ELEVEE":
+                summary = f"La situation reste préoccupante mais moins critique que les zones prioritaires (score: {zone['score']}/100, {zone['beneficiaries']} bénéficiaires)."
+            elif level == "AUCUNE_DONNEE":
+                summary = "Aucune donnée collectée dans cette zone pour le moment."
+            else:
+                summary = f"La vulnérabilité est {level.lower()} et les besoins immédiats sont limités (score: {zone['score']}/100, {zone['beneficiaries']} bénéficiaires)."
+            zone_analysis.append({"zone": zone["name"], "summary": summary})
+        
+        recommendations = []
+        for i, zone in enumerate(zones):
+            if i == 0:
+                recommendations.append(f"Déployer l'équipe en priorité à {zone['name']}.")
+            elif i == 1:
+                recommendations.append(f"Prévoir une deuxième intervention à {zone['name']}.")
+            else:
+                recommendations.append(f"Maintenir un suivi régulier à {zone['name']}.")
+        
+        return {
+            "executive_summary": executive_summary,
+            "zone_analysis": zone_analysis,
+            "recommendations": recommendations,
+            "generated_at": datetime.utcnow().isoformat() + "Z"
+        }
 
 
 gemini_service = GeminiService()

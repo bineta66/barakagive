@@ -33,7 +33,7 @@ export const menusConfig = {
     { nom: "Tableau de bord", route: "/chef-projet/dashboard", icon: LayoutDashboard },
     { nom: "Mes projets", route: "/chef-projet/projets", icon: FolderKanban },
     { nom: "Campagnes", route: "/chef-projet/campagnes", icon: ClipboardList },
-    { nom: "Bénéficiaires", route: "/chef-projet/beneficiaires", icon: Users },
+    { nom: "Carte des priorités", route: "/chef-projet/carte-priorites", icon: MapPinned },
     { nom: "Zones", route: "/chef-projet/zones", icon: MapPinned },
     { nom: "Finances", route: "/chef-projet/finances", icon: Wallet },
     { nom: "Rapports", route: "/chef-projet/rapports", icon: BarChart3 },

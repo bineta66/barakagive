@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
@@ -48,8 +48,6 @@
       </div>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -59,7 +57,6 @@ import { List } from "lucide-vue-next"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import CarteSenegal from "@/modules/chef-projet/components/zones/CarteSenegal.vue"
 import FormulaireZone from "@/modules/chef-projet/components/zones/FormulaireZone.vue"
 import { useZoneStore } from "@/stores/zone.js"

@@ -27,20 +27,32 @@
     <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <ZoneAnalysisCard
         v-for="zone in zones"
-        :key="zone.id"
+        :key="zone.zone_id || zone.id"
         :zone="zone"
         :rang="zones.indexOf(zone) + 1"
-        @view-detail="goToZoneDetail"
       />
+    </div>
+
+    <!-- Bouton pour voir l'analyse IA complète de la région -->
+    <div class="mt-4 text-center">
+      <BoutonPrimary 
+        class="w-full sm:w-auto"
+        @click="goToRegionAnalysis"
+      >
+        <Brain :size="18" class="mr-2" />
+        Voir l'analyse IA complète de la région
+      </BoutonPrimary>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from "vue"
-import { MapPin } from "lucide-vue-next"
+import { MapPin, Brain } from "lucide-vue-next"
+import { useRouter } from "vue-router"
 import api from "@/services/api.js"
 import ZoneAnalysisCard from "./ZoneAnalysisCard.vue"
+import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 
 const props = defineProps({
   selectedRegion: {
@@ -49,7 +61,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(["zone-selected"])
+const router = useRouter()
 
 const zones = ref([])
 const loading = ref(false)
@@ -65,8 +77,8 @@ const fetchZonesForRegion = async () => {
   error.value = null
 
   try {
-    // Call the IA service endpoint
-    const response = await api.get(`/api/ia/regions/${encodeURIComponent(props.selectedRegion)}/zones`)
+    // Call the Django endpoint for computed zone scores
+    const response = await api.get(`/api/ia/regions/${encodeURIComponent(props.selectedRegion)}/analysis`)
     zones.value = response.data.zones || []
   } catch (err) {
     error.value = err.response?.data?.detail || "Impossible de charger les zones prioritaires."
@@ -84,7 +96,7 @@ watch(
   { immediate: true }
 )
 
-const goToZoneDetail = (zoneId) => {
-  emit("zone-selected", zoneId)
+const goToRegionAnalysis = () => {
+  router.push(`/chef-projet/zones/analyse-region/${encodeURIComponent(props.selectedRegion)}`)
 }
 </script>

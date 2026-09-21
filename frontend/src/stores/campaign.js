@@ -105,6 +105,28 @@ export const useCampaignStore = defineStore("campaign", () => {
     }
   }
 
+  const fetchCampaignAffectations = async (id) => {
+    error.value = null
+    try {
+      const response = await api.get(`/api/campaigns/${id}/agents/zones/`)
+      return response.data
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
+    }
+  }
+
+  const assignAgentZones = async (id, payload) => {
+    error.value = null
+    try {
+      const response = await api.put(`/api/campaigns/${id}/agents/zones/`, payload)
+      return response.data
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
+    }
+  }
+
   const deleteCampaign = async (id) => {
     loading.value = true
     error.value = null
@@ -134,5 +156,7 @@ export const useCampaignStore = defineStore("campaign", () => {
     createCampaign,
     updateCampaign,
     deleteCampaign,
+    fetchCampaignAffectations,
+    assignAgentZones,
   }
 })

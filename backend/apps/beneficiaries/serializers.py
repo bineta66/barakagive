@@ -81,11 +81,12 @@ class BeneficiaryUpdateSerializer(serializers.Serializer):
 
 
 class BeneficiaryListSerializer(serializers.ModelSerializer):
-    """Sérialiseur pour la liste des bénéficiaires."""
+    """Sérialiseur pour la liste des bénéficiaires, incluant les réponses détaillées."""
 
     campagne = serializers.SerializerMethodField()
     zone = serializers.SerializerMethodField()
     created_by = serializers.SerializerMethodField()
+    responses = FormResponseSerializer(many=True, read_only=True)
 
     class Meta:
         model = Beneficiary
@@ -98,10 +99,11 @@ class BeneficiaryListSerializer(serializers.ModelSerializer):
             "date_naissance",
             "campagne",
             "zone",
-            "ai_score",
+            "score_vulnerabilite",
             "sync_status",
             "created_by",
             "created_at",
+            "responses",
         ]
 
     def get_campagne(self, obj):
@@ -150,7 +152,7 @@ class BeneficiaryDetailSerializer(serializers.ModelSerializer):
             "campagne",
             "zone",
             "formulaire",
-            "ai_score",
+            "score_vulnerabilite",
             "sync_status",
             "responses",
             "created_by",

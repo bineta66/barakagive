@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="w-full max-w-[1152px] border-slate-200/60 inline-flex flex-col justify-start items-start p-8 min-h-screen">
     <div class="self-stretch mb-6">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -104,8 +104,6 @@
       @fermer="fermerModal"
     />
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -116,7 +114,6 @@ import { useFormStore } from "@/stores/form.js"
 import { useCampaignStore } from "@/stores/campaign.js"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import FormBuilder from "@/modules/chef-projet/components/campagnes/FormBuilder.vue"
 import ApercuFormulaire from "@/modules/chef-projet/components/campagnes/ApercuFormulaire.vue"
 import TypeQuestionModal from "@/modules/chef-projet/components/campagnes/TypeQuestionModal.vue"

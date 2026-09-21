@@ -18,6 +18,7 @@ class IsChefProjetOrGerant(BasePermission):
                 User.Role.CHEF_PROJET,
                 User.Role.GERANT,
                 User.Role.AGENT,
+                User.Role.FINANCE,
             ]
         )
 

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="min-h-screen bg-white flex justify-center items-start py-8 px-4 sm:px-6 lg:px-8">
     <div class="w-full max-w-4xl bg-white rounded-2xl border border-slate-200/60 p-8 shadow-xs-sm">
       <!-- En-tête -->
@@ -289,7 +289,6 @@
       @fermer="critereModalOuvert = false"
       @cree="onCritereCree"
     />
-    <ExecutiveOrbitalIA />
   </div>
 </template>
 
@@ -304,10 +303,8 @@ import { useAuthStore } from "@/stores/auth.js"
 import { getErrorMessage } from "@/services/api.js"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
-import BoutonTertiary from "@/components/ui/BoutonTertiary.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
 import CritereVulnerabiliteModal from "@/modules/gerant/components/projets/CritereVulnerabiliteModal.vue"
-import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const router = useRouter()
 const store = useGerantStore()
@@ -369,12 +366,6 @@ const couleurTotalPoids = computed(() => {
   if (totalPoids.value > 100) return "text-red-600"
   if (totalPoids.value === 100) return "text-green-600"
   return "text-yellow-600"
-})
-
-const couleurBarrePoids = computed(() => {
-  if (totalPoids.value > 100) return "bg-red-500"
-  if (totalPoids.value === 100) return "bg-green-500"
-  return "bg-yellow-400"
 })
 
 const messageTotalPoids = computed(() => {
@@ -474,4 +465,3 @@ onMounted(async () => {
   }
 })
 </script>
-

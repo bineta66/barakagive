@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center  pb-4">
@@ -171,8 +171,6 @@
       </table>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -183,7 +181,6 @@ import { FileDown, List, Download } from "lucide-vue-next"
 import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import { useFinances } from "@/composables/useFinances.js"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 
 const route = useRoute()
 const { projetsDetail } = useFinances()

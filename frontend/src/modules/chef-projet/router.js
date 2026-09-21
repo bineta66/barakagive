@@ -8,14 +8,14 @@ import CreerZone from "./views/zones/CreerZone.vue";
 import ModifierZone from "./views/zones/ModifierZone.vue";
 import DetailZone from "./views/zones/DetailZone.vue";
 import ZoneAnalyseIA from "./views/zones/ZoneAnalyseIA.vue";
+import RegionAnalyseIA from "./views/zones/RegionAnalyseIA.vue";
 import ListeCampagnes from "./views/campagnes/ListeCampagnes.vue";
 import CreerCampagne from "./views/campagnes/CreerCampagne.vue";
 import ModifierCampagne from "./views/campagnes/ModifierCampagne.vue";
 import DetailCampagne from "./views/campagnes/DetailCampagne.vue";
 import FormulaireDynamique from "./views/campagnes/FormulaireDynamique.vue";
-import ListeBeneficiaires from "./views/beneficiaires/ListeBeneficiaires.vue";
-import CarteBeneficiaires from "./views/beneficiaires/CarteBeneficiaires.vue";
-import DetailZoneBeneficiaires from "./views/beneficiaires/DetailZone.vue";
+import CartePriorites from "@/modules/chef-projet/views/priorites/CartePriorites.vue";
+import TableauBeneficiairesZone from "./views/priorites/TableauBeneficiairesZone.vue";
 import ListeFinances from "./views/finances/ListeFinances.vue";
 import DetailProjetFinance from "./views/finances/DetailProjetFinance.vue";
 import ListePartenaires from "./views/partenaires/ListePartenaires.vue";
@@ -74,6 +74,11 @@ const routes = [
         component: ZoneAnalyseIA,
       },
       {
+        path: "zones/analyse-region/:region",
+        name: "zones-analyse-region",
+        component: RegionAnalyseIA,
+      },
+      {
         path: "campagnes",
         name: "campagnes",
         component: ListeCampagnes,
@@ -99,19 +104,23 @@ const routes = [
         component: FormulaireDynamique,
       },
       {
-        path: "beneficiaires",
-        name: "beneficiaires",
-        component: ListeBeneficiaires,
+        path: "carte-priorites",
+        name: "carte-priorites",
+        component: CartePriorites,
       },
       {
-        path: "beneficiaires/carte",
-        name: "beneficiaires-carte",
-        component: CarteBeneficiaires,
+        path: "zones/:zoneId/beneficiaires",
+        name: "beneficiaires-zone",
+        component: TableauBeneficiairesZone,
+        props: true,
       },
       {
         path: "beneficiaires/zone",
-        name: "beneficiaires-zone",
-        component: DetailZoneBeneficiaires,
+        redirect: to => ({
+          name: "beneficiaires-zone",
+          params: { zoneId: to.query.zoneId || to.query.zone || "" },
+          query: to.query,
+        }),
       },
       {
         path: "finances",
@@ -143,3 +152,5 @@ const routes = [
 ];
 
 export default routes;
+
+// Cache bust

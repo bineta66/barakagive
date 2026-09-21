@@ -10,6 +10,11 @@ from .executive import (
 )
 from .zones import (
     UrgencyLevel as ZonesUrgencyLevel,
+    VulnerabilityLevel,
+    ZoneData,
+    RegionAnalysisRequest,
+    ZoneAnalysisItem,
+    RegionAnalysisResponse,
     ZoneRankingItem,
     RegionZonesResponse,
     ZoneDetailResponse,
@@ -30,6 +35,11 @@ __all__ = [
     "ExecutiveInsightResponse",
     "CampaignBase",
     "ExecutiveAnalyzeRequest",
+    "VulnerabilityLevel",
+    "ZoneData",
+    "RegionAnalysisRequest",
+    "ZoneAnalysisItem",
+    "RegionAnalysisResponse",
     "ZoneRankingItem",
     "RegionZonesResponse",
     "ZoneDetailResponse",

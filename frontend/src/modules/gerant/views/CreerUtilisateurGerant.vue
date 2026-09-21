@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="min-h-screen bg-white flex justify-center items-start py-8 px-4 sm:px-6 lg:px-8">
     <div class="w-full max-w-4xl bg-white rounded-2xl border border-slate-200/60 p-8 shadow-xs-sm">
       <!-- En-tête -->
@@ -158,7 +158,6 @@ import { ArrowLeft, Mail, Phone } from "lucide-vue-next"
 import { useGerantStore } from "@/modules/gerant/stores/gerantStore.js"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 
 const router = useRouter()
 const store = useGerantStore()
@@ -196,10 +195,7 @@ const soumettreFormulaire = async () => {
   } catch (err) {
     error.value = store.error || "Une erreur est survenue lors de la création de l'utilisateur."
   } finally {
-loading.value = false
+    loading.value = false
   }
-
 }
 </script>
-
-<ExecutiveOrbitalIA />

@@ -11,21 +11,200 @@ from rest_framework.permissions import IsAuthenticated
 from apps.campaigns.models import Campaign
 from apps.beneficiaries.models import Beneficiary
 from apps.zones.models import Zone
-from apps.finance.models import Depense, Budget, PosteBudgetaire
+from apps.finance.models import Depense, Budget
 from apps.projects.models import Project
 from apps.ia.models import IAnalyse
+from apps.ia.services import compute_region_zones_data, get_zone_beneficiaries_detail
 
 logger = logging.getLogger(__name__)
 
 
-def get_active_campaign(user):
-    """Get the active campaign for the user's organization"""
+def compute_assistant_dashboard(user):
+    """
+    Calcule dynamiquement les métriques exécutives réelles de l'organisation à partir de PostgreSQL.
+    Aucune donnée n'est simulée ou codée en dur.
+    """
+    now = timezone.now()
+    today = now.date()
+
     if user.role == "SUPER_ADMIN":
-        return Campaign.objects.filter(statut=Campaign.Statut.EN_COURS).first()
-    return Campaign.objects.filter(
-        organization=user.organization, 
-        statut=Campaign.Statut.EN_COURS
-    ).first()
+        projects_qs = Project.objects.all()
+        campaigns_qs = Campaign.objects.all()
+        beneficiaries_qs = Beneficiary.objects.all()
+        budgets_qs = Budget.objects.all()
+        depenses_qs = Depense.objects.all()
+    else:
+        org = user.organization
+        projects_qs = Project.objects.filter(organization=org)
+        campaigns_qs = Campaign.objects.filter(organization=org)
+        beneficiaries_qs = Beneficiary.objects.filter(organization=org)
+        budgets_qs = Budget.objects.filter(organization=org)
+        depenses_qs = Depense.objects.filter(organization=org)
+
+    # 1. Projets et Campagnes actifs
+    projets_actifs = projects_qs.filter(archived=False).count()
+    active_campaigns_qs = campaigns_qs.filter(statut=Campaign.Statut.EN_COURS)
+    campagnes_actives = active_campaigns_qs.count()
+    beneficiaires = beneficiaries_qs.count()
+
+    # 2. Données Financières
+    sum_budgets = budgets_qs.aggregate(total=models.Sum("montant_total"))["total"]
+    if sum_budgets is None or sum_budgets == 0:
+        sum_prj_budgets = projects_qs.filter(archived=False).aggregate(total=models.Sum("budget"))["total"]
+        budget_total = float(sum_prj_budgets or 0)
+    else:
+        budget_total = float(sum_budgets or 0)
+
+    sum_depenses = depenses_qs.aggregate(total=models.Sum("montant"))["total"]
+    depenses = float(sum_depenses or 0)
+    solde = budget_total - depenses
+    taux_execution = (depenses / budget_total * 100) if budget_total > 0 else 0
+
+    # 3. Campagnes proches de la clôture (date_fin >= aujourd'hui)
+    closing_soon_campaigns = list(
+        active_campaigns_qs.filter(date_fin__gte=today).order_by("date_fin")[:5]
+    )
+
+    # 4. Régions les plus actives
+    region_counts = (
+        beneficiaries_qs.values("zone__region")
+        .annotate(total=models.Count("id"))
+        .order_by("-total")
+    )
+    region_counts = [r for r in region_counts if r.get("zone__region")]
+    top_region = region_counts[0]["zone__region"] if region_counts else None
+    top_region_count = region_counts[0]["total"] if region_counts else 0
+
+    # 5. Campagne avec le plus de bénéficiaires
+    top_campaign = None
+    if active_campaigns_qs.exists():
+        top_campaign = (
+            active_campaigns_qs.annotate(nb_ben=models.Count("beneficiaries"))
+            .order_by("-nb_ben")
+            .first()
+        )
+
+    # 6. Résumé dynamique
+    if campagnes_actives > 0:
+        if top_campaign and top_campaign.beneficiaries.count() > 0:
+            camp_plural = "campagnes sont actuellement en cours" if campagnes_actives > 1 else "campagne est actuellement en cours"
+            resume = (
+                f"{campagnes_actives} {camp_plural}. "
+                f"La campagne '{top_campaign.nom}' présente le plus grand nombre de bénéficiaires ({top_campaign.beneficiaries.count()})."
+            )
+        else:
+            camp_plural = "campagnes sont actuellement en cours" if campagnes_actives > 1 else "campagne est actuellement en cours"
+            ben_plural = "bénéficiaires enregistrés" if beneficiaires > 1 else "bénéficiaire enregistré"
+            resume = f"{campagnes_actives} {camp_plural} avec {beneficiaires} {ben_plural}."
+    elif projets_actifs > 0:
+        prj_plural = "projets actifs" if projets_actifs > 1 else "projet actif"
+        resume = f"{projets_actifs} {prj_plural}. Aucune campagne opérationnelle n'est actuellement en cours."
+    else:
+        resume = "Aucun projet ou campagne active n'est actuellement enregistré."
+
+    # 7. Alertes réelles calculées
+    alertes = []
+
+    # Projets dépassant 80% du budget
+    high_budget_projects = []
+    for p in projects_qs.filter(archived=False):
+        p_budget = float(p.budget or 0)
+        if p_budget > 0:
+            p_dep = float(depenses_qs.filter(projet=p).aggregate(s=models.Sum("montant"))["s"] or 0)
+            ratio = (p_dep / p_budget) * 100
+            if ratio >= 80:
+                high_budget_projects.append((p.name, round(ratio, 1)))
+
+    if len(high_budget_projects) == 1:
+        alertes.append(f"Le projet '{high_budget_projects[0][0]}' dépasse {high_budget_projects[0][1]} % de son budget")
+    elif len(high_budget_projects) > 1:
+        alertes.append(f"{len(high_budget_projects)} projets dépassent 80 % de leur enveloppe budgétaire")
+
+    # Concentration géographique
+    if top_region and beneficiaires > 0:
+        pct_region = round((top_region_count / beneficiaires) * 100)
+        if pct_region >= 30:
+            alertes.append(f"La région de {top_region} concentre le plus de bénéficiaires ({top_region_count} bénéficiaires, soit {pct_region} %)")
+
+    # Campagnes proches de la clôture
+    for camp in closing_soon_campaigns:
+        days_left = (camp.date_fin - today).days
+        if days_left <= 7:
+            days_label = "aujourd'hui" if days_left == 0 else f"dans {days_left} jour{'s' if days_left > 1 else ''}"
+            alertes.append(f"La campagne '{camp.nom}' se clôture {days_label}")
+
+    # Solde déficitaire ou critique
+    if solde < 0:
+        alertes.append("Le solde budgétaire global présente un dépassement (déficit).")
+    elif budget_total > 0 and (solde / budget_total) < 0.1:
+        alertes.append("Le solde budgétaire disponible restant est inférieur à 10 %.")
+
+    if not alertes:
+        alertes.append("Aucune anomalie budgétaire ou opérationnelle détectée.")
+
+    # 8. Recommandations dynamiques
+    recommandations = []
+    if closing_soon_campaigns:
+        camp_names = ", ".join([c.nom for c in closing_soon_campaigns[:2]])
+        recommandations.append(f"Prioriser les campagnes proches de la clôture ({camp_names})")
+
+    if high_budget_projects:
+        recommandations.append("Vérifier et ajuster les dépenses des projets à risque budgétaire élevé")
+
+    if beneficiaires == 0 and campagnes_actives > 0:
+        recommandations.append("Mobiliser les agents terrain pour accélérer le recensement des bénéficiaires")
+
+    if solde > 0 and taux_execution < 50 and campagnes_actives > 0:
+        recommandations.append("Accélérer l'exécution des activités planifiées pour atteindre les objectifs de décaissement")
+
+    recommandations.append("Consulter la carte des priorités pour orienter les actions vers les zones les plus vulnérables")
+
+    # Alerte status pour indicateur orb (GREEN, YELLOW, RED)
+    alert_status = "GREEN"
+    if high_budget_projects or solde < 0:
+        alert_status = "RED"
+    elif any((camp.date_fin - today).days <= 7 for camp in closing_soon_campaigns) or (budget_total > 0 and (solde / budget_total) < 0.1):
+        alert_status = "YELLOW"
+
+    return {
+        "generated_at": now.isoformat(),
+        "projets_actifs": projets_actifs,
+        "campagnes_actives": campagnes_actives,
+        "beneficiaires": beneficiaires,
+        "budget_total": budget_total,
+        "depenses": depenses,
+        "solde": solde,
+        "taux_execution": round(taux_execution, 1),
+        "resume": resume,
+        "alertes": alertes,
+        "recommandations": recommandations[:4],
+        "alert": alert_status,
+        "budget": {
+            "total": budget_total,
+            "depenses": depenses,
+            "solde": solde,
+            "taux": round(taux_execution, 1),
+            "alerte": alert_status == "RED",
+        },
+        "campagne_prioritaire": {
+            "nom": top_campaign.nom,
+            "urgence": "Élevée" if (top_campaign.date_fin - today).days <= 14 else "Normale",
+            "region": top_campaign.zones.first().region if top_campaign and top_campaign.zones.exists() else "Multi-zones",
+        } if top_campaign else None,
+    }
+
+
+class AssistantDashboardView(APIView):
+    """
+    GET /api/assistant/dashboard/
+    Retourne les indicateurs stratégiques et opérationnels en temps réel
+    calculés exclusivement depuis la base de données PostgreSQL.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        data = compute_assistant_dashboard(request.user)
+        return Response(data)
 
 
 def compute_executive_payload(campaign, user):
@@ -39,8 +218,8 @@ def compute_executive_payload(campaign, user):
     zones_data = []
     for zone in zones:
         zone_beneficiaries = beneficiaries.filter(zone=zone)
-        avg_score = zone_beneficiaries.exclude(ai_score__isnull=True).aggregate(
-            avg_score=models.Avg('ai_score')
+        avg_score = zone_beneficiaries.exclude(score_vulnerabilite__isnull=True).aggregate(
+            avg_score=models.Avg('score_vulnerabilite')
         )['avg_score'] or 0
         zones_data.append({
             "id": str(zone.id),
@@ -142,43 +321,8 @@ class ExecutiveInsightView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        campaign = get_active_campaign(request.user)
-        if not campaign:
-            return Response({
-                "resume": "Aucune urgence stratégique n'est détectée actuellement.",
-                "alert": "GREEN",
-                "generated_at": timezone.now().isoformat()
-            })
-        
-        # Try to get cached analysis
-        analysis = IAnalyse.objects.filter(
-            campagne=campaign, 
-            type_analyse='global'
-        ).first()
-        
-        if analysis and analysis.response_data:
-            executive_data = analysis.response_data.get('executive', {})
-            executive_data["generated_at"] = analysis.updated_at.isoformat()
-            return Response(executive_data)
-        
-        # Compute and call IA service
-        payload = compute_executive_payload(campaign, request.user)
-        try:
-            result = call_ia_service("/api/ia/executive-insight", payload)
-            # Cache result
-            IAnalyse.objects.update_or_create(
-                campagne=campaign,
-                type_analyse='global',
-                defaults={'response_data': result}
-            )
-            return Response(result.get('executive', result))
-        except Exception as e:
-            logger.error(f"Executive insight failed: {e}")
-            return Response({
-                "resume": "Aucune urgence stratégique n'est détectée actuellement.",
-                "alert": "GREEN",
-                "generated_at": timezone.now().isoformat()
-            })
+        data = compute_assistant_dashboard(request.user)
+        return Response(data)
 
 
 class RegionZonesView(APIView):
@@ -189,25 +333,17 @@ class RegionZonesView(APIView):
         if not campaign:
             return Response({"region": id, "zones": []})
         
-        analysis = IAnalyse.objects.filter(
-            campagne=campaign, 
-            type_analyse='global'
-        ).first()
-        
-        if analysis and analysis.response_data:
-            zones = analysis.response_data.get('zones_prioritaires', [])
-            # Filter zones by region if needed
-            region_zones = [z for z in zones if z.get('region', '').lower() == id.lower()]
-            return Response({"region": id, "zones": region_zones})
-        
-        # Compute and call IA
-        payload = compute_executive_payload(campaign, request.user)
+        # Donnees calculees par Django (jamais d'erreur 500 pour un cas metier)
         try:
-            result = call_ia_service(f"/api/ia/regions/{id}/analyze", payload)
-            return Response(result)
+            data = compute_region_zones_data(campaign, id)
         except Exception as e:
             logger.error(f"Region zones failed: {e}")
             return Response({"region": id, "zones": []})
+
+        return Response({
+            "region": id,
+            "zones": data.get("zones", []),
+        })
 
 
 class ZoneDetailView(APIView):
@@ -234,9 +370,20 @@ class ZoneDetailView(APIView):
                         return Response(detail)
                     except Exception as e:
                         logger.error(f"Zone detail failed: {e}")
-            return Response({"message": "Zone non trouvée"})
-        
-        return Response({"message": "Zone non trouvée"})
+                    # IA indisponible : on retombe sur les donnees calculees par Django
+                    return self._django_zone_detail(campaign, id)
+            return Response({"message": "Zone non trouvée"}, status=404)
+
+        # Aucune analyse en cache : donnees calculees par Django
+        return self._django_zone_detail(campaign, id)
+
+    @staticmethod
+    def _django_zone_detail(campaign, zone_id):
+        """Retourne les donnees de zone calculees par Django (404 si absente)."""
+        try:
+            return Response(get_zone_beneficiaries_detail(campaign, zone_id))
+        except Zone.DoesNotExist:
+            return Response({"message": "Zone non trouvée"}, status=404)
 
 
 class BudgetAnalysisView(APIView):
@@ -278,3 +425,57 @@ class BudgetAnalysisView(APIView):
                 "resume": "Les dépenses restent cohérentes avec le budget prévu. Aucun risque financier n'est détecté pour le moment.",
                 "generated_at": timezone.now().isoformat()
             })
+
+
+class RegionAnalysisView(APIView):
+    """
+    Returns computed zone scores for a region (Django-computed, no IA).
+    Used by frontend to display zones with scores before IA analysis.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, region_name):
+        campaign = get_active_campaign(request.user)
+        if not campaign:
+            return Response({
+                "region": region_name,
+                "campaign": "",
+                "total_beneficiaries": 0,
+                "zones_count": 0,
+                "zones": [],
+            })
+        
+        # Check permissions
+        if request.user.role != "SUPER_ADMIN" and campaign.organization != request.user.organization:
+            return Response({"detail": "Accès refusé"}, status=403)
+        
+        data = compute_region_zones_data(campaign, region_name)
+        return Response(data)
+
+
+class RegionAnalysisIAView(APIView):
+    """
+    Triggers IA analysis for a region's zones.
+    Sends Django-computed data to FastAPI/Gemini for human-readable analysis.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, region_name):
+        campaign = get_active_campaign(request.user)
+        if not campaign:
+            return Response({"detail": "Aucune campagne active"}, status=404)
+        
+        # Check permissions
+        if request.user.role != "SUPER_ADMIN" and campaign.organization != request.user.organization:
+            return Response({"detail": "Accès refusé"}, status=403)
+        
+        # Compute zones data from Django
+        zones_data = compute_region_zones_data(campaign, region_name)
+        
+        # Call IA service for analysis
+        try:
+            result = call_ia_service(f"/api/ia/regions/{region_name}/analyze", zones_data)
+            return Response(result)
+        except Exception as e:
+            logger.error(f"Region IA analysis failed: {e}")
+            return Response({"detail": "Erreur lors de l'analyse IA"}, status=500)

@@ -10,9 +10,41 @@ class ProjectCriteria(models.Model):
         related_name="criteres",
     )
 
+    # Lien vers la question du formulaire (optionnel mais recommandé)
+    question = models.ForeignKey(
+        "forms.FormField",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="criteria",
+        help_text="Question du formulaire liée à ce critère"
+    )
+
     nom = models.CharField(max_length=200)
 
     poids = models.PositiveIntegerField()
+
+    actif = models.BooleanField(default=True)
+
+    # Configuration de vulnérabilité pour ce critère
+    vulnerable_values = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Valeurs considérées comme vulnérables (ex: ['oui', 'true', '1'])"
+    )
+    
+    vulnerable_operator = models.CharField(
+        max_length=20,
+        choices=[
+            ("equals", "Égal à"),
+            ("contains", "Contient"),
+            ("in", "Dans la liste"),
+            ("lt", "Inférieur à"),
+            ("gt", "Supérieur à"),
+        ],
+        default="contains",
+        help_text="Opérateur pour évaluer la vulnérabilité"
+    )
 
     actif = models.BooleanField(default=True)
 

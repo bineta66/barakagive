@@ -1,343 +1,123 @@
-﻿<template>
-  <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- En-tête -->
-    <div class="flex justify-between items-center  pb-4">
-      <div>
-        <h1 class="text-4xl font-bold text-or">Dépenses</h1>
-        <p class="text-xs text-gray-500 mt-1">
-          Enregistrement et suivi des dépenses par projet
-        </p>
-      </div>
-      <BoutonPrimary @click="openDepenseModal(null)">
-        <Plus class="w-5 h-5" />
-        Nouvelle dépense
-      </BoutonPrimary>
-    </div>
-
-    <!-- Cartes KPI -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Dépenses totales</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stat.depensesTotales) }} FCFA</h3>
+<template>
+  <div class="self-stretch p-8 inline-flex flex-col justify-start items-start gap-8">
+    <div class="self-stretch inline-flex justify-between items-end">
+      <div class="size- inline-flex flex-col justify-start items-start gap-2">
+        <div class="self-stretch flex flex-col justify-start items-start">
+          <div class="justify-center text-yellow-800 text-4xl font-bold font-['Inter'] leading-9">Dépenses</div>
         </div>
-        <Wallet class="text-bleu-nuit" :size="28" />
-      </div>
-
-      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Dépenses du mois</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stat.depensesDuMois) }} FCFA</h3>
+        <div class="self-stretch flex flex-col justify-start items-start">
+          <div class="justify-center text-gray-800 text-sm font-normal font-['Inter'] leading-5 tracking-tight">Gestion des dépenses et justificatifs.</div>
         </div>
-        <Receipt class="text-bleu-nuit" :size="28" />
       </div>
-
-      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Nombre d'opérations</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ stat.nombreOperations }}</h3>
+      <div class="h-11 px-6 bg-slate-900 rounded-md shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] flex justify-start items-center gap-2" @click="modalOpen = true">
+        <div class="size- pt-[2.50px] pb-1 inline-flex flex-col justify-start items-start">
+          <div class="w-2.5 h-3 relative">
+            <div class="size-2.5 left-[0.38px] top-[1.13px] absolute bg-white"></div>
+          </div>
         </div>
-        <Activity class="text-bleu-nuit" :size="28" />
-      </div>
-
-      <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Budget restant</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(stat.budgetRestant) }} FCFA</h3>
-        </div>
-        <Banknote class="text-bleu-nuit" :size="28" />
+        <div class="text-center justify-center text-white text-sm font-semibold font-['Inter'] leading-5 tracking-tight">Ajouter dépense</div>
       </div>
     </div>
 
-    <!-- Filtres -->
-    <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-4 gap-3">
-      <div class="relative">
-        <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Rechercher une dépense..."
-          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm"
-        />
+    <div class="self-stretch bg-white rounded-xl shadow-[0px_4px_20px_0px_rgba(0,0,0,0.05)] flex flex-col justify-start items-start overflow-hidden">
+      <div class="self-stretch p-6 border-b border-indigo-50 inline-flex justify-between items-center">
+        <div class="size- inline-flex flex-col justify-start items-start">
+          <div class="w-52 justify-center text-yellow-800 text-lg font-semibold font-['Inter'] leading-7 tracking-wide">LISTE DES DÉPENSES</div>
+        </div>
+        <div class="size- flex justify-start items-center gap-4">
+          <div class="w-36 h-5 relative">
+            <div class="left-0 top-[-1px] absolute justify-center text-gray-800 text-xs font-normal font-['Inter'] leading-5">{{ store.depenses.length }} dépenses répertoriées</div>
+          </div>
+        </div>
       </div>
-
-      <select v-model="filtreCategorie" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Toutes les catégories</option>
-        <option v-for="c in store.categoriesDepense" :key="c" :value="c">{{ c }}</option>
-      </select>
-
-      <select v-model="filtreProjet" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Tous les projets</option>
-        <option v-for="p in store.projetsAssignes" :key="p.id" :value="p.nom">{{ p.nom }}</option>
-      </select>
-
-      <BoutonTertiary @click="resetFilters">
-        Réinitialiser
-      </BoutonTertiary>
-    </div>
-
-    <!-- Tableau -->
-    <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
-      <table class="w-full">
-        <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
-          <tr>
-            <th class="text-left px-4 py-3">Date</th>
-            <th class="text-left px-4 py-3">Projet</th>
-            <th class="text-left px-4 py-3">Catégorie</th>
-            <th class="text-right px-4 py-3">Montant</th>
-            <th class="text-left px-4 py-3">Statut</th>
-            <th class="text-center px-4 py-3">Justificatif</th>
-            <th class="text-center px-4 py-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="depense in depensesPage"
-            :key="depense.id"
-            class="border-t hover:bg-slate-50"
-          >
-            <td class="px-4 py-3 text-sm text-slate-600">{{ formatDate(depense.date) }}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">{{ depense.projet }}</td>
-            <td class="px-4 py-3 text-sm text-slate-700">{{ depense.categorie }}</td>
-            <td class="px-4 text-right text-sm font-semibold text-red-700">{{ formatMontant(depense.montant) }} FCFA</td>
-            <td class="px-4 py-3">
-              <StatusBadge :statut="depense.statut">{{ depense.statut }}</StatusBadge>
-            </td>
-            <td class="px-4 py-3 text-center">
-              <span
-                v-if="depense.justificatif"
-                class="text-xs text-emerald-600 font-medium"
-              >
-                Attaché
-              </span>
-              <span
-                v-else
-                class="text-xs text-red-500 font-medium"
-              >
-                Manquant
-              </span>
-            </td>
-            <td class="px-4 py-3 text-center">
-              <div class="flex justify-center gap-1">
-                <button
-                  @click="openDepenseModal(depense)"
-                  class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition-colors"
-                  title="Modifier"
-                >
-                  <Pencil class="w-4 h-4" />
-                </button>
-                <button
-                  @click="addJustificatif(depense)"
-                  class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition-colors"
-                  title="Ajouter justificatif"
-                >
-                  <FileText class="w-4 h-4" />
-                </button>
+      <div class="self-stretch flex flex-col justify-start items-start">
+        <div class="self-stretch bg-white shadow-[0px_1px_4px_0px_rgba(0,0,0,0.05)] flex flex-col justify-start items-start">
+          <div class="self-stretch inline-flex justify-center items-start">
+            <div class="w-32 px-5 py-3 inline-flex flex-col justify-start items-start">
+              <div class="w-12 justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Référence</div>
+            </div>
+            <div class="w-48 px-5 py-3 inline-flex flex-col justify-start items-start">
+              <div class="w-24 justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Projet</div>
+            </div>
+            <div class="w-40 px-5 py-3 inline-flex flex-col justify-start items-start">
+              <div class="w-20 justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Catégorie</div>
+            </div>
+            <div class="w-40 px-5 py-3 inline-flex flex-col justify-start items-start">
+              <div class="w-20 justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Montant</div>
+            </div>
+            <div class="w-32 px-5 py-3 inline-flex flex-col justify-start items-start">
+              <div class="w-16 justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Date</div>
+            </div>
+            <div class="w-32 px-5 py-3 inline-flex flex-col justify-start items-start">
+              <div class="w-16 justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Statut</div>
+            </div>
+            <div class="w-40 px-5 py-3 inline-flex flex-col justify-end items-start">
+              <div class="w-20 text-right justify-center text-gray-800 text-xs font-medium font-['Inter'] uppercase leading-4 tracking-wide">Justificatif</div>
+            </div>
+          </div>
+        </div>
+        <div class="self-stretch flex flex-col justify-start items-start">
+          <div v-for="depense in store.depenses" :key="depense.id" class="self-stretch border-t border-indigo-50 inline-flex justify-center items-center">
+            <div class="w-32 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div class="self-stretch justify-center text-gray-800 text-xs font-semibold font-['Inter'] leading-5">{{ depense.reference }}</div>
+            </div>
+            <div class="w-48 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div class="justify-center text-gray-800 text-xs font-medium font-['Inter'] leading-5">{{ depense.projet_nom }}</div>
+            </div>
+            <div class="w-40 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div class="justify-center text-gray-800 text-xs font-medium font-['Inter'] leading-5">{{ depense.categorie }}</div>
+            </div>
+            <div class="w-40 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div class="justify-center text-red-700 text-xs font-medium font-['Inter'] leading-5">{{ formatMontant(depense.montant) }}</div>
+            </div>
+            <div class="w-32 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div class="justify-center text-gray-800 text-xs font-medium font-['Inter'] leading-5">{{ depense.date }}</div>
+            </div>
+            <div class="w-32 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div class="size- px-2 py-[2.50px] bg-white rounded-md outline outline-1 outline-offset-[-1px] outline-emerald-800/10 inline-flex justify-start items-start">
+                <div class="justify-center text-emerald-800 text-[10px] font-bold font-['Inter'] leading-4 tracking-tight">{{ depense.statut }}</div>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <div class="flex items-center justify-between px-4 py-3 border-t border-slate-200">
-      <p class="text-xs text-slate-500">
-        Affichage de {{ startItem }}-{{ endItem }} sur {{ filteredDepenses.length }} dépenses
-      </p>
-      <div class="flex items-center gap-2">
-        <button
-          :disabled="currentPage === 1"
-          @click="currentPage -= 1"
-          class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft class="w-4 h-4" />
-        </button>
-        <div class="flex items-center gap-1">
-          <button
-            v-for="page in visiblePages"
-            :key="page"
-            @click="currentPage = page"
-            :class="[
-              'px-2.5 py-1 rounded text-sm font-medium transition-colors',
-              page === currentPage
-                ? 'bg-or text-white'
-                : 'text-bleu-nuit hover:bg-bleu-nuit/10'
-            ]"
-          >
-            {{ page }}
-          </button>
+            </div>
+            <div class="w-40 px-5 py-6 inline-flex flex-col justify-start items-start">
+              <div v-if="depense.justifications && depense.justifications.length > 0" class="justify-center text-emerald-800 text-xs font-medium font-['Inter'] leading-5">Oui</div>
+              <div v-else class="justify-center text-red-700 text-xs font-medium font-['Inter'] leading-5">Non</div>
+            </div>
+          </div>
         </div>
-        <button
-          :disabled="currentPage === totalPages"
-          @click="currentPage += 1"
-          class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight class="w-4 h-4" />
-        </button>
       </div>
     </div>
 
-    <!-- Formulaire Nouvelle dépense (Modal) -->
     <DepenseFormModal
-      v-if="modalDepense"
-      :ouvert="modalDepense"
-      :projets="store.projetsAssignes"
-      :categories="store.categoriesDepense"
-      :modes-paiement="store.modesPaiement"
-      :depense="depenseSelectionne"
-      @fermer="modalDepense = false"
+      v-if="modalOpen"
+      :ouvert="modalOpen"
+      @fermer="modalOpen = false"
       @save="saveDepense"
-    />
-
-    <!-- Formulaire Ajouter justificatif (Modal) -->
-    <JustificatifFormModal
-      v-if="modalJustificatif"
-      :ouvert="modalJustificatif"
-      :depenses="store.depenses"
-      :types-document="store.typesDocument"
-      :depense-initiale="depenseJustificatifSelectionnee"
-      @fermer="modalJustificatif = false"
-      @save="saveJustificatif"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import {
-  Wallet, Receipt, Activity, Banknote, FolderKanban,
-  Search, ChevronLeft, ChevronRight, Plus,
-  Pencil, FileText
-} from 'lucide-vue-next'
+import { ref, onMounted } from 'vue'
 import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
-import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
-import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
-import FinancialOrbital from '@/components/ia/FinancialOrbital.vue'
 import DepenseFormModal from '@/modules/finance/components/depenses/DepenseFormModal.vue'
-import JustificatifFormModal from '@/modules/finance/components/justificatifs/JustificatifFormModal.vue'
 
 const store = useFinanceStore()
-const { formatMontant } = store
+const modalOpen = ref(false)
 
-const stat = computed(() => store.depensesStatistiques)
-
-const search = ref('')
-const filtreCategorie = ref('')
-const filtreProjet = ref('')
-const currentPage = ref(1)
-const itemsPerPage = 5
-
-const depensesPage = computed(() => {
-  return filteredDepenses.value.slice(
-    (currentPage.value - 1) * itemsPerPage,
-    currentPage.value * itemsPerPage
-  )
-})
-
-const filteredDepenses = computed(() => {
-  return store.depenses.filter(d => {
-    const matchesSearch = d.libelle.toLowerCase().includes(search.value.toLowerCase()) ||
-      d.projet.toLowerCase().includes(search.value.toLowerCase()) ||
-      d.categorie.toLowerCase().includes(search.value.toLowerCase()) ||
-      d.fournisseur.toLowerCase().includes(search.value.toLowerCase())
-    const matchesCategorie = filtreCategorie.value ? d.categorie === filtreCategorie.value : true
-    const matchesProjet = filtreProjet.value ? d.projet === filtreProjet.value : true
-    return matchesSearch && matchesCategorie && matchesProjet
-  })
-})
-
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filteredDepenses.value.length / itemsPerPage))
-)
-
-const startItem = computed(() =>
-  filteredDepenses.value.length === 0 ? 0 : (currentPage.value - 1) * itemsPerPage + 1
-)
-
-const endItem = computed(() =>
-  Math.min(currentPage.value * itemsPerPage, filteredDepenses.value.length)
-)
-
-const visiblePages = computed(() => {
-  const total = totalPages.value
-  if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1)
-  const current = currentPage.value
-  let start = Math.max(1, current - 2)
-  let end = Math.min(total, start + 4)
-  if (end === total) start = Math.max(1, end - 4)
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-})
-
-const modalDepense = ref(false)
-const depenseSelectionne = ref(null)
-const modalJustificatif = ref(false)
-const depenseJustificatifSelectionnee = ref(null)
-
-const resetFilters = () => {
-  search.value = ''
-  filtreCategorie.value = ''
-  filtreProjet.value = ''
+const formatMontant = (value) => {
+  return Number(value || 0).toLocaleString('fr-FR')
 }
 
-const openDepenseModal = (depense) => {
-  depenseSelectionne.value = depense ? { ...depense } : null
-  modalDepense.value = true
-}
-
-const saveDepense = async (depenseData) => {
+const saveDepense = async (data) => {
   try {
-    const created = await store.createExpense(depenseData)
-    modalDepense.value = false
-    depenseSelectionne.value = null
+    await store.createExpense(data)
+    modalOpen.value = false
   } catch (error) {
-    store.error = error.response?.data?.detail || error.message
-    return
-  }
-
-  depenseJustificatifSelectionnee.value = { id: created.id, projet: depenseData.projet }
-  modalJustificatif.value = true
-}
-
-const addJustificatif = (depense) => {
-  depenseJustificatifSelectionnee.value = { id: depense.id, projet: depense.projet }
-  modalJustificatif.value = true
-}
-
-const saveJustificatif = async (justificatifData) => {
-  try {
-    await store.uploadJustification(justificatifData.depenseId, justificatifData.pieceJointe)
-    modalJustificatif.value = false
-    depenseJustificatifSelectionnee.value = null
-  } catch (error) {
-    store.error = error.response?.data?.detail || error.message
+    console.error('Erreur:', error)
   }
 }
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('fr-FR')
-}
-
-const badgeClass = (statut) => {
-  switch (statut) {
-    case 'Validé':
-      return 'bg-bleu-nuit/10 text-bleu-nuit'
-    case 'En attente':
-      return 'bg-or/10 text-or'
-    case 'Rejeté':
-      return 'bg-red-100 text-red-700'
-    default:
-      return 'bg-gray-100 text-gray-600'
-  }
-}
-
-watch([search, filtreCategorie, filtreProjet], () => {
-  currentPage.value = 1
+onMounted(() => {
+  store.fetchExpenses()
 })
 </script>
-
-<FinancialOrbital />
-
-

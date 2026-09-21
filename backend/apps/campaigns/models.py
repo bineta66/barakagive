@@ -130,9 +130,9 @@ class CampagneAffectation(models.Model):
         verbose_name_plural = "Affectations de campagnes"
         constraints = [
             models.UniqueConstraint(
-                fields=["campagne", "agent"],
-                name="unique_campagne_agent",
-            )
+                fields=["campagne", "agent", "zone"],
+                name="unique_campagne_agent_zone",
+            ),
         ]
 
     def __str__(self):

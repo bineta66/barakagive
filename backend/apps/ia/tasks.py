@@ -8,7 +8,7 @@ from django.db import models
 from apps.campaigns.models import Campaign
 from apps.beneficiaries.models import Beneficiary
 from apps.zones.models import Zone
-from apps.finance.models import Depense, Budget, PosteBudgetaire
+from apps.finance.models import Depense, Budget
 from apps.ia.models import IAnalyse
 
 logger = logging.getLogger(__name__)
@@ -25,8 +25,8 @@ def compute_executive_payload(campaign):
     zones_data = []
     for zone in zones:
         zone_beneficiaries = beneficiaries.filter(zone=zone)
-        avg_score = zone_beneficiaries.exclude(ai_score__isnull=True).aggregate(
-            avg_score=models.Avg('ai_score')
+        avg_score = zone_beneficiaries.exclude(score_vulnerabilite__isnull=True).aggregate(
+            avg_score=models.Avg('score_vulnerabilite')
         )['avg_score'] or 0
         zones_data.append({
             "id": str(zone.id),

@@ -68,12 +68,12 @@ class Beneficiary(models.Model):
         help_text="Identifiant du dispositif de collecte",
     )
 
-    ai_score = models.DecimalField(
+    score_vulnerabilite = models.DecimalField(
         max_digits=5,
         decimal_places=2,
         null=True,
         blank=True,
-        help_text="Score IA calculé automatiquement",
+        help_text="Score de vulnérabilité calculé automatiquement",
     )
 
     sync_status = models.CharField(

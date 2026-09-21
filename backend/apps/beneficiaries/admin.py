@@ -13,10 +13,10 @@ class FormResponseInline(admin.TabularInline):
 
 @admin.register(Beneficiary)
 class BeneficiaryAdmin(admin.ModelAdmin):
-    list_display = ["nom", "prenom", "telephone", "sexe", "campagne", "zone", "ai_score", "sync_status", "created_by", "created_at"]
+    list_display = ["nom", "prenom", "telephone", "sexe", "campagne", "zone", "score_vulnerabilite", "sync_status", "created_by", "created_at"]
     list_filter = ["sexe", "sync_status", "campagne__organization", "campagne", "zone", "created_at"]
     search_fields = ["nom", "prenom", "telephone", "local_id", "device_id"]
-    readonly_fields = ["id", "local_id", "device_id", "ai_score", "sync_status", "created_by", "created_at", "updated_at"]
+    readonly_fields = ["id", "local_id", "device_id", "score_vulnerabilite", "sync_status", "created_by", "created_at", "updated_at"]
     inlines = [FormResponseInline]
     ordering = ["-created_at"]
 

@@ -16,7 +16,7 @@ class ProjectCriteriaCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProjectCriteria
-        fields = ["nom", "poids"]
+        fields = ["nom", "poids", "question", "vulnerable_values", "vulnerable_operator"]
         read_only_fields = ["created_by"]
 
     def validate_poids(self, value):

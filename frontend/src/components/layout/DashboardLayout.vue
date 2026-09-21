@@ -49,9 +49,6 @@
 
     <!-- Financial Orbital - Responsable Finance only -->
     <FinancialOrbital v-if="isFinance" />
-
-    <!-- Operational Orbital IA - Chef de Projet only -->
-    <OperationalOrbitalIA v-if="isChefProjet" />
   </div>
 </template>
 
@@ -62,7 +59,6 @@ import Sidebar from "@/components/layout/Sidebar.vue"
 import Navbar from "@/components/layout/Navbar.vue"
 import ExecutiveOrbitalIA from "@/components/ia/ExecutiveOrbitalIA.vue"
 import FinancialOrbital from "@/components/ia/FinancialOrbital.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import TrialBanner from "@/components/payment/TrialBanner.vue"
 
 const mobileOpen = ref(false)
@@ -70,7 +66,6 @@ const authStore = useAuthStore()
 
 const isGerant = computed(() => authStore.role === "GERANT")
 const isFinance = computed(() => authStore.role === "FINANCE")
-const isChefProjet = computed(() => authStore.role === "CHEF_PROJET")
 </script>
 
 <style scoped>

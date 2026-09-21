@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="w-full h-full relative">
     <LMap
       ref="mapRef"
@@ -110,6 +110,10 @@ const props = defineProps({
   mode: {
     type: String,
     default: "creation",
+  },
+  selectedRegion: {
+    type: String,
+    default: "",
   },
 })
 
@@ -228,7 +232,63 @@ const addGeoJsonLayer = () => {
       })
     },
   }).addTo(mapInstance)
+
+  if (props.selectedRegion) {
+    highlightRegionByName(props.selectedRegion)
+  }
 }
+
+const normalizeString = (s) => {
+  if (!s) return ""
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_]/g, " ").toLowerCase().trim()
+}
+
+const highlightRegionByName = (regionName) => {
+  if (!geoJsonLayer || !mapInstance) return
+
+  if (!regionName || regionName.toLowerCase() === "toutes les régions" || regionName.toLowerCase() === "toutes les regions") {
+    if (selectedLayer) {
+      geoJsonLayer.resetStyle(selectedLayer)
+      selectedLayer = null
+    }
+    mapInstance.setView([14.4974, -14.4524], 7)
+    return
+  }
+
+  const target = normalizeString(regionName)
+  let foundLayer = null
+
+  geoJsonLayer.eachLayer((layer) => {
+    const props_data = layer?.feature?.properties
+    const name = props_data?.shapeName || props_data?.name || ""
+    if (normalizeString(name) === target) {
+      foundLayer = layer
+    }
+  })
+
+  if (foundLayer) {
+    if (selectedLayer && selectedLayer !== foundLayer) {
+      geoJsonLayer.resetStyle(selectedLayer)
+    }
+    selectedLayer = foundLayer
+    foundLayer.setStyle({
+      color: "#EA580C",
+      weight: 3,
+      fillColor: "#EA580C",
+      fillOpacity: 0.25,
+    })
+    if (foundLayer.getBounds) {
+      mapInstance.fitBounds(foundLayer.getBounds(), { padding: [40, 40], maxZoom: 11 })
+    }
+  }
+}
+
+watch(
+  () => props.selectedRegion,
+  (newRegion) => {
+    highlightRegionByName(newRegion)
+  }
+)
 
 watch(
   () => props.form.submitDone,

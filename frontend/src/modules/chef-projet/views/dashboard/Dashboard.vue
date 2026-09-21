@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
     <div class="pb-4">
@@ -64,8 +64,6 @@
       </div>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -75,7 +73,6 @@ import EvolutionChart from "@/components/ui/EvolutionChart.vue"
 import ActiviteRecent from "@/components/ui/ActiviteRecent.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useProjectStore } from "@/stores/project.js"
 import { useCampaignStore } from "@/stores/campaign.js"
 import { useBeneficiaryStore } from "@/stores/beneficiary.js"

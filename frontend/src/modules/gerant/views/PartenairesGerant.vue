@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
-    <div class="flex justify-between items-center  pb-4">
+    <div class="flex justify-between items-center pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Partenaires</h1>
         <p class="text-xs text-gray-500 mt-1">
@@ -62,13 +62,13 @@
       </div>
 
       <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Tous les statuts</option>
-        <option>ACTIF</option>
-        <option>INACTIF</option>
+        <option value="">Tous les statuts</option>
+        <option value="ACTIF">ACTIF</option>
+        <option value="INACTIF">INACTIF</option>
       </select>
 
       <select v-model="filtreDomaine" class="border rounded-lg px-3 py-2 text-sm">
-        <option>Tous les domaines</option>
+        <option value="">Tous les domaines</option>
         <option v-for="d in domainesListe" :key="d" :value="d">{{ d }}</option>
       </select>
 
@@ -150,7 +150,7 @@
               'px-2.5 py-1 rounded text-sm font-medium transition-colors',
               page === currentPage
                 ? 'bg-or text-white'
-                  : 'text-bleu-nuit hover:bg-bleu-nuit/10'
+                : 'text-bleu-nuit hover:bg-bleu-nuit/10'
             ]"
           >
             {{ page }}
@@ -186,8 +186,8 @@ import {
 import { useGerantStore } from '@/modules/gerant/stores/gerantStore.js'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
+import StatusBadge from '@/components/ui/StatusBadge.vue'
 import PartenaireFormModal from '@/modules/gerant/components/partenaires/PartenaireFormModal.vue'
-import ExecutiveOrbitalIA from '@/components/ia/ExecutiveOrbitalIA.vue'
 
 const store = useGerantStore()
 
@@ -216,7 +216,7 @@ const domainesCount = computed(() =>
 const filteredPartenaires = computed(() => {
   return store.partenaires.filter(p => {
     const matchesSearch = p.nom.toLowerCase().includes(search.value.toLowerCase()) ||
-      p.projet.toLowerCase().includes(search.value.toLowerCase())
+      (p.projet && p.projet.toLowerCase().includes(search.value.toLowerCase()))
     const matchesStatut = filtreStatut.value ? p.statut === filtreStatut.value : true
     const matchesDomaine = filtreDomaine.value ? p.domaine === filtreDomaine.value : true
     return matchesSearch && matchesStatut && matchesDomaine
@@ -282,26 +282,7 @@ const supprimerPartenaire = (partenaire) => {
   }
 }
 
-const badgeClass = (statut) => {
-  switch (statut) {
-    case 'ACTIF':
-      return 'bg-bleu-nuit/10 text-bleu-nuit'
-    case 'INACTIF':
-      return 'bg-gray-100 text-gray-600'
-    default:
-      return 'bg-gray-100 text-gray-600'
-  }
-}
-
 watch([search, filtreStatut, filtreDomaine], () => {
   currentPage.value = 1
 })
 </script>
-
-<ExecutiveOrbitalIA />
-
-
-
-
-
-

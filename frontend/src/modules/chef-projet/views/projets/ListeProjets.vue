@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4">
@@ -178,8 +178,6 @@
       </div>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -194,7 +192,6 @@ import {
 import TableauProjets from "@/modules/chef-projet/components/projets/TableauProjets.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useProjectStore } from "@/stores/project.js"
 import { useAuthStore } from "@/stores/auth.js"
 

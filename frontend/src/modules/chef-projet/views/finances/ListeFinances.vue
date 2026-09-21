@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
     <div class="flex justify-between items-center  pb-4">
@@ -157,8 +157,6 @@
       </div>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
@@ -167,7 +165,6 @@ import { Wallet, Activity, PiggyBank, Search, Eye } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
 import StatutProjet from "@/modules/chef-projet/components/projets/StatutProjet.vue"
 import { useFinances } from "@/composables/useFinances.js"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 
 const {
   recherche,

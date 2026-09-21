@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
-    <div class="flex justify-between items-center  pb-4">
+    <div class="flex justify-between items-center pb-4">
       <div>
         <h1 class="text-4xl font-bold text-or">Rapports</h1>
         <p class="text-xs text-gray-500 mt-1">
@@ -13,7 +13,7 @@
     <!-- Rapports -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="bg-white border border-slate-200/60 rounded-xl p-6 flex flex-col items-center text-center">
-         <div class="w-16 h-16 rounded-full bg-or/10 flex items-center justify-center mb-4">
+        <div class="w-16 h-16 rounded-full bg-or/10 flex items-center justify-center mb-4">
           <FileText class="text-or" :size="32" />
         </div>
         <h3 class="text-lg font-bold text-slate-900 mb-2">Rapport d'exécution</h3>
@@ -48,7 +48,7 @@
 
     <!-- Historique des rapports -->
     <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
-      <div class="px-6 py-4 ">
+      <div class="px-6 py-4">
         <h3 class="text-sm font-bold uppercase text-slate-900">Historique des rapports générés</h3>
       </div>
 
@@ -68,9 +68,9 @@
             <td class="px-4 py-3 text-sm text-slate-600">12 Sep 2025</td>
             <td class="px-4 py-3 text-sm text-slate-600">Amine Diop</td>
             <td class="px-4 text-center">
-             <StatusBadge statut="Terminé">
-               Terminé
-             </StatusBadge>
+              <StatusBadge statut="Terminé">
+                Terminé
+              </StatusBadge>
             </td>
             <td class="px-4 text-center">
               <button class="p-1 text-slate-500 hover:text-bleu-nuit rounded-lg transition-colors">
@@ -88,13 +88,4 @@
 import { FileText, BarChart3, Download, Eye } from 'lucide-vue-next'
 import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
 import StatusBadge from '@/components/ui/StatusBadge.vue'
-import ExecutiveOrbitalIA from '@/components/ia/ExecutiveOrbitalIA.vue'
 </script>
-
-<ExecutiveOrbitalIA />
-
-
-
-
-
-

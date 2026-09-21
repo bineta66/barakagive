@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="min-h-screen bg-white flex justify-center items-start py-8 px-4 sm:px-6 lg:px-8">
     <div class="w-full max-w-4xl bg-white rounded-2xl border border-slate-200/60 p-8 shadow-xs-sm">
       <div class="mb-6">
@@ -133,31 +133,60 @@
         <div>
           <h3 class="text-xl font-bold text-or mb-4 pb-2 border-b">4. Affectation des agents terrain</h3>
           <p class="text-sm text-gray-600 mb-3">
-            Sélectionnez les agents terrain qui recevront cette campagne. Chaque agent verra uniquement les campagnes qui lui sont assignées.
+            Sélectionnez les agents terrain puis les zones qui leurs sont affectées.
+            Un agent peut intervenir dans plusieurs zones de la campagne.
           </p>
 
           <div v-if="campaignStore.agents.length === 0" class="p-4 bg-slate-50 border rounded-lg text-sm text-slate-500">
             Aucun agent terrain actif disponible pour votre ONG. Les agents doivent d'abord être créés par le Gérant.
           </div>
 
-          <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto border rounded-lg p-3 bg-slate-50">
-            <label
+          <div v-else class="space-y-2 max-h-96 overflow-y-auto border rounded-lg p-3 bg-slate-50">
+            <div
               v-for="agent in campaignStore.agents"
               :key="agent.id"
-              class="flex items-center gap-2 p-2 rounded hover:bg-white cursor-pointer transition border border-transparent hover:border-slate-200"
+              class="rounded-lg bg-white border border-slate-200 p-3"
             >
-              <input
-                type="checkbox"
-                :value="agent.id"
-                v-model="form.agents"
-                class="rounded text-bleu-nuit focus:ring-or/30 w-4 h-4"
-              />
-              <span class="text-sm font-medium text-slate-800">{{ agent.full_name || (agent.first_name + " " + agent.last_name) }}</span>
-              <span class="text-xs text-slate-500">({{ agent.role === "AGENT" ? "Agent" : "Chef" }})</span>
-            </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  :value="agent.id"
+                  :checked="isAgentSelected(agent.id)"
+                  @change="toggleAgent(agent.id)"
+                  class="rounded text-bleu-nuit focus:ring-or/30 w-4 h-4"
+                />
+                <span class="text-sm font-medium text-slate-800">
+                  {{ agent.full_name || (agent.first_name + " " + agent.last_name) }}
+                </span>
+                <span class="text-xs text-slate-500">({{ agent.role === "AGENT" ? "Agent" : "Chef" }})</span>
+              </label>
+
+              <!-- Zones affectées à cet agent (plusieurs possibles) -->
+              <div v-if="isAgentSelected(agent.id)" class="mt-2 pl-6">
+                <p v-if="zonesDisponibles.length === 0" class="text-xs text-slate-400 italic">
+                  Sélectionnez d'abord les zones d'intervention (section 2).
+                </p>
+                <div v-else class="flex flex-wrap gap-x-4 gap-y-1.5">
+                  <label
+                    v-for="z in zonesDisponibles"
+                    :key="z.id"
+                    class="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="z.nom"
+                      :checked="isZoneSelected(agent.id, z.nom)"
+                      @change="toggleAgentZone(agent.id, z.nom)"
+                      class="rounded text-bleu-nuit focus:ring-or/30 w-3.5 h-3.5"
+                    />
+                    {{ z.nom }}
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
           <p class="text-xs text-slate-500 mt-1.5">
-            {{ form.agents.length }} agent(s) sélectionné(s).
+            {{ agentsSelectionnes.length }} agent(s) sélectionné(s).
           </p>
         </div>
 
@@ -178,17 +207,14 @@
       </form>
     </div>
   </div>
-
-  <OperationalOrbitalIA />
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from "vue"
+import { reactive, ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
-import OperationalOrbitalIA from "@/components/ia/OperationalOrbitalIA.vue"
 import { useCampaignStore } from "@/stores/campaign.js"
 import { useProjectStore } from "@/stores/project.js"
 import { useZoneStore } from "@/stores/zone.js"
@@ -209,9 +235,49 @@ const form = reactive({
   zone_ids: [],
   date_debut: "",
   date_fin: "",
-  agents: [],
+  // Affectation multi-zones : { [agentId]: [zoneNom, ...] }
+  agentZones: {},
   statut: "PLANIFIER",
 })
+
+// Zones de la campagne (resolues depuis les ids selectionnes en section 2).
+const zonesDisponibles = computed(() =>
+  zoneStore.zones.filter((z) => form.zone_ids.includes(z.id))
+)
+
+// Agents ayant au moins une zone affectee.
+const agentsSelectionnes = computed(() =>
+  Object.entries(form.agentZones)
+    .filter(([, zones]) => zones && zones.length > 0)
+    .map(([id]) => Number(id))
+)
+
+function isAgentSelected(agentId) {
+  return Array.isArray(form.agentZones[agentId])
+}
+
+function toggleAgent(agentId) {
+  if (isAgentSelected(agentId)) {
+    delete form.agentZones[agentId]
+  } else {
+    form.agentZones[agentId] = []
+  }
+}
+
+function isZoneSelected(agentId, zoneNom) {
+  return (form.agentZones[agentId] || []).includes(zoneNom)
+}
+
+function toggleAgentZone(agentId, zoneNom) {
+  const zones = form.agentZones[agentId] || []
+  const index = zones.indexOf(zoneNom)
+  if (index === -1) {
+    zones.push(zoneNom)
+  } else {
+    zones.splice(index, 1)
+  }
+  form.agentZones[agentId] = zones
+}
 
 onMounted(async () => {
   loadingInit.value = true
@@ -237,6 +303,22 @@ const creerCampagne = async () => {
   feedback.message = ""
 
 try {
+    // Un agent peut etre affecte a plusieurs zones : on envoie la liste
+    // complete de ses zones (une affectation creee par zone cote backend).
+    const agents = Object.entries(form.agentZones)
+      .filter(([, zones]) => zones && zones.length > 0)
+      .map(([id, zones]) => ({
+        agent_id: Number(id),
+        zones,
+        objectif: 0,
+      }))
+
+    if (agents.some((a) => a.zones.length === 0)) {
+      feedback.type = "error"
+      feedback.message = "Chaque agent sélectionné doit avoir au moins une zone."
+      return
+    }
+
     await campaignStore.createCampaign({
       nom: form.nom,
       projet_id: Number(form.projet_id),
@@ -244,7 +326,7 @@ try {
       zone_ids: form.zone_ids,
       date_debut: form.date_debut,
       date_fin: form.date_fin,
-      agents: form.agents.map((id) => ({ agent_id: id, zone: "", objectif: 0 })),
+      agents,
       statut: form.statut,
     })
 

@@ -1,175 +1,110 @@
-from django.db import transaction
-from django.db.models import Sum
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.db.models import Sum
 
-from .models import Bailleur, Budget, Depense, Don, Justificatif, Partenaire, PosteBudgetaire
-from .permissions import (
-    FinancePermission,
-    JustificatifPermission,
-    OrganizationManagerPermission,
-    SuperAdminPermission,
-)
-from .serializers import (
-    BailleurSerializer, BudgetSerializer, DepenseSerializer, DonSerializer,
-    JustificatifSerializer, PartenaireSerializer, PosteBudgetaireSerializer,
-)
-from .services import recalculate_poste
+from .models import Budget, Don, Depense, Justification
+from .permissions import FinancePermission
+from .serializers import BudgetSerializer, DonSerializer, DepenseSerializer, JustificationSerializer
+from .services import prepare_budget_analysis
 
 
-class OrganizationQuerysetMixin:
-    scope_to_project = False
-
-    def org_queryset(self, queryset):
-        if self.request.user.role != "SUPER_ADMIN":
-            queryset = queryset.filter(organization=self.request.user.organization)
-        if self.scope_to_project and self.request.user.role == "CHEF_PROJET":
-            queryset = queryset.filter(projet__chef_projet=self.request.user)
+class FinanceQuerysetMixin:
+    def get_queryset(self):
+        user = self.request.user
+        queryset = self.queryset.filter(organization=user.organization)
+        
+        # Responsable Finance voit uniquement ses projets assignés
+        if user.role == "FINANCE":
+            # Filtrer par projets assignés (à adapter selon votre logique d'assignation)
+            # Pour l'instant, on suppose que le FINANCE voit tout de son organisation
+            pass
+        
         return queryset
 
 
-class BailleurListCreateView(OrganizationQuerysetMixin, generics.ListCreateAPIView):
-    serializer_class = BailleurSerializer
-    permission_classes = [OrganizationManagerPermission]
-
-    def get_queryset(self):
-        return self.org_queryset(Bailleur.objects.all())
-
-    def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
-
-
-class BailleurDetailView(OrganizationQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = BailleurSerializer
-    permission_classes = [OrganizationManagerPermission]
-    lookup_url_kwarg = "id"
-
-    def get_queryset(self):
-        return self.org_queryset(Bailleur.objects.all())
-
-
-class PartenaireListCreateView(OrganizationQuerysetMixin, generics.ListCreateAPIView):
-    serializer_class = PartenaireSerializer
-    permission_classes = [OrganizationManagerPermission]
-
-    def get_queryset(self):
-        return self.org_queryset(Partenaire.objects.all())
-
-    def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
-
-
-class PartenaireDetailView(OrganizationQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PartenaireSerializer
-    permission_classes = [OrganizationManagerPermission]
-    lookup_url_kwarg = "id"
-
-    def get_queryset(self):
-        return self.org_queryset(Partenaire.objects.all())
-
-
-class DonListCreateView(OrganizationQuerysetMixin, generics.ListCreateAPIView):
-    serializer_class = DonSerializer
+class DashboardView(APIView):
     permission_classes = [FinancePermission]
-    scope_to_project = True
 
-    def get_queryset(self):
-        return self.org_queryset(Don.objects.select_related("bailleur", "projet"))
+    def get(self, request):
+        user = request.user
+        queryset = Budget.objects.filter(organization=user.organization)
+        
+        budget_total = queryset.aggregate(total=Sum('montant'))['total'] or 0
+        dons_total = Don.objects.filter(organization=user.organization).aggregate(total=Sum('montant'))['total'] or 0
+        depenses_total = Depense.objects.filter(organization=user.organization).aggregate(total=Sum('montant'))['total'] or 0
+        solde = dons_total - depenses_total
+        
+        taux_execution = 0
+        if budget_total > 0:
+            taux_execution = round((depenses_total / budget_total) * 100, 2)
+        
+        return Response({
+            "budget_total": float(budget_total),
+            "dons_reçus": float(dons_total),
+            "depenses_totales": float(depenses_total),
+            "solde_disponible": float(solde),
+            "taux_execution": taux_execution,
+        })
 
-    def perform_create(self, serializer):
-        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
 
-
-class DonDetailView(OrganizationQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = DonSerializer
-    permission_classes = [FinancePermission]
-    lookup_url_kwarg = "id"
-    scope_to_project = True
-
-    def get_queryset(self):
-        return self.org_queryset(Don.objects.all())
-
-
-class BudgetListCreateView(OrganizationQuerysetMixin, generics.ListCreateAPIView):
+class BudgetListCreateView(FinanceQuerysetMixin, generics.ListCreateAPIView):
     serializer_class = BudgetSerializer
     permission_classes = [FinancePermission]
-    scope_to_project = True
-
-    def get_queryset(self):
-        return self.org_queryset(Budget.objects.select_related("projet", "don").prefetch_related("postes"))
+    queryset = Budget.objects.select_related("projet")
 
     def perform_create(self, serializer):
         serializer.save(organization=self.request.user.organization, created_by=self.request.user)
 
 
-class BudgetDetailView(OrganizationQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
+class BudgetDetailView(FinanceQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BudgetSerializer
     permission_classes = [FinancePermission]
+    queryset = Budget.objects.all()
     lookup_url_kwarg = "id"
-    scope_to_project = True
-
-    def get_queryset(self):
-        return self.org_queryset(Budget.objects.prefetch_related("postes"))
 
 
-class PosteListCreateView(generics.ListCreateAPIView):
-    serializer_class = PosteBudgetaireSerializer
+class DonListCreateView(FinanceQuerysetMixin, generics.ListCreateAPIView):
+    serializer_class = DonSerializer
     permission_classes = [FinancePermission]
-
-    def get_queryset(self):
-        queryset = PosteBudgetaire.objects.filter(
-            budget_id=self.kwargs["budget_id"],
-            budget__organization=self.request.user.organization,
-        )
-        if self.request.user.role == "CHEF_PROJET":
-            queryset = queryset.filter(budget__projet__chef_projet=self.request.user)
-        return queryset
+    queryset = Don.objects.select_related("projet", "campagne", "budget")
 
     def perform_create(self, serializer):
-        serializer.save(budget_id=self.kwargs["budget_id"])
+        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
 
 
-class PosteDetailView(generics.RetrieveUpdateDestroyAPIView):
-    serializer_class = PosteBudgetaireSerializer
+class DonDetailView(FinanceQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = DonSerializer
     permission_classes = [FinancePermission]
+    queryset = Don.objects.all()
     lookup_url_kwarg = "id"
 
-    def get_queryset(self):
-        queryset = PosteBudgetaire.objects.filter(budget__organization=self.request.user.organization)
-        if self.request.user.role == "CHEF_PROJET":
-            queryset = queryset.filter(budget__projet__chef_projet=self.request.user)
-        return queryset
 
-
-class DepenseListCreateView(OrganizationQuerysetMixin, generics.ListCreateAPIView):
+class DepenseListCreateView(FinanceQuerysetMixin, generics.ListCreateAPIView):
     serializer_class = DepenseSerializer
     permission_classes = [FinancePermission]
-    scope_to_project = True
+    queryset = Depense.objects.select_related("projet", "campagne")
 
-    def get_queryset(self):
-        return self.org_queryset(Depense.objects.select_related("projet", "poste_budgetaire").prefetch_related("justificatifs"))
+    def perform_create(self, serializer):
+        serializer.save(organization=self.request.user.organization, created_by=self.request.user)
 
 
-class DepenseDetailView(OrganizationQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
+class DepenseDetailView(FinanceQuerysetMixin, generics.RetrieveUpdateDestroyAPIView):
     serializer_class = DepenseSerializer
     permission_classes = [FinancePermission]
+    queryset = Depense.objects.all()
     lookup_url_kwarg = "id"
-    scope_to_project = True
-
-    def get_queryset(self):
-        return self.org_queryset(Depense.objects.prefetch_related("justificatifs"))
 
 
-class JustificatifListCreateView(generics.ListCreateAPIView):
-    serializer_class = JustificatifSerializer
-    permission_classes = [JustificatifPermission]
+class JustificationListCreateView(generics.ListCreateAPIView):
+    serializer_class = JustificationSerializer
+    permission_classes = [FinancePermission]
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        return Justificatif.objects.filter(
+        return Justification.objects.filter(
             depense_id=self.kwargs["depense_id"],
             depense__organization=self.request.user.organization,
         )
@@ -181,55 +116,44 @@ class JustificatifListCreateView(generics.ListCreateAPIView):
         )
 
 
-class JustificatifDetailView(generics.DestroyAPIView):
-    serializer_class = JustificatifSerializer
-    permission_classes = [SuperAdminPermission]
+class JustificationDetailView(generics.DestroyAPIView):
+    serializer_class = JustificationSerializer
+    permission_classes = [FinancePermission]
+    queryset = Justification.objects.all()
     lookup_url_kwarg = "id"
 
     def get_queryset(self):
-        queryset = Justificatif.objects.all()
-        if self.request.user.role != "SUPER_ADMIN":
-            queryset = queryset.filter(depense__organization=self.request.user.organization)
+        queryset = Justification.objects.filter(depense__organization=self.request.user.organization)
         return queryset
 
 
-class DepenseStatusView(APIView):
-    permission_classes = [SuperAdminPermission]
-
-    @transaction.atomic
-    def patch(self, request, id):
-        try:
-            depense = Depense.objects.get(id=id, organization=request.user.organization)
-        except Depense.DoesNotExist:
-            return Response({"detail": "Dépense introuvable."}, status=status.HTTP_404_NOT_FOUND)
-        new_status = request.data.get("statut")
-        if new_status not in {Depense.Status.APPROUVEE, Depense.Status.REJETEE}:
-            return Response({"detail": "Statut invalide."}, status=status.HTTP_400_BAD_REQUEST)
-        depense.statut = new_status
-        depense.save(update_fields=["statut", "updated_at"])
-        recalculate_poste(depense.poste_budgetaire)
-        return Response(DepenseSerializer(depense, context={"request": request}).data)
-
-
-class FinanceDashboardView(APIView):
+class BudgetAnalysisView(APIView):
     permission_classes = [FinancePermission]
 
-    def get(self, request):
-        budgets = Budget.objects.all()
-        depenses = Depense.objects.all()
-        dons = Don.objects.all()
-        if request.user.role != "SUPER_ADMIN":
-            budgets = budgets.filter(organization=request.user.organization)
-            depenses = depenses.filter(organization=request.user.organization)
-            dons = dons.filter(organization=request.user.organization)
-        budget_total = budgets.aggregate(total=Sum("montant_total"))["total"] or 0
-        montant_finance = dons.aggregate(total=Sum("montant_affecte"))["total"] or 0
-        montant_depense = depenses.filter(statut=Depense.Status.APPROUVEE).aggregate(total=Sum("montant"))["total"] or 0
-        return Response({
-            "budget_total": budget_total,
-            "montant_finance": montant_finance,
-            "montant_depense": montant_depense,
-            "solde": budget_total - montant_depense,
-            "nb_budgets": budgets.count(),
-            "nb_depenses": depenses.count(),
-        })
+    def get(self, request, campaign_id):
+        # Préparer les données pour l'analyse IA
+        data = prepare_budget_analysis(campaign_id)
+        
+        # Envoyer à FastAPI pour l'analyse
+        try:
+            import requests
+            fastapi_url = f"http://ia_service:8001/api/ia/budget-analysis/{campaign_id}"
+            response = requests.post(fastapi_url, json=data, timeout=10)
+            if response.status_code == 200:
+                ia_analysis = response.json()
+                return Response({
+                    "financial_data": data,
+                    "ia_analysis": ia_analysis
+                })
+            else:
+                return Response({
+                    "financial_data": data,
+                    "ia_analysis": None,
+                    "error": "IA service unavailable"
+                })
+        except Exception as e:
+            return Response({
+                "financial_data": data,
+                "ia_analysis": None,
+                "error": str(e)
+            })

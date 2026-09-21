@@ -1,197 +1,104 @@
-﻿<template>
-  <div
-    v-if="ouvert"
-    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-    @click.self="fermer"
-  >
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-3xl w-full">
+<template>
+  <div v-if="ouvert" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="fermer">
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-md w-full">
       <div class="p-6">
-        <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold" style="color: #744D03">
-            {{ don ? 'Modifier le financement' : 'Nouveau financement' }}
-          </h2>
-          <button
-            @click="fermer"
-            class="text-gray-400 hover:text-gray-600 transition"
-          >
-            <X class="w-6 h-6" />
-          </button>
-        </div>
-        <p class="text-sm text-gray-500 mt-1">
-          {{ don ? 'Modifiez les informations du financement' : 'Enregistrez un nouveau financement reçu' }}
-        </p>
+        <h2 class="text-2xl font-bold" style="color: #744D03">Nouveau don</h2>
+        <p class="text-sm text-gray-500 mt-1">Enregistrer un nouveau financement</p>
       </div>
 
-      <form @submit.prevent="submit" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form @submit.prevent="submit" class="p-6 space-y-4">
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Projet *</label>
-          <select
-            v-model="form.projetId"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          >
-            <option value="">Sélectionner un projet</option>
-            <option v-for="p in projets" :key="p.id" :value="p.id">{{ p.nom }}</option>
-          </select>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Bailleur / Donateur *</label>
+          <input v-model="form.bailleur" type="text" class="w-full border rounded-lg px-3 py-2" required>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Bailleur *</label>
-          <select
-            v-model="form.bailleur"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          >
-            <option value="">Sélectionner un bailleur</option>
-            <option v-for="b in bailleurs" :key="b" :value="b">{{ b }}</option>
-            <option value="__new__">Autre...</option>
-          </select>
-        </div>
-
-        <div v-if="form.bailleur === '__new__'">
-          <label class="block text-xs font-medium text-gray-600 mb-1">Nouveau bailleur</label>
-          <input
-            v-model="form.nouveauBailleur"
-            type="text"
-            placeholder="Nom du bailleur"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Type de financement *</label>
-          <select
-            v-model="form.typeFinancement"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          >
+          <label class="block text-sm font-medium text-gray-700 mb-1">Projet *</label>
+          <select v-model="form.projet" class="w-full border rounded-lg px-3 py-2" required>
             <option value="">Sélectionner</option>
-            <option v-for="t in typesFinancement" :key="t" :value="t">{{ t }}</option>
+            <option v-for="p in projets" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Montant *</label>
-          <input
-            v-model.number="form.montant"
-            type="number"
-            placeholder="0 FCFA"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Budget *</label>
+          <select v-model="form.budget" class="w-full border rounded-lg px-3 py-2" required>
+            <option value="">Sélectionner</option>
+            <option v-for="b in budgets" :key="b.id" :value="b.id">{{ b.source_financement }}</option>
+          </select>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Date *</label>
-          <input
-            v-model="form.date"
-            type="date"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-            required
-          />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Montant *</label>
+          <input v-model.number="form.montant" type="number" class="w-full border rounded-lg px-3 py-2" required>
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-gray-600 mb-1">Référence</label>
-          <input
-            v-model="form.reference"
-            type="text"
-            placeholder="REF-2025-XXX"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
-          />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Moyen de paiement *</label>
+          <select v-model="form.moyen_paiement" class="w-full border rounded-lg px-3 py-2" required>
+            <option value="VIREMENT">Virement</option>
+            <option value="ESPECE">Espèce</option>
+            <option value="CHEQUE">Chèque</option>
+            <option value="CARTE">Carte</option>
+          </select>
         </div>
 
-        <div class="md:col-span-2">
-          <label class="block text-xs font-medium text-gray-600 mb-1">Commentaire</label>
-          <textarea
-            v-model="form.commentaire"
-            rows="3"
-            placeholder="Commentaires sur le financement..."
-            class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-or/30 resize-none"
-          ></textarea>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+          <input v-model="form.date" type="date" class="w-full border rounded-lg px-3 py-2" required>
         </div>
       </form>
 
       <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-        <BoutonTertiary @click="fermer">
-          Annuler
-        </BoutonTertiary>
-        <BoutonPrimary @click="submit">
-          {{ don ? 'Mettre à jour' : 'Enregistrer' }}
-        </BoutonPrimary>
+        <button @click="fermer" class="px-4 py-2 border rounded-lg">Annuler</button>
+        <button @click="submit" class="px-4 py-2 bg-orange-600 text-white rounded-lg">Enregistrer</button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue'
-import { X } from 'lucide-vue-next'
-import BoutonPrimary from '@/components/ui/BoutonPrimary.vue'
-import BoutonTertiary from '@/components/ui/BoutonTertiary.vue'
+import { ref, onMounted } from 'vue'
+import api from '@/services/api.js'
+import { useFinanceStore } from '@/modules/finance/stores/financeStore.js'
 
 const props = defineProps({
   ouvert: Boolean,
-  projets: { type: Array, default: () => [] },
-  bailleurs: { type: Array, default: () => [] },
-  typesFinancement: { type: Array, default: () => [] },
-  don: { type: Object, default: null },
 })
 
 const emit = defineEmits(['fermer', 'save'])
 
+const store = useFinanceStore()
+
 const form = ref({
-  projetId: '',
   bailleur: '',
-  nouveauBailleur: '',
-  typeFinancement: '',
+  projet: '',
+  budget: '',
   montant: 0,
+  moyen_paiement: 'VIREMENT',
   date: '',
-  reference: '',
-  commentaire: '',
 })
 
-watch(
-  () => props.ouvert,
-  (val) => {
-    if (val && props.don) {
-      form.value = { ...props.don }
-    }
-    if (val && !props.don) {
-      form.value = {
-        projetId: '',
-        bailleur: '',
-        nouveauBailleur: '',
-        typeFinancement: '',
-        montant: 0,
-        date: '',
-        reference: '',
-        commentaire: '',
-      }
-    }
-  },
-  { immediate: true }
-)
+const projets = ref([])
+const budgets = ref([])
+
+onMounted(async () => {
+  try {
+    const [projectsRes, budgetsRes] = await Promise.all([
+      api.get('/api/projects/'),
+      api.get('/api/finance/budgets/'),
+    ])
+    projets.value = projectsRes.data
+    budgets.value = budgetsRes.data
+  } catch (error) {
+    console.error('Erreur:', error)
+  }
+})
 
 const submit = () => {
-  let bailleurFinal = form.value.bailleur
-  if (bailleurFinal === '__new__') {
-    bailleurFinal = form.value.nouveauBailleur
-  }
-  const projet = props.projets.find(p => p.id === Number(form.value.projetId))
-  const donData = {
-    ...form.value,
-    bailleur: bailleurFinal,
-    projetId: Number(form.value.projetId),
-    projet: projet?.nom || '',
-    montant: Number(form.value.montant) || 0,
-  }
-  emit('save', donData)
+  emit('save', form.value)
+  fermer()
 }
+
+const fermer = () => emit('fermer')
 </script>
-
-
-
-
-
-
