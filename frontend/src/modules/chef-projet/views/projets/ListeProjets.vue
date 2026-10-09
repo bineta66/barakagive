@@ -1,22 +1,18 @@
 <template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
-    <!-- Titre -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4">
+    <!-- Titre et Action -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
       <div>
-        <h1 class="text-4xl font-bold text-or">Projets</h1>
+        <h1 class="text-4xl font-bold text-bleu-nuit">Mes projets</h1>
         <p class="text-xs text-gray-500 mt-1">
-          Gérez et suivez les projets humanitaires sur le terrain et en phase de déploiement.
+          Gérez, suivez et mettez à jour les projets humanitaires sur le terrain.
         </p>
       </div>
 
-      <button
-        v-if="authStore.role !== 'CHEF_PROJET'"
-        @click="showCreateModal = true"
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-bleu-nuit text-white text-sm font-semibold rounded-lg hover:bg-[#01111eff] transition shadow-xs"
-      >
+      <BoutonPrimary v-if="peutGererProjets" @click="openCreateModal">
         <Plus :size="18" />
         Nouveau projet
-      </button>
+      </BoutonPrimary>
     </div>
 
     <!-- Alert and Loading -->
@@ -27,24 +23,24 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Volume budgétaire alloué</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatBudget(totalBudget) }}</h3>
+          <p class="text-xs font-bold uppercase text-slate-500">Volume budgétaire alloué</p>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-1">{{ formatBudget(totalBudget) }}</h3>
         </div>
         <Wallet class="text-bleu-nuit" :size="28" />
       </div>
 
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Projets actifs</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ activeProjectsCount }}</h3>
+          <p class="text-xs font-bold uppercase text-slate-500">Projets actifs</p>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-1">{{ activeProjectsCount }}</h3>
         </div>
         <Activity class="text-bleu-nuit" :size="28" />
       </div>
 
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
-          <p class="text-xs font-bold uppercase text-slate-900">Total projets</p>
-          <h3 class="text-xl font-bold text-slate-800 mt-2">{{ projectStore.projects.length }}</h3>
+          <p class="text-xs font-bold uppercase text-slate-500">Total projets</p>
+          <h3 class="text-xl font-bold text-slate-800 mt-1">{{ projectStore.projects.length }}</h3>
         </div>
         <FolderKanban class="text-bleu-nuit" :size="28" />
       </div>
@@ -52,144 +48,114 @@
 
     <!-- Filtres -->
     <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 grid md:grid-cols-3 gap-3">
-      <select v-model="filtreStatut" class="border rounded-lg px-3 py-2 text-sm bg-white">
+      <select v-model="filtreStatut" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30">
         <option value="Tous les statuts">Tous les statuts</option>
         <option value="Actif">Actifs</option>
         <option value="Archivé">Archivés</option>
       </select>
 
-      <select v-model="filtreRegion" class="border rounded-lg px-3 py-2 text-sm bg-white">
+      <select v-model="filtreRegion" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30">
         <option value="Toutes les régions">Toutes les régions</option>
         <option v-for="reg in regionsList" :key="reg" :value="reg">{{ reg }}</option>
       </select>
 
       <div class="relative">
-        <Search class="absolute left-3 top-3 text-slate-400" :size="16" />
+        <Search class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" :size="16" />
         <input
           v-model="recherche"
           type="text"
-          placeholder="Rechercher un projet..."
-          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm"
+          placeholder="Rechercher par nom ou code..."
+          class="w-full border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30"
         />
       </div>
     </div>
 
-    <!-- Tableau -->
-    <TableauProjets
-      :projects="projetsFiltres"
-      :can-manage="authStore.role !== 'CHEF_PROJET'"
-      @delete="handleDeleteProject"
-    />
-
-    <!-- Modal Création Projet -->
-    <div
-      v-if="showCreateModal && authStore.role !== 'CHEF_PROJET'"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-    >
-      <div class="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-xs-sm space-y-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center border-b pb-3">
-          <h3 class="text-lg font-bold text-bleu-nuit">Créer un nouveau projet</h3>
-          <button @click="showCreateModal = false" class="text-gray-400 hover:text-gray-600 text-xl font-bold">×</button>
-        </div>
-
-        <form @submit.prevent="submitCreateProject" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Nom du projet *</label>
-            <input
-              v-model="newProject.name"
-              type="text"
-              required
-              placeholder="Ex: Secours Alimentaire & Nutrition d'Urgence"
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Région *</label>
-            <select
-              v-model="newProject.region"
-              required
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
-            >
-              <option value="">Sélectionner une région</option>
-              <option v-for="r in senegalRegions" :key="r" :value="r">{{ r }}</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Objectif *</label>
-            <textarea
-              v-model="newProject.objectif"
-              rows="2"
-              required
-              placeholder="Objectif principal du projet..."
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
-            ></textarea>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Description</label>
-            <textarea
-              v-model="newProject.description"
-              rows="2"
-              placeholder="Description détaillée..."
-              class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
-            ></textarea>
-          </div>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Date début *</label>
-              <input
-                v-model="newProject.start_date"
-                type="date"
-                required
-                class="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Date fin *</label>
-              <input
-                v-model="newProject.end_date"
-                type="date"
-                required
-                class="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-3 pt-3 border-t">
-            <button
-              type="button"
-              @click="showCreateModal = false"
-              class="px-4 py-2 border rounded-lg text-sm text-slate-600 hover:bg-slate-50"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              :disabled="saving"
-              class="px-5 py-2 bg-bleu-nuit text-white text-sm font-semibold rounded-lg hover:bg-[#01111eff] disabled:opacity-50"
-            >
-              {{ saving ? "Création..." : "Créer le projet" }}
-            </button>
-          </div>
-        </form>
-      </div>
+    <div class="flex justify-end gap-2">
+      <button type="button" @click="modeAffichage = 'cartes'" :aria-pressed="modeAffichage === 'cartes'" class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition" :class="modeAffichage === 'cartes' ? 'border-bleu-nuit bg-bleu-nuit text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"><LayoutGrid :size="16" />Cartes</button>
+      <button type="button" @click="modeAffichage = 'tableau'" :aria-pressed="modeAffichage === 'tableau'" class="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition" :class="modeAffichage === 'tableau' ? 'border-bleu-nuit bg-bleu-nuit text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'"><List :size="16" />Tableau</button>
     </div>
+
+    <div v-if="modeAffichage === 'tableau'" class="overflow-x-auto rounded-xl border border-slate-200/60 bg-white">
+      <table class="w-full min-w-[760px] text-left text-sm">
+        <thead class="bg-slate-50 text-xs uppercase tracking-wide text-bleu-nuit">
+          <tr><th class="px-4 py-4">Projet</th><th class="px-4 py-4">Région</th><th class="px-4 py-4">Budget</th><th class="px-4 py-4">Dates</th><th class="px-4 py-4">Statut</th><th class="px-4 py-4 text-right">Actions</th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr v-for="projet in projetsPage" :key="projet.id" class="hover:bg-slate-50/70">
+            <td class="px-4 py-4"><p class="font-semibold text-slate-800">{{ projet.name || projet.nom }}</p><p class="mt-0.5 text-xs text-slate-500">{{ projet.code || 'Sans code' }}</p></td>
+            <td class="px-4 py-4 text-slate-600">{{ projet.region || 'Non renseignée' }}</td>
+            <td class="px-4 py-4 font-medium text-slate-700">{{ formatBudget(projet.budget) }}</td>
+            <td class="px-4 py-4 text-slate-600">{{ projet.start_date || '-' }} – {{ projet.end_date || '-' }}</td>
+            <td class="px-4 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'">{{ projet.archived ? 'Archivé' : 'Actif' }}</span></td>
+            <td class="px-4 py-4"><div class="flex justify-end gap-2">
+              <RouterLink :to="{ name: 'projets-detail', params: { id: projet.id || projet.code } }" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-bleu-nuit" title="Détails" aria-label="Détails"><Eye :size="16" /></RouterLink>
+              <button v-if="peutGererProjets && !projet.archived" class="rounded-lg px-3 py-2 text-xs font-semibold text-bleu-nuit hover:bg-slate-100" @click="openEditProject(projet)">Modifier</button>
+              <button v-if="peutGererProjets && !projet.archived" class="rounded-lg px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50" @click="handleDeleteProject(projet.id)">Archiver</button>
+            </div></td>
+          </tr>
+          <tr v-if="!projetsPage.length"><td colspan="6" class="px-4 py-10 text-center text-slate-500">Aucun projet ne correspond aux filtres.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div v-else-if="projetsPage.length" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <article v-for="projet in projetsPage" :key="projet.id" class="overflow-hidden rounded-xl border border-slate-200/70 bg-white/75 text-slate-800 backdrop-blur-xl">
+        <div class="border-b border-slate-200/70 p-5">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0"><h2 class="truncate text-lg font-bold text-slate-900">{{ projet.name || projet.nom }}</h2><p class="mt-1 text-xs text-slate-500">{{ projet.code || 'Sans code' }}</p></div>
+            <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'">{{ projet.archived ? 'Archive' : 'Actif' }}</span>
+          </div>
+          <p class="mt-3 line-clamp-2 min-h-10 text-sm text-slate-600">{{ projet.description || projet.objectif || 'Aucune description disponible.' }}</p>
+          <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+            <div class="rounded-lg border border-slate-200/70 bg-slate-100/70 p-3"><p class="text-slate-500">Région</p><span class="mt-1 inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2.5 py-1 font-semibold text-bleu-nuit">{{ projet.region || 'Non renseignée' }}</span></div>
+            <div class="rounded-lg border border-slate-200/70 bg-slate-100/70 p-3"><p class="text-slate-500">Budget</p><p class="mt-1 font-semibold text-slate-800">{{ formatBudget(projet.budget) }}</p></div>
+            <div class="rounded-lg border border-slate-200/70 bg-slate-100/70 p-3"><p class="text-slate-500">Début</p><p class="mt-1 font-semibold text-slate-800">{{ projet.start_date || '-' }}</p></div>
+            <div class="rounded-lg border border-slate-200/70 bg-slate-100/70 p-3"><p class="text-slate-500">Fin</p><p class="mt-1 font-semibold text-slate-800">{{ projet.end_date || '-' }}</p></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-100/70 p-4">
+          <RouterLink :to="{ name: 'projets-detail', params: { id: projet.id || projet.code } }" class="inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-bleu-nuit hover:bg-slate-100"><Eye :size="15" />Détails</RouterLink>
+          <div class="flex flex-wrap gap-2">
+            <button v-if="peutGererProjets && !projet.archived" class="rounded-lg px-2 py-2 text-xs font-semibold text-bleu-nuit hover:bg-bleu-nuit/5" @click="openEditProject(projet)">Modifier</button>
+            <button v-if="peutGererProjets && !projet.archived" class="rounded-lg px-2 py-2 text-xs font-semibold text-rose-baraka hover:bg-rose-baraka/10" @click="handleDeleteProject(projet.id)">Archiver</button>
+          </div>
+        </div>
+      </article>
+    </div>
+    <div v-else-if="modeAffichage === 'cartes'" class="rounded-xl border border-bleu-nuit/10 bg-bleu-nuit/[0.035] p-10 text-center text-sm text-slate-500 backdrop-blur-xl">Aucun projet ne correspond aux filtres.</div>
+
+    <nav v-if="pageCount > 1" class="flex items-center justify-between rounded-xl border border-bleu-nuit/10 bg-bleu-nuit/[0.035] px-4 py-3 text-sm backdrop-blur-xl" aria-label="Pagination des projets">
+      <span class="text-slate-500">Page {{ currentPage }} sur {{ pageCount }} · {{ projectStore.pagination.count }} projet(s)</span>
+      <div class="flex gap-2"><button :disabled="currentPage === 1" class="rounded-lg border px-3 py-2 disabled:opacity-40" @click="currentPage--">Precedent</button><button :disabled="currentPage === pageCount" class="rounded-lg border px-3 py-2 disabled:opacity-40" @click="currentPage++">Suivant</button></div>
+    </nav>
+
+    <!-- Modal Projet (Création & Modification) -->
+    <ProjetFormModal
+      v-if="peutGererProjets && modalOpen"
+      :ouvert="modalOpen"
+      :projet="editingProject"
+      :saving="projectStore.loading"
+      @fermer="closeModal"
+      @save="handleSaveProject"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from "vue"
+import { ref, computed, reactive, watch } from "vue"
+import { RouterLink } from "vue-router"
 import {
   Wallet,
   Activity,
   FolderKanban,
   Search,
   Plus,
+  Eye,
+  LayoutGrid,
+  List,
 } from "lucide-vue-next"
-import TableauProjets from "@/modules/chef-projet/components/projets/TableauProjets.vue"
+import ProjetFormModal from "@/modules/chef-projet/components/projets/ProjetFormModal.vue"
+import BoutonPrimary from "@/components/ui/BoutonPrimary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
 import { useProjectStore } from "@/stores/project.js"
@@ -197,37 +163,30 @@ import { useAuthStore } from "@/stores/auth.js"
 
 const projectStore = useProjectStore()
 const authStore = useAuthStore()
+const peutGererProjets = computed(() => authStore.user?.role === "GERANT")
 
 const recherche = ref("")
 const filtreStatut = ref("Tous les statuts")
 const filtreRegion = ref("Toutes les régions")
-const showCreateModal = ref(false)
-const saving = ref(false)
+const modalOpen = ref(false)
+const editingProject = ref(null)
 const feedback = reactive({ type: "success", message: "" })
+const currentPage = ref(1)
+const modeAffichage = ref("cartes")
+const pageSize = 6
 
-const senegalRegions = [
-  "Dakar", "Thiès", "Diourbel", "Fatick", "Kaolack", "Kaffrine",
-  "Saint-Louis", "Louga", "Matam", "Tambacounda", "Kédougou",
-  "Kolda", "Sédhiou", "Ziguinchor"
-]
-
-const newProject = reactive({
-  name: "",
-  description: "",
-  region: "",
-  objectif: "",
-  start_date: "",
-  end_date: "",
-})
-
-onMounted(async () => {
+watch([currentPage, recherche, filtreStatut, filtreRegion], async () => {
+  const params = { page: currentPage.value, page_size: pageSize, search: recherche.value.trim() }
+  if (filtreStatut.value === "Actif") params.archived = "false"
+  else if (filtreStatut.value === "Archivé") params.archived = "true"
+  if (filtreRegion.value !== "Toutes les régions") params.region = filtreRegion.value
   try {
-    await projectStore.fetchProjects()
+    await projectStore.fetchProjects(params)
   } catch (err) {
     feedback.type = "error"
     feedback.message = "Erreur lors du chargement des projets."
   }
-})
+}, { immediate: true })
 
 const totalBudget = computed(() => {
   return projectStore.projects.reduce((acc, p) => acc + (parseFloat(p.budget) || 0), 0)
@@ -243,55 +202,55 @@ const regionsList = computed(() => {
 })
 
 const projetsFiltres = computed(() => {
-  return projectStore.projects.filter((p) => {
-    const q = recherche.value.toLowerCase()
-    const nameMatch = (p.name || p.nom || "").toLowerCase().includes(q)
-    const codeMatch = (p.code || "").toLowerCase().includes(q)
-    const okRecherche = !q || nameMatch || codeMatch
-
-    let okStatut = true
-    if (filtreStatut.value === "Actif") okStatut = !p.archived
-    else if (filtreStatut.value === "Archivé") okStatut = !!p.archived
-
-    let okRegion = true
-    if (filtreRegion.value !== "Toutes les régions") {
-      okRegion = p.region === filtreRegion.value
-    }
-
-    return okRecherche && okStatut && okRegion
-  })
+  return projectStore.projects
 })
 
+const pageCount = computed(() => Math.max(1, Math.ceil(projectStore.pagination.count / pageSize)))
+const projetsPage = computed(() => projetsFiltres.value)
+watch([recherche, filtreStatut, filtreRegion], () => { currentPage.value = 1 })
+watch(pageCount, value => { if (currentPage.value > value) currentPage.value = value })
+
 const formatBudget = (val) => {
-  return new Intl.NumberFormat("fr-FR").format(val) + " FCFA"
+  return new Intl.NumberFormat("fr-FR").format(val || 0) + " FCFA"
 }
 
-const submitCreateProject = async () => {
-  saving.value = true
+const openCreateModal = () => {
+  editingProject.value = null
+  modalOpen.value = true
+}
+
+const openEditProject = (projet) => {
+  editingProject.value = projet
+  modalOpen.value = true
+}
+
+const closeModal = () => {
+  modalOpen.value = false
+  editingProject.value = null
+}
+
+const handleSaveProject = async (payload) => {
   feedback.message = ""
   try {
-    const currentUserId = authStore.user?.id
-    await projectStore.createProject({
-      ...newProject,
-      chef_projet: currentUserId,
-      responsable_finance: currentUserId,
-    })
-    feedback.type = "success"
-    feedback.message = "Projet créé avec succès !"
-    showCreateModal.value = false
-    Object.assign(newProject, {
-      name: "",
-      description: "",
-      region: "",
-      objectif: "",
-      start_date: "",
-      end_date: "",
-    })
+    if (payload.id) {
+      await projectStore.updateProject(payload.id, payload)
+      feedback.type = "success"
+      feedback.message = "Projet mis à jour avec succès !"
+    } else {
+      const currentUserId = authStore.user?.id
+      await projectStore.createProject({
+        ...payload,
+        chef_projet: payload.chef_projet,
+        responsable_finance: payload.responsable_finance,
+      })
+      feedback.type = "success"
+      feedback.message = "Projet créé avec succès !"
+    }
+    closeModal()
+    await projectStore.fetchProjects()
   } catch (err) {
     feedback.type = "error"
-    feedback.message = projectStore.error || "Erreur lors de la création du projet."
-  } finally {
-    saving.value = false
+    feedback.message = projectStore.error || "Erreur lors de l'enregistrement du projet."
   }
 }
 
@@ -307,5 +266,3 @@ const handleDeleteProject = async (id) => {
   }
 }
 </script>
-
-

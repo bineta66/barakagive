@@ -1,9 +1,8 @@
 from rest_framework import serializers
-from django.utils import timezone
+from apps.common.validators import validate_description
 
 from apps.projects.models import Project
 from apps.zones.models import Zone
-from apps.accounts.models import User
 from .models import Campaign, CampagneAffectation
 
 
@@ -64,8 +63,8 @@ class AgentCampagneSerializer(serializers.ModelSerializer):
     class Meta:
         model = Campaign
         fields = [
-            "id", "nom", "projet", "image", "date_fin",
-            "zone", "zones", "objectif", "objectif_total", "collectes", "statut",
+            "id", "nom", "projet", "image", "date_debut", "date_fin",
+            "zone", "zones", "objectif", "objectif_total", "collectes", "statut", "type",
         ]
 
     def _assignments(self, obj):
@@ -79,10 +78,86 @@ class AgentCampagneSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         return None
     def get_zones(self, obj):
-        return [assignment.zone for assignment in self._assignments(obj)]
+        campaign_zones = list(obj.zones.filter(organization_id=obj.organization_id))
+        assignments = self._assignments(obj)
+        assigned_names = [a.zone for a in assignments if a.zone]
+
+        if self.context.get("agent") is not None:
+            allowed_names = set(assigned_names)
+            return [
+                {
+                    "id": str(z.id),
+                    "nom": z.nom,
+                    "latitude": str(z.latitude) if z.latitude is not None else None,
+                    "longitude": str(z.longitude) if z.longitude is not None else None,
+                }
+                for z in campaign_zones
+                if z.organization_id == obj.organization_id
+                and (z.nom in allowed_names or str(z.id) in allowed_names)
+            ]
+
+        if campaign_zones:
+            if assigned_names:
+                filtered = [
+                    z for z in campaign_zones
+                    if z.organization_id == obj.organization_id
+                    and (z.nom in assigned_names or str(z.id) in assigned_names)
+                ]
+                if filtered:
+                    return [
+                        {
+                            "id": str(z.id),
+                            "nom": z.nom,
+                            "latitude": str(z.latitude) if z.latitude is not None else None,
+                            "longitude": str(z.longitude) if z.longitude is not None else None,
+                        }
+                        for z in filtered
+                    ]
+            return [
+                {
+                    "id": str(z.id),
+                    "nom": z.nom,
+                    "latitude": str(z.latitude) if z.latitude is not None else None,
+                    "longitude": str(z.longitude) if z.longitude is not None else None,
+                }
+                for z in campaign_zones
+            ]
+
+        if assigned_names:
+            matched_zones = {
+                z.nom: z for z in Zone.objects.filter(
+                    nom__in=assigned_names, organization_id=obj.organization_id,
+                )
+            }
+            result = []
+            for name in assigned_names:
+                z = matched_zones.get(name)
+                result.append({
+                    "id": str(z.id) if z else name,
+                    "nom": name,
+                    "latitude": str(z.latitude) if (z and z.latitude is not None) else None,
+                    "longitude": str(z.longitude) if (z and z.longitude is not None) else None,
+                })
+            return result
+
+        all_zones = Zone.objects.filter(organization=obj.organization, statut=True)
+        return [
+            {
+                "id": str(z.id),
+                "nom": z.nom,
+                "latitude": str(z.latitude) if z.latitude is not None else None,
+                "longitude": str(z.longitude) if z.longitude is not None else None,
+            }
+            for z in all_zones
+        ]
+
     def get_zone(self, obj):
         assignments = self._assignments(obj)
-        return assignments[0].zone if assignments else None
+        if assignments and assignments[0].zone:
+            return assignments[0].zone
+        if obj.zones.exists():
+            return obj.zones.first().nom
+        return None
     def get_objectif(self, obj):
         assignments = self._assignments(obj)
         return assignments[0].objectif_beneficiaires if assignments else 0
@@ -93,7 +168,9 @@ class AgentCampagneSerializer(serializers.ModelSerializer):
 class AgentDashboardSerializer(serializers.Serializer):
     agent = serializers.CharField()
     campagnes_actives = serializers.IntegerField()
+    zones_assignees = serializers.IntegerField()
     beneficiaires_enregistres = serializers.IntegerField()
+    beneficiaires_prioritaires = serializers.IntegerField()
     objectif_total = serializers.IntegerField()
     progression = serializers.FloatField()
 
@@ -151,6 +228,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "nom",
             "projet",
             "zones_count",
+            "type",
             "date_debut",
             "date_fin",
             "statut",
@@ -186,6 +264,7 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             "code_campagne",
             "nom",
             "description",
+            "type",
             "projet",
             "zones",
             "regions",
@@ -229,17 +308,44 @@ class CampaignCreateSerializer(serializers.Serializer):
     nom = serializers.CharField(max_length=200)
     description = serializers.CharField(required=False, allow_blank=True)
     zone_ids = serializers.ListField(
-        child=serializers.UUIDField(),
-        min_length=1,
-    )
+            child=serializers.UUIDField(),
+            min_length=1,
+        )
     date_debut = serializers.DateField()
     date_fin = serializers.DateField()
+    type = serializers.ChoiceField(
+        choices=[choice for choice in Campaign.Type.choices if choice[0] != Campaign.Type.COLLECTE],
+        required=False,
+        default=Campaign.Type.DISTRIBUTION,
+    )
+    statut = serializers.ChoiceField(choices=Campaign.Statut.choices, required=False)
     agents = AgentAssignmentInputSerializer(many=True, required=False, default=list)
+    def validate_zone_ids(self, value):
+        """Validate zone IDs for creation, similar to update serializer."""
+        if value is None:
+            return value
+        normalized = [str(value_id) for value_id in value]
+        if len(normalized) != len(set(normalized)):
+            raise serializers.ValidationError("Une zone ne peut être sélectionnée qu'une seule fois.")
+        return value
+
 
     def validate_nom(self, value):
-        if not value or not value.strip():
+        v = (value or "").strip()
+        if not v:
             raise serializers.ValidationError("Le nom de la campagne est obligatoire.")
-        return value
+        if len(v) < 3:
+            raise serializers.ValidationError("Le nom de la campagne doit contenir au moins 3 caractères.")
+        if len(v) > 200:
+            raise serializers.ValidationError("Le nom de la campagne ne peut pas dépasser 200 caractères.")
+        return v
+
+    def validate_description(self, value):
+        value = (value or "").strip()
+        try:
+            return validate_description(value)
+        except Exception as exc:
+            raise serializers.ValidationError(str(exc))
 
     def validate(self, attrs):
         if not attrs.get("projet_id") and attrs.get("projet"):
@@ -247,10 +353,10 @@ class CampaignCreateSerializer(serializers.Serializer):
         if not attrs.get("projet_id"):
             raise serializers.ValidationError({"projet_id": "Le projet est obligatoire."})
         date_debut = attrs.get("date_debut")
-        date_fin = attrs.get("date_fin")
-        if date_debut and date_fin and date_fin <= date_debut:
+        date_fin   = attrs.get("date_fin")
+        if date_debut and date_fin and date_fin < date_debut:
             raise serializers.ValidationError({
-                """date_fin": "La date de fin doit être postérieure à la date de début."""
+                "date_fin": "La date de fin doit être égale ou postérieure à la date de début."
             })
         return attrs
 
@@ -267,22 +373,51 @@ class CampaignUpdateSerializer(serializers.Serializer):
     zone_ids = serializers.ListField(
         child=serializers.UUIDField(),
         required=False,
+        min_length=1,
     )
     date_debut = serializers.DateField(required=False)
     date_fin = serializers.DateField(required=False)
+    type = serializers.ChoiceField(
+        choices=[choice for choice in Campaign.Type.choices if choice[0] != Campaign.Type.COLLECTE],
+        required=False,
+    )
+    statut = serializers.ChoiceField(choices=Campaign.Statut.choices, required=False)
 
-    def validate_nom(self, value):
-        if value is not None and (not value or not value.strip()):
-            raise serializers.ValidationError("Le nom de la campagne ne peut pas être vide.")
+    def validate_zone_ids(self, value):
+        """Validate zone IDs for updates, same logic as creation validator."""
+        if value is None:
+            return value
+        normalized = [str(value_id) for value_id in value]
+        if len(normalized) != len(set(normalized)):
+            raise serializers.ValidationError("Une zone ne peut être sélectionnée qu'une seule fois.")
         return value
 
-    def validate(self, attrs):
-        date_debut = attrs.get("date_debut")
-        date_fin = attrs.get("date_fin")
+    def validate_nom(self, value):
+        value = (value or "").strip()
+        if len(value) < 3:
+            raise serializers.ValidationError("Le nom de la campagne doit contenir au moins 3 caractères.")
+        if len(value) > 200:
+            raise serializers.ValidationError("Le nom de la campagne ne peut pas dépasser 200 caractères.")
+        return value
 
-        if date_debut and date_fin and date_fin <= date_debut:
+    def validate_description(self, value):
+        value = (value or "").strip()
+        try:
+            return validate_description(value)
+        except Exception as exc:
+            raise serializers.ValidationError(str(exc))
+
+    def validate(self, attrs):
+        # Prevent modification of immutable fields
+        if "projet" in attrs or "projet_id" in attrs:
+            raise serializers.ValidationError({"projet": "Le projet ne peut pas être modifié via la mise à jour."})
+        instance = self.instance
+        date_debut = attrs.get("date_debut", getattr(instance, "date_debut", None))
+        date_fin = attrs.get("date_fin", getattr(instance, "date_fin", None))
+
+        if date_debut and date_fin and date_fin < date_debut:
             raise serializers.ValidationError({
-                """date_fin": "La date de fin doit être postérieure à la date de début."""
+                "date_fin": "La date de fin doit être égale ou postérieure à la date de début."
             })
 
         return attrs

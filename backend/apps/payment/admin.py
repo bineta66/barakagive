@@ -1,9 +1,10 @@
 from django.contrib import admin
+from apps.common.admin import SuperAdminOnlyModelAdmin
 from .models import Subscription, Transaction
 
 
 @admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
+class SubscriptionAdmin(SuperAdminOnlyModelAdmin, admin.ModelAdmin):
     list_display = [
         "id",
         "ong",
@@ -30,7 +31,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Transaction)
-class TransactionAdmin(admin.ModelAdmin):
+class TransactionAdmin(SuperAdminOnlyModelAdmin, admin.ModelAdmin):
     list_display = [
         "id",
         "subscription",

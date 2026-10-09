@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
+from apps.common.admin import SuperAdminOnlyModelAdmin
 from .models import User
 
 
 @admin.register(User)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(SuperAdminOnlyModelAdmin, UserAdmin):
 
     model = User
 
@@ -74,3 +75,9 @@ class CustomUserAdmin(UserAdmin):
     )
 
     filter_horizontal = ("groups", "user_permissions")
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = list(super().get_readonly_fields(request, obj))
+        if not request.user.is_superuser:
+            fields.extend(("is_superuser", "is_staff", "groups", "user_permissions"))
+        return tuple(dict.fromkeys(fields))

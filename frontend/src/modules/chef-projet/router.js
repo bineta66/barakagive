@@ -14,13 +14,13 @@ import CreerCampagne from "./views/campagnes/CreerCampagne.vue";
 import ModifierCampagne from "./views/campagnes/ModifierCampagne.vue";
 import DetailCampagne from "./views/campagnes/DetailCampagne.vue";
 import FormulaireDynamique from "./views/campagnes/FormulaireDynamique.vue";
-import CartePriorites from "@/modules/chef-projet/views/priorites/CartePriorites.vue";
 import TableauBeneficiairesZone from "./views/priorites/TableauBeneficiairesZone.vue";
 import ListeFinances from "./views/finances/ListeFinances.vue";
 import DetailProjetFinance from "./views/finances/DetailProjetFinance.vue";
 import ListePartenaires from "./views/partenaires/ListePartenaires.vue";
 import ListeBailleurs from "./views/bailleurs/ListeBailleurs.vue";
 import ListeRapports from "./views/rapports/ListeRapports.vue";
+import CartePriorites from "./views/priorites/CartePriorites.vue";
 
 const routes = [
   {

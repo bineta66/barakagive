@@ -34,4 +34,4 @@ async def analyze_all(request: ExecutiveAnalyzeRequest):
         
         return combined
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erreur interne du service IA.")

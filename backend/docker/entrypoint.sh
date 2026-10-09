@@ -1,12 +1,12 @@
 #!/bin/sh
+set -eu
 
-echo "Attente de PostgreSQL..."
-
-while ! python -c "import psycopg2; psycopg2.connect(host='db', port='5432', dbname='barakagive', user='postgres', password='postgres')" 2>/dev/null; do
-  echo "PostgreSQL pas encore prêt..."
+echo "Waiting for PostgreSQL..."
+until python -c "import os, psycopg2; psycopg2.connect(host=os.environ['DB_HOST'], port=os.environ.get('DB_PORT', '5432'), dbname=os.environ['DB_NAME'], user=os.environ['DB_USER'], password=os.environ['DB_PASSWORD'])" 2>/dev/null; do
   sleep 2
 done
 
-python manage.py migrate
+python manage.py migrate --noinput
+python manage.py collectstatic --noinput
 
-python manage.py runserver 0.0.0.0:8000 --noreload
+exec python manage.py runserver 0.0.0.0:8000

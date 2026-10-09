@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-or">Bailleurs de fonds</h1>
+        <h1 class="text-4xl font-bold text-bleu-nuit">Bailleurs de fonds</h1>
         <p class="text-xs text-gray-500 mt-1">
           Partenaires institutionnels, agences multilatérales et mécènes finançant les interventions humanitaires.
         </p>
@@ -23,7 +23,7 @@
           v-model="recherche"
           type="text"
           placeholder="Rechercher par bailleur ou contact..."
-          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-or/30"
+          class="w-full border rounded-lg pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-bleu-nuit/30"
         />
       </div>
 

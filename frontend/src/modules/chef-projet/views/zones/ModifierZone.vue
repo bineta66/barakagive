@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-or">Modifier la zone</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Modifier la zone</h1>
         <p class="text-xs text-gray-500 mt-1">
           Modifiez les informations et l'emplacement de la zone.
         </p>
@@ -35,7 +35,7 @@
       </div>
 
       <div class="w-full lg:w-96 bg-white border border-slate-200 p-6 overflow-y-auto rounded-xl shadow-xs-sm">
-        <h2 class="text-xl font-bold text-or mb-1">Modifier la zone</h2>
+        <h2 class="text-xl font-bold text-bleu-nuit mb-1">Modifier la zone</h2>
         <p class="text-xs text-gray-500 mb-6">
           Modifiez les informations de la zone.
         </p>
@@ -43,6 +43,7 @@
         <FormulaireZone
           mode="modification"
           :initial-data="form"
+          :saving="saving"
           @submit="onSubmit"
         />
       </div>
@@ -68,6 +69,7 @@ const zoneStore = useZoneStore()
 const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
 
 const loading = ref(true)
+const saving = ref(false)
 const feedback = reactive({ type: "success", message: "" })
 const zone = ref(null)
 
@@ -115,7 +117,9 @@ const onMapClick = ({ latitude, longitude }) => {
 }
 
 const onSubmit = async (data) => {
+  if (saving.value) return
     feedback.message = ""
+  saving.value = true
     try {
       await zoneStore.updateZone(route.params.id, {
         nom: data.nom,
@@ -135,6 +139,8 @@ const onSubmit = async (data) => {
     } catch (err) {
       feedback.type = "error"
       feedback.message = zoneStore.error || "Erreur lors de la modification de la zone."
+    } finally {
+      saving.value = false
     }
   }
 </script>

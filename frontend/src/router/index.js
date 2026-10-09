@@ -5,6 +5,7 @@ import ActivationCompte from "@/views/authentification/ActivationCompte.vue";
 import Connexion from "@/views/authentification/Connexion.vue";
 import InscriptionONG from "@/views/authentification/InscriptionONG.vue";
 import LandingPage from "@/views/LandingPage.vue";
+import Contact from "@/views/Contact.vue";
 import chefProjectRoutes from "@/modules/chef-projet/router.js";
 import financeRoutes from "@/modules/finance/router.js";
 import gerantRoutes from "@/modules/gerant/router.js";
@@ -15,6 +16,11 @@ const routes = [
   {
     path: "/",
     component: LandingPage,
+  },
+  {
+    path: "/contact",
+    name: "contact",
+    component: Contact,
   },
   {
     path: "/connexion",
@@ -68,6 +74,7 @@ const router = createRouter({
 
 const publicPaths = [
   "/",
+  "/contact",
   "/connexion",
   "/inscription",
   "/activation-compte",
@@ -82,6 +89,20 @@ router.beforeEach((to) => {
 
   if (!token && !isPublic) {
     return { path: "/connexion", query: { redirect: to.fullPath } };
+  }
+
+  if (token && !isPublic) {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      if (user.role === "AGENT" && !to.path.startsWith("/agent")) {
+        return "/agent/dashboard";
+      }
+      if (user.role !== "AGENT" && to.path.startsWith("/agent")) {
+        return user.role === "FINANCE" ? "/finance/dashboard" : "/";
+      }
+    } catch {
+      return "/connexion";
+    }
   }
 
   if (token && to.path === "/connexion") {

@@ -1,4 +1,4 @@
-import { ref, computed } from "vue"
+﻿import { ref, computed } from "vue"
 import { defineStore } from "pinia"
 import financeApi from "@/services/financeApi.js"
 
@@ -62,7 +62,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchBudgets()
       await fetchDashboard()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de la création du budget"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de la création du budget"
       throw err
     } finally {
       loading.value = false
@@ -77,7 +77,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchBudgets()
       await fetchDashboard()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de la modification du budget"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de la modification du budget"
       throw err
     } finally {
       loading.value = false
@@ -92,7 +92,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchBudgets()
       await fetchDashboard()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de la clôture du budget"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de la clôture du budget"
       throw err
     } finally {
       loading.value = false
@@ -120,7 +120,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchDonations()
       await fetchDashboard()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de l'ajout du don"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de l'ajout du don"
       throw err
     } finally {
       loading.value = false
@@ -150,7 +150,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchExpenses()
       await fetchDashboard()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de la création de la dépense"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de la création de la dépense"
       throw err
     } finally {
       loading.value = false
@@ -165,7 +165,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await fetchExpenses()
       await fetchDashboard()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de la mise à jour du statut"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de la mise à jour du statut"
       throw err
     } finally {
       loading.value = false
@@ -207,7 +207,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await financeApi.uploadJustification(depenseId, fileOrFormData)
       await fetchAllJustifications()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de l'envoi de la pièce justificative"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de l'envoi de la pièce justificative"
       throw err
     } finally {
       loading.value = false
@@ -221,7 +221,7 @@ export const useFinanceStore = defineStore("finance", () => {
       await financeApi.deleteJustification(id)
       await fetchAllJustifications()
     } catch (err) {
-      error.value = err.response?.data || "Erreur lors de la suppression"
+      error.value = (typeof err.response?.data === "string" ? err.response?.data : err.response?.data?.detail || JSON.stringify(err.response?.data)) || "Erreur lors de la suppression"
       throw err
     } finally {
       loading.value = false

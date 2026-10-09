@@ -1,14 +1,22 @@
-from django.utils import timezone
 from django.db import transaction, models
 
 from apps.campaigns.models import Campaign
-from apps.projects.models import Project
 from .models import Formulaire, FormField
 
 
 class FormulaireError(Exception):
     """Exception personnalisée pour les erreurs de formulaire."""
     pass
+
+
+def _ensure_form_tenant_scope(formulaire, user):
+    if (
+        formulaire.organization_id != formulaire.campagne.organization_id
+        or formulaire.campagne.projet.organization_id != formulaire.organization_id
+    ):
+        raise FormulaireError("Le formulaire, sa campagne et son projet doivent appartenir à la même ONG.")
+    if user.role != "SUPER_ADMIN" and formulaire.organization_id != user.organization_id:
+        raise FormulaireError("Le formulaire n'appartient pas à votre ONG.")
 
 
 def validate_campaign_for_chef_projet(campaign, user):
@@ -31,6 +39,9 @@ def validate_campaign_for_chef_projet(campaign, user):
 
     if campaign.organization != user.organization:
         raise FormulaireError("La campagne n'appartient pas à votre ONG.")
+
+    if campaign.projet.organization_id != campaign.organization_id:
+        raise FormulaireError("La campagne et son projet doivent appartenir à la même ONG.")
 
     if campaign.projet.chef_projet != user:
         raise FormulaireError("Vous n'êtes pas le chef de projet de cette campagne.")
@@ -70,7 +81,7 @@ def create_formulaire(validated_data, user):
     with transaction.atomic():
         formulaire = Formulaire.objects.create(
             campagne=campaign,
-            organization=user.organization,
+            organization=campaign.organization,
             nom=nom,
             description=description,
             created_by=user,
@@ -79,6 +90,14 @@ def create_formulaire(validated_data, user):
         )
 
         for idx, field_data in enumerate(fields_data):
+            criterion = field_data.get("critere")
+            if criterion and (
+                criterion.projet_id != campaign.projet_id
+                or campaign.projet.organization_id != campaign.organization_id
+            ):
+                raise FormulaireError("Le critère doit appartenir au projet de la campagne et à la même ONG.")
+            if criterion and criterion.question_id and criterion.question.critere_id not in (None, criterion.pk):
+                raise FormulaireError("Les relations question/critère existantes sont contradictoires.")
             ordre = field_data.get("ordre", idx + 1)
             FormField.objects.create(
                 formulaire=formulaire,
@@ -88,6 +107,9 @@ def create_formulaire(validated_data, user):
                 ordre=ordre,
                 placeholder=field_data.get("placeholder", ""),
                 options=field_data.get("options"),
+                critere=field_data.get("critere"),
+                source=field_data.get("source", "MANUEL"),
+                aide=field_data.get("aide", ""),
             )
 
     return formulaire
@@ -105,6 +127,7 @@ def update_formulaire(formulaire, validated_data, user):
     Returns:
         Formulaire: Le formulaire mis à jour
     """
+    _ensure_form_tenant_scope(formulaire, user)
     if "nom" in validated_data:
         formulaire.nom = validated_data["nom"]
 
@@ -136,6 +159,7 @@ def publish_formulaire(formulaire, user):
     Raises:
         FormulaireError: Si les conditions ne sont pas remplies
     """
+    _ensure_form_tenant_scope(formulaire, user)
     if formulaire.statut != Formulaire.Statut.BROUILLON:
         raise FormulaireError("Seul un formulaire en brouillon peut être publié.")
 
@@ -159,8 +183,19 @@ def add_question(formulaire, validated_data, user):
     Returns:
         FormField: La question créée
     """
+    _ensure_form_tenant_scope(formulaire, user)
     if formulaire.statut != Formulaire.Statut.BROUILLON:
         raise FormulaireError("Impossible d'ajouter une question à un formulaire non-brouillon.")
+
+    criterion = validated_data.get("critere")
+    if criterion and (
+        criterion.projet_id != formulaire.campagne.projet_id
+        or formulaire.organization_id != formulaire.campagne.organization_id
+        or formulaire.campagne.projet.organization_id != formulaire.organization_id
+    ):
+        raise FormulaireError("Le critère, le formulaire et le projet doivent appartenir à la même ONG.")
+    if criterion and criterion.question_id and criterion.question.critere_id not in (None, criterion.pk):
+        raise FormulaireError("Les relations question/critère existantes sont contradictoires.")
 
     max_ordre = formulaire.fields.aggregate(models.Max("ordre"))["ordre__max"] or 0
     ordre = validated_data.get("ordre", max_ordre + 1)
@@ -173,6 +208,9 @@ def add_question(formulaire, validated_data, user):
         ordre=ordre,
         placeholder=validated_data.get("placeholder", ""),
         options=validated_data.get("options"),
+        critere=validated_data.get("critere"),
+        source=validated_data.get("source", "MANUEL"),
+        aide=validated_data.get("aide", ""),
     )
 
     return question
@@ -190,8 +228,19 @@ def update_question(question, validated_data, user):
     Returns:
         FormField: La question mise à jour
     """
+    _ensure_form_tenant_scope(question.formulaire, user)
     if question.formulaire.statut != Formulaire.Statut.BROUILLON:
         raise FormulaireError("Impossible de modifier une question d'un formulaire non-brouillon.")
+
+    criterion = validated_data.get("critere")
+    if criterion and (
+        criterion.projet_id != question.formulaire.campagne.projet_id
+        or question.formulaire.organization_id != question.formulaire.campagne.organization_id
+        or question.formulaire.campagne.projet.organization_id != question.formulaire.organization_id
+    ):
+        raise FormulaireError("Le critère, le formulaire et le projet doivent appartenir à la même ONG.")
+    if criterion and criterion.question_id and criterion.question.critere_id not in (None, criterion.pk):
+        raise FormulaireError("Les relations question/critère existantes sont contradictoires.")
 
     for field, value in validated_data.items():
         setattr(question, field, value)
@@ -214,6 +263,7 @@ def duplicate_question(question, user):
     Raises:
         FormulaireError: Si le formulaire n'est pas en brouillon
     """
+    _ensure_form_tenant_scope(question.formulaire, user)
     if question.formulaire.statut != Formulaire.Statut.BROUILLON:
         raise FormulaireError("Impossible de dupliquer une question d'un formulaire non-brouillon.")
 
@@ -227,6 +277,9 @@ def duplicate_question(question, user):
         ordre=max_ordre + 1,
         placeholder=question.placeholder,
         options=question.options,
+        critere=question.critere,
+        source=question.source,
+        aide=question.aide,
     )
 
     return new_question
@@ -243,6 +296,7 @@ def delete_question(question, user):
     Raises:
         FormulaireError: Si le formulaire n'est pas en brouillon
     """
+    _ensure_form_tenant_scope(question.formulaire, user)
     if question.formulaire.statut != Formulaire.Statut.BROUILLON:
         raise FormulaireError("Impossible de supprimer une question d'un formulaire non-brouillon.")
 
@@ -264,6 +318,7 @@ def reorder_questions(formulaire, questions_data, user):
     Raises:
         FormulaireError: Si le formulaire n'est pas en brouillon ou IDs invalides
     """
+    _ensure_form_tenant_scope(formulaire, user)
     if formulaire.statut != Formulaire.Statut.BROUILLON:
         raise FormulaireError("Impossible de réordonner les questions d'un formulaire non-brouillon.")
 
@@ -295,5 +350,7 @@ def get_published_formulaires_for_agent(user):
     """
     return Formulaire.objects.filter(
         organization=user.organization,
+        campagne__organization=user.organization,
+        campagne__projet__organization=user.organization,
         statut=Formulaire.Statut.PUBLIE,
     ).select_related("campagne", "campagne__projet").prefetch_related("fields")

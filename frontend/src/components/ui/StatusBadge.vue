@@ -8,23 +8,36 @@
 </template>
 
 <script setup>
-import { computed } from "vue"
+import { computed } from "vue";
 
 const props = defineProps({
   statut: {
     type: String,
     required: true,
   },
-})
+});
 
 const badgeClass = computed(() => {
-  const s = props.statut
+  const s = props.statut;
   switch (s) {
     case "Actif":
     case "ACTIF":
     case "ACTIVE":
     case "Reçu":
-      return "bg-emerald-600 text-white"
+      return "bg-emerald-600 text-white";
+    case "TRIAL":
+    case "Essai":
+    case "En essai":
+      return "bg-amber-100 text-amber-800";
+    case "EXPIRED":
+    case "Expiré":
+    case "Expirée":
+      return "bg-red-50 text-red-700";
+    case "ANNULEE":
+    case "Annulée":
+    case "CANCELLED":
+    case "Annulé":
+      return "bg-red-100 text-red-800";
     case "En cours":
     case "EN COURS":
     case "EN_COURS":
@@ -32,14 +45,15 @@ const badgeClass = computed(() => {
     case "Budgétisé":
     case "Élevé":
     case "Élevée":
-      return "bg-or text-white"
+      return "bg-bleu-nuit text-white";
     case "Planifié":
     case "PLANIFIÉ":
     case "Planifiée":
     case "PLANIFIÉE":
     case "PLANIFIER":
+    case "EN_ATTENTE":
     case "À budgétiser":
-      return "bg-bleu-nuit text-white"
+      return "bg-bleu-nuit text-white";
     case "Terminé":
     case "TERMINÉ":
     case "Terminée":
@@ -48,13 +62,10 @@ const badgeClass = computed(() => {
     case "Archivé":
     case "Archivée":
     case "ARCHIVE":
-      return "bg-gray-500 text-white"
+      return "bg-gray-500 text-white";
     case "BROUILLON":
     case "Brouillon":
-      return "bg-amber-100 text-amber-800"
-    case "ANNULEE":
-    case "Annulée":
-      return "bg-red-100 text-red-800"
+      return "bg-amber-100 text-amber-800";
     case "Inactif":
     case "INACTIF":
     case "SUSPENDED":
@@ -64,12 +75,12 @@ const badgeClass = computed(() => {
     case "Invitation envoyée":
     case "Modéré":
     case "Modérée":
-      return "bg-gray-400 text-white"
+      return "bg-gray-400 text-white";
     case "Critique":
     case "CRITIQUE":
-      return "bg-red-600 text-white"
+      return "bg-red-600 text-white";
     default:
-      return "bg-gray-400 text-white"
+      return "bg-gray-400 text-white";
   }
-})
+});
 </script>

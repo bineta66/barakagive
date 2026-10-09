@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-or">Bailleurs</h1>
+        <h1 class="text-4xl font-bold text-bleu-nuit">Bailleurs</h1>
         <p class="text-xs text-gray-500 mt-1">
           Gérez les bailleurs de fonds des missions humanitaires.
         </p>
@@ -19,7 +19,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total bailleurs</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ bailleurs.length }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ bailleurs.length }}</h3>
         </div>
         <Landmark class="text-bleu-nuit" :size="28" />
       </div>
@@ -27,7 +27,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Financement total</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(bailleursFinance) }} FCFA</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ formatMontant(bailleursFinance) }} FCFA</h3>
         </div>
         <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>
@@ -35,7 +35,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Reçus</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ bailleursRecus }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ bailleursRecus }}</h3>
         </div>
         <CheckCircle class="text-bleu-nuit" :size="28" />
       </div>
@@ -43,7 +43,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">En attente</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ bailleursEnAttente }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ bailleursEnAttente }}</h3>
         </div>
         <Clock class="text-bleu-nuit" :size="28" />
       </div>
@@ -150,7 +150,7 @@
             :class="[
               'px-2.5 py-1 rounded text-sm font-medium transition-colors',
               page === currentPage
-                ? 'bg-or text-white'
+                ? 'bg-bleu-nuit text-white'
                 : 'text-bleu-nuit hover:bg-bleu-nuit/10'
             ]"
           >
@@ -172,6 +172,8 @@
       v-if="modalBailleur"
       :ouvert="modalBailleur"
       :bailleur="bailleurSelectionne"
+      :saving="savingBailleur"
+      :erreur-backend="modalError"
       @fermer="modalBailleur = false"
       @save="saveBailleur"
     />
@@ -273,6 +275,8 @@ const visiblePages = computed(() => {
 
 const modalBailleur = ref(false)
 const bailleurSelectionne = ref(null)
+const savingBailleur = ref(false)
+const modalError = ref("")
 
 const resetFilters = () => {
   search.value = ''
@@ -286,12 +290,20 @@ const openBailleur = (bailleur) => {
 }
 
 const saveBailleur = async (bailleurData) => {
+  if (savingBailleur.value) return
+  savingBailleur.value = true
+  modalError.value = ""
   try {
     await store.saveBailleurApi(bailleurData, bailleurSelectionne.value?.id)
     modalBailleur.value = false
     bailleurSelectionne.value = null
   } catch (error) {
-    store.error = error.response?.data?.detail || "Impossible d'enregistrer le bailleur."
+    const data = error.response?.data
+    modalError.value = data?.detail || (data && typeof data === "object"
+      ? Object.entries(data).map(([field, messages]) => `${field}: ${[].concat(messages).join(", ")}`).join("\n")
+      : error.message) || "Impossible d'enregistrer le bailleur."
+  } finally {
+    savingBailleur.value = false
   }
 }
 

@@ -1,14 +1,26 @@
 <template>
   <div
+    :id="`priority-zone-${zone.id}`"
     class="rounded-xl border transition-all duration-200"
     :class="[
-      expanded ? 'border-slate-300 shadow-md' : 'border-slate-200 hover:border-slate-300 hover:shadow-sm',
+      selected
+        ? 'border-bleu-nuit ring-2 ring-bleu-nuit/20'
+        : expanded
+        ? 'border-slate-300 shadow-md'
+        : 'border-slate-200 hover:border-slate-300 hover:shadow-sm',
       cardBgClass,
     ]"
   >
     <!-- En-tête de la zone -->
     <div class="p-4">
-      <div class="flex items-start justify-between gap-3">
+      <div
+        class="flex items-start justify-between gap-3 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bleu-nuit/40"
+        role="button"
+        tabindex="0"
+        :aria-pressed="selected"
+        @click="$emit('selectionner-zone', zone)"
+        @keydown.enter="$emit('selectionner-zone', zone)"
+      >
         <!-- Rang + Infos zone -->
         <div class="flex items-center gap-3 min-w-0">
           <!-- Numéro de rang -->
@@ -19,9 +31,13 @@
             {{ rang }}
           </div>
           <div class="min-w-0">
-            <h4 class="text-sm font-bold text-slate-800 leading-tight truncate">{{ zone.nom }}</h4>
+            <h4 class="text-sm font-bold text-slate-800 leading-tight truncate">
+              {{ zone.nom }}
+            </h4>
             <p class="text-xs text-slate-500 mt-0.5">
-              {{ zone.total_beneficiaires }} bénéficiaire{{ zone.total_beneficiaires > 1 ? "s" : "" }}
+              {{ zone.total_beneficiaires }} bénéficiaire{{
+                zone.total_beneficiaires > 1 ? "s" : ""
+              }}
             </p>
           </div>
         </div>
@@ -32,18 +48,22 @@
             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold"
             :class="niveauBadgeClass"
           >
-            <span class="w-1.5 h-1.5 rounded-full" :class="niveauDotClass"></span>
-            {{ zone.niveau }}
+            <span
+              class="w-1.5 h-1.5 rounded-full"
+              :class="niveauDotClass"
+            ></span>
+            {{ zone.niveau || 'Information non disponible' }}
           </span>
           <span class="text-xl font-black" :class="scoreTextClass">
-            {{ zone.score_moyen }}
+            {{ scoreAvailable ? zone.score_moyen : '—' }}
             <span class="text-xs font-semibold text-slate-400">/100</span>
           </span>
         </div>
       </div>
+      <p v-if="!hasMapLocation" class="ml-10 mt-1 text-[11px] text-slate-400">Localisation cartographique indisponible</p>
 
       <!-- Barre de progression -->
-      <div class="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div v-if="scoreAvailable" class="mt-3 h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div
           class="h-full rounded-full transition-all duration-700"
           :class="progressBarClass"
@@ -55,11 +75,14 @@
       <div class="mt-3 flex items-center gap-2">
         <button
           @click="goToTableau"
-          class="flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2 px-3 rounded-lg transition-all bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md group"
+          class="flex-1 flex items-center justify-center gap-2 text-xs font-semibold py-2 px-3 rounded-lg transition-all bg-[#021427] text-white hover:bg-[#032040] shadow-sm hover:shadow-md group"
         >
           <Users :size="13" />
           <span>Voir les bénéficiaires ({{ zone.total_beneficiaires }})</span>
-          <ArrowRight :size="13" class="group-hover:translate-x-0.5 transition-transform" />
+          <ArrowRight
+            :size="13"
+            class="group-hover:translate-x-0.5 transition-transform"
+          />
         </button>
         <button
           @click="expanded = !expanded"
@@ -77,7 +100,10 @@
 
     <!-- Liste des bénéficiaires (expandable) -->
     <Transition name="expand">
-      <div v-if="expanded" class="border-t border-slate-200 divide-y divide-slate-100">
+      <div
+        v-if="expanded"
+        class="border-t border-slate-200 divide-y divide-slate-100"
+      >
         <button
           v-for="b in zone.beneficiaires"
           :key="b.id"
@@ -94,7 +120,9 @@
 
           <!-- Infos bénéficiaire -->
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-slate-800 truncate group-hover:text-blue-700 transition-colors">
+            <p
+              class="text-sm font-semibold text-slate-800 truncate group-hover:text-or transition-colors"
+            >
               {{ b.nom_complet }}
             </p>
             <p class="text-xs text-slate-500">
@@ -106,27 +134,34 @@
 
           <!-- Score + niveau -->
           <div class="flex items-center gap-2 flex-shrink-0">
-            <span
-              class="text-sm font-black"
-              :class="getScoreTextClass(b.score)"
-            >{{ b.score }}/100</span>
+            <span class="text-sm font-black" :class="getScoreTextClass(b.score)"
+              >{{ b.score }}/100</span
+            >
             <span
               class="inline-block w-1.5 h-1.5 rounded-full"
               :class="getScoreBgClass(b.score)"
             ></span>
-            <ChevronRight :size="14" class="text-slate-300 group-hover:text-blue-400 transition-colors" />
+            <ChevronRight
+              :size="14"
+              class="text-slate-300 group-hover:text-bleu-accent transition-colors"
+            />
           </div>
         </button>
 
-        <div v-if="!zone.beneficiaires || zone.beneficiaires.length === 0" class="px-4 py-4 text-center">
-          <p class="text-xs text-slate-400 italic">Aucun bénéficiaire dans cette zone.</p>
+        <div
+          v-if="!zone.beneficiaires || zone.beneficiaires.length === 0"
+          class="px-4 py-4 text-center"
+        >
+          <p class="text-xs text-slate-400 italic">
+            Aucun bénéficiaire dans cette zone.
+          </p>
         </div>
 
         <!-- Bouton pour voir le tableau complet -->
         <div class="px-4 py-3 bg-slate-50/50">
           <button
             @click="goToTableau"
-            class="w-full flex items-center justify-center gap-2 text-xs font-semibold py-2 px-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md transition-all"
+            class="w-full flex items-center justify-center gap-2 text-xs font-semibold py-2 px-3 rounded-lg bg-[#021427] text-white hover:bg-[#032040] shadow-sm hover:shadow-md transition-all"
           >
             <TableProperties :size="13" />
             Voir le tableau complet
@@ -141,18 +176,33 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { Users, ChevronDown, ChevronRight, TableProperties, ArrowRight } from "lucide-vue-next";
+import {
+  Users,
+  ChevronDown,
+  ChevronRight,
+  TableProperties,
+  ArrowRight,
+} from "lucide-vue-next";
 
 const router = useRouter();
 
 const props = defineProps({
   zone: { type: Object, required: true },
   rang: { type: Number, default: 1 },
+  selected: { type: Boolean, default: false },
 });
 
-defineEmits(["voir-beneficiaire"]);
+defineEmits(["voir-beneficiaire", "selectionner-zone"]);
 
 const expanded = ref(false);
+const hasMapLocation = computed(() => {
+  const lat = Number(props.zone.latitude);
+  const lng = Number(props.zone.longitude);
+  return props.zone.latitude != null && props.zone.longitude != null
+    && String(props.zone.latitude).trim() !== "" && String(props.zone.longitude).trim() !== ""
+    && Number.isFinite(lat) && lat >= -90 && lat <= 90
+    && Number.isFinite(lng) && lng >= -180 && lng <= 180;
+});
 
 function goToTableau() {
   router.push({
@@ -184,10 +234,12 @@ function getInitiales(b) {
 }
 
 // ── Classes dynamiques ─────────────────────────────────────────────────────────
-const score = computed(() => props.zone.score_moyen || 0);
+const scoreAvailable = computed(() => props.zone.score_moyen != null && Number.isFinite(Number(props.zone.score_moyen)));
+const score = computed(() => scoreAvailable.value ? Number(props.zone.score_moyen) : null);
 
 const cardBgClass = computed(() => {
   if (!expanded.value) return "bg-white";
+  if (score.value == null) return "bg-slate-50/30";
   if (score.value >= 80) return "bg-red-50/30";
   if (score.value >= 60) return "bg-orange-50/30";
   if (score.value >= 40) return "bg-yellow-50/30";
@@ -195,24 +247,27 @@ const cardBgClass = computed(() => {
 });
 
 const rangBgClass = computed(() => {
+  if (score.value == null) return "bg-slate-500";
   if (score.value >= 80) return "bg-red-500";
   if (score.value >= 60) return "bg-orange-400";
   if (score.value >= 40) return "bg-yellow-400";
   return "bg-green-500";
 });
 
-const scoreTextClass = computed(() => getScoreTextClass(score.value));
+const scoreTextClass = computed(() => score.value == null ? "text-slate-500" : getScoreTextClass(score.value));
 
 const niveauBadgeClass = computed(() => {
+  if (score.value == null) return "bg-slate-100 text-slate-600";
   if (score.value >= 80) return "bg-red-100 text-red-700";
   if (score.value >= 60) return "bg-orange-100 text-orange-700";
   if (score.value >= 40) return "bg-yellow-100 text-yellow-700";
   return "bg-green-100 text-green-700";
 });
 
-const niveauDotClass = computed(() => getScoreBgClass(score.value));
+const niveauDotClass = computed(() => score.value == null ? "bg-slate-400" : getScoreBgClass(score.value));
 
 const progressBarClass = computed(() => {
+  if (score.value == null) return "bg-slate-400";
   if (score.value >= 80) return "bg-red-500";
   if (score.value >= 60) return "bg-orange-400";
   if (score.value >= 40) return "bg-yellow-400";

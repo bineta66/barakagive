@@ -2,10 +2,16 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from django.conf import settings
+import requests
+import logging
+from django.core.exceptions import ImproperlyConfigured
 
 from drf_spectacular.utils import extend_schema
 
 from apps.campaigns.models import Campaign
+from apps.projects.models import ProjectCriteria
+from apps.common.interservice import post_to_ai_service
 from .models import Formulaire, FormField
 from .serializers import (
     FormulaireListSerializer,
@@ -39,6 +45,60 @@ from .services import (
     FormulaireError,
 )
 
+logger = logging.getLogger(__name__)
+
+
+class GenerateFormQuestionsView(APIView):
+    permission_classes = [IsAuthenticated, IsChefProjetOnly]
+
+    def post(self, request, campaign_id):
+        campaign = Campaign.objects.filter(
+            id=campaign_id, organization=request.user.organization,
+            projet__organization=request.user.organization,
+            projet__chef_projet=request.user,
+        ).select_related("projet").first()
+        if not campaign:
+            return Response({"detail": "Campagne introuvable."}, status=status.HTTP_404_NOT_FOUND)
+        criteria = list(ProjectCriteria.objects.filter(projet=campaign.projet, actif=True).order_by("nom"))
+        if not criteria:
+            return Response({"detail": "Aucun critère actif n'est configuré sur ce projet."}, status=status.HTTP_400_BAD_REQUEST)
+        context = {"projet": campaign.projet.name, "campagne": campaign.nom,
+                   "criteres": [{"id": c.pk, "nom": c.nom, "poids": c.poids} for c in criteria]}
+        try:
+            response = post_to_ai_service(
+                f"{settings.IA_SERVICE_URL.rstrip('/')}/api/ia/form-questions",
+                payload=context,
+                timeout=45,
+            )
+            response.raise_for_status()
+            generated = response.json()
+            allowed = {choice for choice, _label in FormField.TypeChoices.choices}
+            valid_ids = {str(c.pk) for c in criteria}
+            proposals = []
+            for item in generated.get("questions", []):
+                if not isinstance(item, dict) or str(item.get("critere_id")) not in valid_ids or item.get("type") not in allowed:
+                    continue
+                proposals.append({"critere_id": str(item["critere_id"]), "question": str(item.get("question", ""))[:300],
+                                  "type": item["type"], "options": item.get("options", []), "aide": str(item.get("aide", ""))[:500]})
+            if not proposals:
+                raise ValueError("Aucune proposition valide")
+            return Response({"resume": str(generated.get("resume", ""))[:1200], "questions": proposals})
+        except requests.RequestException as exc:
+            logger.exception("Échec du service IA pour la génération des questions de formulaire")
+            detail = "Le service IA a refusé la génération. Vérifiez sa disponibilité et réessayez."
+            if exc.response is not None:
+                try:
+                    detail = exc.response.json().get("detail", detail)
+                except ValueError:
+                    pass
+            return Response({"detail": detail}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except ValueError as exc:
+            logger.exception("Réponse IA invalide pour la génération des questions: %s", exc)
+            return Response({"detail": "Le service IA a répondu dans un format inexploitable. Réessayez."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        except ImproperlyConfigured:
+            logger.exception("Configuration interservice IA manquante")
+            return Response({"detail": "La connexion sécurisée au service IA n'est pas configurée."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
 
 @extend_schema(tags=["Formulaires"])
 class FormulaireListCreateView(APIView):
@@ -65,7 +125,9 @@ class FormulaireListCreateView(APIView):
             formulaires = get_published_formulaires_for_agent(request.user)
         else:
             formulaires = Formulaire.objects.filter(
-                organization=request.user.organization
+                organization=request.user.organization,
+                campagne__organization=request.user.organization,
+                campagne__projet__organization=request.user.organization,
             ).select_related(
                 "campagne", "campagne__projet", "created_by"
             ).prefetch_related("fields").order_by("-created_at")
@@ -124,7 +186,11 @@ class FormulaireDetailView(APIView):
         try:
             return Formulaire.objects.select_related(
                 "campagne", "campagne__projet", "created_by", "organization"
-            ).prefetch_related("fields").get(pk=pk, organization=user.organization)
+            ).prefetch_related("fields").get(
+                pk=pk, organization=user.organization,
+                campagne__organization=user.organization,
+                campagne__projet__organization=user.organization,
+            )
         except Formulaire.DoesNotExist:
             return None
 
@@ -213,7 +279,11 @@ class FormulairePublishView(APIView):
         try:
             return Formulaire.objects.select_related(
                 "campagne__projet", "organization"
-            ).prefetch_related("fields").get(pk=pk, organization=user.organization)
+            ).prefetch_related("fields").get(
+                pk=pk, organization=user.organization,
+                campagne__organization=user.organization,
+                campagne__projet__organization=user.organization,
+            )
         except Formulaire.DoesNotExist:
             return None
 
@@ -260,7 +330,11 @@ class QuestionListCreateView(APIView):
         try:
             return Formulaire.objects.select_related(
                 "campagne__projet", "organization"
-            ).get(id=form_id, organization=user.organization)
+            ).get(
+                id=form_id, organization=user.organization,
+                campagne__organization=user.organization,
+                campagne__projet__organization=user.organization,
+            )
         except Formulaire.DoesNotExist:
             return None
 
@@ -326,7 +400,7 @@ class QuestionDetailView(APIView):
 
         self.check_object_permissions(request, question)
 
-        serializer = FormFieldUpdateSerializer(data=request.data, partial=True)
+        serializer = FormFieldUpdateSerializer(instance=question, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         try:
@@ -429,7 +503,11 @@ class QuestionReorderView(APIView):
         try:
             return Formulaire.objects.select_related(
                 "campagne__projet", "organization"
-            ).get(id=form_id, organization=user.organization)
+            ).get(
+                id=form_id, organization=user.organization,
+                campagne__organization=user.organization,
+                campagne__projet__organization=user.organization,
+            )
         except Formulaire.DoesNotExist:
             return None
 
@@ -449,7 +527,11 @@ class QuestionReorderView(APIView):
         try:
             formulaire = Formulaire.objects.select_related(
                 "campagne__projet", "organization"
-            ).get(id=form_id, organization=request.user.organization)
+            ).get(
+                id=form_id, organization=request.user.organization,
+                campagne__organization=request.user.organization,
+                campagne__projet__organization=request.user.organization,
+            )
         except Formulaire.DoesNotExist:
             return Response(
                 {"detail": "Formulaire non trouvé."},

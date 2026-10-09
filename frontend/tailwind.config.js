@@ -7,8 +7,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        'bleu-nuit': '#021427',
-        'or': '#744D03',
+        'bleu-nuit': '#00313C',
+        'rose-baraka': '#D20C4F',
+        'or': '#0a3a5c',        // bleu secondaire (remplace le doré)
+        'bleu-accent': '#1a6fad', // bleu vif pour les accents
       },
       fontFamily: {
         poppins: ['Poppins', 'sans-serif'],
@@ -20,4 +22,3 @@ export default {
   },
   plugins: [],
 }
-

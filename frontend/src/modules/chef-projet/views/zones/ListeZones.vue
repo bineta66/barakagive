@@ -1,14 +1,14 @@
-<template>
-  <div class="p-6 space-y-6 bg-white min-h-screen">
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-bold text-or">Zones d'intervention</h1>
+﻿<template>
+  <div class="min-w-0 p-4 sm:p-6 space-y-6 bg-white min-h-screen">
+    <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+      <div class="min-w-0">
+        <h1 class="text-3xl font-bold text-bleu-nuit">Zones d'intervention</h1>
         <p class="text-xs text-gray-500 mt-1">
           Liste des zones géographiques d'intervention humanitaire.
         </p>
       </div>
 
-      <div class="flex gap-3">
+      <div class="flex w-full gap-3 sm:w-auto">
         <BoutonPrimary to="/chef-projet/zones/creer">
           <Plus :size="18" />
           Nouvelle zone
@@ -26,17 +26,17 @@
             v-model="recherche"
             type="text"
             placeholder="Rechercher une zone..."
-            class="w-full h-10 pl-4 pr-4 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-or/30"
+            class="w-full h-10 pl-4 pr-4 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30"
           />
         </div>
-        <div class="w-64">
-          <select v-model="regionFiltre" class="w-full h-10 px-3 border border-gray-300 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-or/30 bg-white">
+        <div class="w-full sm:w-64">
+          <select v-model="regionFiltre" class="w-full h-10 px-3 border border-gray-300 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30 bg-white">
             <option value="">Toutes les régions</option>
             <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
           </select>
         </div>
-        <div class="w-56">
-          <select v-model="statutFiltre" class="w-full h-10 px-3 border border-gray-300 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-or/30 bg-white">
+        <div class="w-full sm:w-56">
+          <select v-model="statutFiltre" class="w-full h-10 px-3 border border-gray-300 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30 bg-white">
             <option value="">Tous les statuts</option>
             <option value="true">Actif</option>
             <option value="false">Inactif</option>

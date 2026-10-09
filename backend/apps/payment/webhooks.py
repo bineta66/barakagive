@@ -7,6 +7,7 @@ Ce fichier contient les helpers pour traiter les webhooks.
 import logging
 from django.utils import timezone
 from .models import Transaction, Subscription
+from .services import paytech_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,23 +30,26 @@ def process_paytech_webhook(data: dict) -> dict:
         logger.warning(f"Transaction {transaction_id} introuvable")
         return {"success": False, "error": "Transaction introuvable"}
 
-    # Statut PayTech
-    paytech_status = data.get("status")  # "success", "failed", "cancelled"
+    if transaction.statut == Transaction.Statut.SUCCESS:
+        return {"success": True, "message": "Déjà traité"}
 
-    if paytech_status == "success":
-        return handle_successful_payment(transaction, data)
-    elif paytech_status == "failed":
-        return handle_failed_payment(transaction, data)
-    elif paytech_status == "cancelled":
-        return handle_cancelled_payment(transaction, data)
-    else:
-        return {"success": False, "error": f"Statut inconnu: {paytech_status}"}
+    verification = paytech_service.verify_payment(transaction_id)
+    if verification.get("verification_unavailable"):
+        return {"success": False, "error": "Vérification du paiement indisponible"}
+    if verification.get("success") != 1:
+        return {"success": False, "error": "Paiement non confirmé par PayTech"}
+    return handle_successful_payment(transaction, data, verification=verification)
 
 
-def handle_successful_payment(transaction: Transaction, data: dict) -> dict:
+def handle_successful_payment(transaction: Transaction, data: dict, verification=None) -> dict:
     """Traite un paiement réussi."""
     if transaction.statut == "SUCCESS":
         return {"success": True, "message": "Déjà traité"}
+
+    if verification is None:
+        verification = paytech_service.verify_payment(transaction.transaction_id)
+    if verification.get("verification_unavailable") or verification.get("success") != 1:
+        return {"success": False, "error": "Paiement non confirmé par PayTech"}
 
     transaction.statut = "SUCCESS"
     transaction.paid_at = timezone.now()
@@ -61,20 +65,10 @@ def handle_successful_payment(transaction: Transaction, data: dict) -> dict:
 
 
 def handle_failed_payment(transaction: Transaction, data: dict) -> dict:
-    """Traite un paiement échoué."""
-    transaction.statut = "FAILED"
-    transaction.raw_data = {**transaction.raw_data, "webhook": data}
-    transaction.save(update_fields=["statut", "raw_data", "updated_at"])
-
-    logger.warning(f"Paiement échoué: {transaction.transaction_id}")
-    return {"success": True, "message": "Échec enregistré"}
+    """Refuse une transition négative issue d'un webhook non authentifié."""
+    return {"success": False, "error": "Statut de paiement non vérifié"}
 
 
 def handle_cancelled_payment(transaction: Transaction, data: dict) -> dict:
-    """Traite un paiement annulé."""
-    transaction.statut = "CANCELLED"
-    transaction.raw_data = {**transaction.raw_data, "webhook": data}
-    transaction.save(update_fields=["statut", "raw_data", "updated_at"])
-
-    logger.info(f"Paiement annulé: {transaction.transaction_id}")
-    return {"success": True, "message": "Annulation enregistrée"}
+    """Refuse une transition négative issue d'un webhook non authentifié."""
+    return {"success": False, "error": "Statut de paiement non vérifié"}

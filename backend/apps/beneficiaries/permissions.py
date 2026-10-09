@@ -56,17 +56,17 @@ class CanManageBeneficiary(BasePermission):
 
         if request.user.role == User.Role.AGENT:
             # L'agent ne peut gérer que ses propres bénéficiaires
-            if view.action in ["update", "partial_update", "destroy"]:
-                return obj.created_by == request.user
-            return True
+            return (
+                obj.created_by == request.user
+                and _agent_is_assigned_to_beneficiary(request.user, obj)
+            )
 
         if request.user.role == User.Role.CHEF_PROJET:
             # Le chef de projet gère les bénéficiaires de ses campagnes
             return obj.campagne.projet.chef_projet == request.user
 
         if request.user.role == User.Role.GERANT:
-            # Le gérant a accès en lecture seule
-            return view.action in ["list", "retrieve"]
+            return False
 
         return False
 
@@ -87,7 +87,10 @@ class CanViewBeneficiary(BasePermission):
             return False
 
         if request.user.role == User.Role.AGENT:
-            return obj.created_by == request.user
+            return (
+                obj.created_by == request.user
+                and _agent_is_assigned_to_beneficiary(request.user, obj)
+            )
 
         if request.user.role == User.Role.CHEF_PROJET:
             return obj.campagne.projet.chef_projet == request.user
@@ -96,3 +99,17 @@ class CanViewBeneficiary(BasePermission):
             return True
 
         return False
+
+
+def _agent_is_assigned_to_beneficiary(user, beneficiary):
+    from apps.campaigns.models import CampagneAffectation
+
+    return bool(
+        beneficiary.campagne_id
+        and beneficiary.zone_id
+        and CampagneAffectation.objects.filter(
+            campagne_id=beneficiary.campagne_id,
+            agent=user,
+            zone=beneficiary.zone.nom,
+        ).exists()
+    )

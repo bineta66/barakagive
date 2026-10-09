@@ -1,5 +1,6 @@
 ﻿import { ref, computed, onMounted } from "vue"
 import { useCampaignStore } from "@/stores/campaign.js"
+import { watch } from "vue"
 
 export function useCampagnes() {
   const campaignStore = useCampaignStore()
@@ -9,10 +10,6 @@ export function useCampagnes() {
   const filtreZone = ref("Toutes les zones")
   const pageCourante = ref(1)
   const parPage = 8
-
-  onMounted(() => {
-    campaignStore.fetchCampaigns().catch(() => {})
-  })
 
   const statutLabel = (statut) => {
     switch (statut) {
@@ -81,16 +78,20 @@ export function useCampagnes() {
   })
 
   const totalPages = computed(() => {
-    return Math.max(1, Math.ceil(campagnesFiltrees.value.length / parPage))
+    return Math.max(1, Math.ceil(campaignStore.totalCampaigns / parPage))
   })
 
   const campagnesPage = computed(() => {
-    const start = (pageCourante.value - 1) * parPage
-    return campagnesFiltrees.value.slice(start, start + parPage)
+    return campagnesFiltrees.value
+  })
+  const pagesVisibles = computed(() => {
+    const start = Math.max(1, pageCourante.value - 2)
+    const end = Math.min(totalPages.value, pageCourante.value + 2)
+    return Array.from({ length: end - start + 1 }, (_value, index) => start + index)
   })
 
   const statistiques = computed(() => {
-    const total = campagnesNormalisees.value.length
+    const total = campaignStore.totalCampaigns
     const actives = campagnesNormalisees.value.filter((c) => c.statut === "En cours").length
     const planifiees = campagnesNormalisees.value.filter((c) => c.statut === "Planifiée").length
     const terminees = campagnesNormalisees.value.filter((c) => c.statut === "Terminée").length
@@ -105,6 +106,29 @@ export function useCampagnes() {
     pageCourante.value = 1
   }
 
+  watch([pageCourante, recherche, filtreStatut, filtreProjet], () => {
+    const statutMap = {
+      Brouillon: "BROUILLON",
+      "Planifiée": "PLANIFIER",
+      "En cours": "EN_COURS",
+      "Terminée": "TERMINE",
+      "Annulée": "ANNULEE",
+    }
+    campaignStore.fetchCampaigns({
+      page: pageCourante.value,
+      page_size: parPage,
+      search: recherche.value.trim(),
+      statut: statutMap[filtreStatut.value] || "",
+      projet: filtreProjet.value === "Tous les projets" ? "" : filtreProjet.value,
+    }).catch(() => {})
+  }, { immediate: true })
+  watch([recherche, filtreStatut, filtreProjet], () => {
+    if (pageCourante.value !== 1) pageCourante.value = 1
+  })
+  watch(totalPages, (count) => {
+    if (pageCourante.value > count) pageCourante.value = count
+  })
+
   return {
     recherche,
     filtreStatut,
@@ -114,6 +138,7 @@ export function useCampagnes() {
     campagnesFiltrees,
     campagnesPage,
     totalPages,
+    pagesVisibles,
     statistiques,
     reinitialiserFiltres,
     campaignStore,

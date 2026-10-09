@@ -1,10 +1,33 @@
 import logging
+import uuid
+from datetime import date
 
 from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
 from .models import FormResponse
+
+
+def _validate_form_response_links(beneficiary, formulaire, question):
+    campaign = formulaire.campagne
+    if (
+        beneficiary.organization_id != formulaire.organization_id
+        or beneficiary.campagne_id != formulaire.campagne_id
+        or question.formulaire_id != formulaire.pk
+        or campaign.organization_id != formulaire.organization_id
+        or campaign.projet.organization_id != formulaire.organization_id
+    ):
+        raise BeneficiaryError(
+            "Le bénéficiaire, le formulaire, la campagne et le projet doivent appartenir à la même ONG."
+        )
+    if question.critere_id and question.critere.projet_id != campaign.projet_id:
+        raise BeneficiaryError("La question est liée à un critère d'un autre projet.")
+    reverse_criteria = list(question.criteria.all())
+    if any(item.projet_id != campaign.projet_id for item in reverse_criteria):
+        raise BeneficiaryError("La question est liée à un critère d'un autre projet.")
+    if question.critere_id and any(item.pk != question.critere_id for item in reverse_criteria):
+        raise BeneficiaryError("Les liens question/critère sont contradictoires.")
 
 
 @transaction.atomic
@@ -23,6 +46,15 @@ def enregistrer_reponse(
     Crée ou met à jour la réponse d'un bénéficiaire.
     Le calcul du score sera déclenché après l'enregistrement.
     """
+    from apps.forms.models import Formulaire, FormField
+
+    try:
+        formulaire = Formulaire.objects.select_related("campagne__projet").get(pk=formulaire_id)
+        question = FormField.objects.select_related("formulaire", "critere").get(pk=question_id)
+    except (Formulaire.DoesNotExist, FormField.DoesNotExist):
+        raise BeneficiaryError("Le formulaire ou la question n'existe pas.")
+    _validate_form_response_links(beneficiary, formulaire, question)
+
     reponse, _ = FormResponse.objects.update_or_create(
         beneficiary=beneficiary,
         question_id=question_id,
@@ -117,11 +149,11 @@ def recalculer_score_beneficiaire(beneficiary):
 
 
 from django.db import transaction
-from django.utils import timezone
 from decimal import Decimal
 
 from apps.campaigns.models import Campaign, CampagneAffectation
 from apps.zones.models import Zone
+from apps.zones.models import Region
 from apps.forms.models import Formulaire, FormField
 from .models import Beneficiary, FormResponse
 
@@ -131,7 +163,7 @@ class BeneficiaryError(Exception):
     pass
 
 
-def build_zone_ranking(campaign):
+def build_zone_ranking(campaign, user=None):
     """
     Construit le classement des zones pour une campagne.
 
@@ -142,8 +174,18 @@ def build_zone_ranking(campaign):
         list[dict]: Classement des zones avec score_total, beneficiaires_prioritaires, top5
     """
     beneficiaries = Beneficiary.objects.filter(
-        campagne=campaign
+        campagne=campaign,
+        organization_id=campaign.organization_id,
+        campagne__organization_id=campaign.organization_id,
+        campagne__projet__organization_id=campaign.organization_id,
+        zone__organization_id=campaign.organization_id,
     ).select_related("zone").prefetch_related("responses__question").order_by("-score_vulnerabilite")
+    if user and user.role == "AGENT":
+        assigned_zone_names = CampagneAffectation.objects.filter(
+            campagne=campaign,
+            agent=user,
+        ).values_list("zone", flat=True)
+        beneficiaries = beneficiaries.filter(zone__nom__in=assigned_zone_names)
 
     zones_data = {}
     for beneficiary in beneficiaries:
@@ -244,24 +286,17 @@ def validate_agent_permissions(user, campaign, zone, formulaire):
     Raises:
         BeneficiaryError: Si une vérification échoue
     """
-    if user.role != "AGENT":
-        raise BeneficiaryError("Seul un Agent terrain peut créer un bénéficiaire.")
-
     if not user.organization:
         raise BeneficiaryError("Vous n'appartenez à aucune ONG.")
 
     if campaign.organization != user.organization:
         raise BeneficiaryError("La campagne n'appartient pas à votre ONG.")
 
-    # Un agent peut etre affecte a plusieurs zones d'une meme campagne.
-    assigned_zones = list(
-        CampagneAffectation.objects.filter(
-            campagne=campaign,
-            agent=user,
-        ).values_list("zone", flat=True)
-    )
-    if not assigned_zones:
-        raise BeneficiaryError("Vous n'êtes pas affecté à cette campagne.")
+    if campaign.projet.organization_id != campaign.organization_id:
+        raise BeneficiaryError("Le projet de la campagne n'appartient pas à son ONG.")
+
+    if campaign.projet.organization_id != user.organization_id:
+        raise BeneficiaryError("Le projet de la campagne n'appartient pas à votre ONG.")
 
     if zone.organization != user.organization:
         raise BeneficiaryError("La zone n'appartient pas à votre ONG.")
@@ -269,18 +304,30 @@ def validate_agent_permissions(user, campaign, zone, formulaire):
     if zone not in campaign.zones.all():
         raise BeneficiaryError("La zone ne fait pas partie de cette campagne.")
 
-    # La zone doit correspondre a l'une des affectations de l'agent.
-    if zone.nom not in set(assigned_zones):
-        raise BeneficiaryError("La zone ne correspond pas à votre affectation.")
+    if formulaire is None:
+        raise BeneficiaryError("Un formulaire publié est requis pour cette campagne.")
+
+    if user.role == "AGENT":
+        assigned_zones = list(
+            CampagneAffectation.objects.filter(
+                campagne=campaign,
+                agent=user,
+            ).values_list("zone", flat=True)
+        )
+        if zone.nom not in set(assigned_zones) and str(zone.id) not in set(assigned_zones):
+            raise BeneficiaryError("La zone ne correspond pas à votre affectation.")
 
     if formulaire.campagne != campaign:
         raise BeneficiaryError("Le formulaire n'appartient pas à cette campagne.")
+
+    if formulaire.organization_id != campaign.organization_id:
+        raise BeneficiaryError("Le formulaire et sa campagne doivent appartenir à la même ONG.")
 
     if formulaire.statut != Formulaire.Statut.PUBLIE:
         raise BeneficiaryError("Le formulaire doit être publié pour être utilisé.")
 
 
-def check_duplicate_in_campaign(campaign, telephone, nom, prenom, date_naissance, exclude_id=None):
+def check_duplicate_in_campaign(campaign, telephone, nom, prenom, date_naissance, exclude_id=None, zone=None):
     """
     Vérifie si un bénéficiaire existe déjà dans la campagne.
 
@@ -297,7 +344,14 @@ def check_duplicate_in_campaign(campaign, telephone, nom, prenom, date_naissance
     Returns:
         Beneficiary or None: Le doublon trouvé ou None
     """
-    queryset = Beneficiary.objects.filter(campagne=campaign)
+    queryset = Beneficiary.objects.filter(
+        campagne=campaign,
+        organization_id=campaign.organization_id,
+        campagne__projet__organization_id=campaign.organization_id,
+        zone__organization_id=campaign.organization_id,
+    )
+    if zone is not None:
+        queryset = queryset.filter(zone=zone)
 
     if exclude_id:
         queryset = queryset.exclude(id=exclude_id)
@@ -317,7 +371,7 @@ def check_duplicate_in_campaign(campaign, telephone, nom, prenom, date_naissance
     return duplicate
 
 
-def check_sync_duplicate(local_id, device_id):
+def check_sync_duplicate(local_id, device_id, organization_id):
     """
     Vérifie si un bénéficiaire avec ce local_id + device_id existe déjà
     (pour éviter les doublons de synchronisation hors ligne).
@@ -332,6 +386,11 @@ def check_sync_duplicate(local_id, device_id):
     return Beneficiary.objects.filter(
         local_id=local_id,
         device_id=device_id,
+        organization_id=organization_id,
+        campagne__organization_id=organization_id,
+        campagne__projet__organization_id=organization_id,
+        zone__organization_id=organization_id,
+        created_by__organization_id=organization_id,
     ).first()
 
 
@@ -348,6 +407,8 @@ def store_response(beneficiary, formulaire, question, value):
     Returns:
         FormResponse: La réponse créée
     """
+    _validate_form_response_links(beneficiary, formulaire, question)
+
     response_data = {
         "beneficiary": beneficiary,
         "formulaire": formulaire,
@@ -356,7 +417,13 @@ def store_response(beneficiary, formulaire, question, value):
 
     field_type = question.type
 
-    if field_type in [FormField.TypeChoices.TEXT, FormField.TypeChoices.PHONE, FormField.TypeChoices.TEXTAREA]:
+    validate_dynamic_response_value(question, value)
+
+    if field_type in [
+        FormField.TypeChoices.TEXT, FormField.TypeChoices.PHONE, FormField.TypeChoices.TEXTAREA,
+        FormField.TypeChoices.EMAIL, FormField.TypeChoices.RADIO,
+        FormField.TypeChoices.PHOTO, FormField.TypeChoices.FILE,
+    ]:
         response_data["value_text"] = str(value) if value is not None else ""
 
     elif field_type == FormField.TypeChoices.SELECT:
@@ -372,30 +439,137 @@ def store_response(beneficiary, formulaire, question, value):
         if isinstance(value, bool):
             response_data["value_boolean"] = value
         elif isinstance(value, str):
-            response_data["value_boolean"] = value.lower() in ["true", "oui", "yes", "1"]
+            response_data["value_boolean"] = value.strip().lower() in ["true", "oui", "yes", "1"]
         else:
             response_data["value_boolean"] = bool(value)
 
     elif field_type == FormField.TypeChoices.NUMBER:
-        try:
-            response_data["value_number"] = Decimal(str(value))
-        except (ValueError, TypeError):
-            response_data["value_number"] = Decimal("0")
+        response_data["value_number"] = Decimal(str(value)) if value not in (None, "") else None
+
+    elif field_type == FormField.TypeChoices.SCALE:
+        response_data["value_number"] = Decimal(str(value)) if value not in (None, "") else None
 
     elif field_type == FormField.TypeChoices.DATE:
-        if isinstance(value, str):
-            from datetime import datetime
-            try:
-                response_data["value_date"] = datetime.strptime(value, "%Y-%m-%d").date()
-            except ValueError:
-                pass
+        response_data["value_date"] = date.fromisoformat(str(value)) if value not in (None, "") else None
 
     elif field_type == FormField.TypeChoices.GPS:
-        # Les coordonnées GPS sont stockées dans Beneficiary, pas dans FormResponse
-        # On crée quand même une entrée pour la traçabilité
-        response_data["value_json"] = {"latitude": None, "longitude": None}
+        response_data["value_json"] = {
+            "latitude": str(value["latitude"]) if value.get("latitude") not in (None, "") else None,
+            "longitude": str(value["longitude"]) if value.get("longitude") not in (None, "") else None,
+        }
 
     return FormResponse.objects.create(**response_data)
+
+
+def validate_dynamic_response_value(question, value):
+    """Reject malformed answers before they are persisted."""
+    import re
+    from datetime import date
+
+    field_type = question.type
+    empty = value is None or value == "" or value == []
+    if field_type == FormField.TypeChoices.GPS and isinstance(value, dict):
+        empty = not str(value.get("latitude", "")).strip() and not str(value.get("longitude", "")).strip()
+    if empty:
+        if question.obligatoire:
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? est obligatoire.")
+        return
+
+    if field_type in (FormField.TypeChoices.TEXT, FormField.TypeChoices.TEXTAREA):
+        if not isinstance(value, str):
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre du texte.")
+    elif field_type == FormField.TypeChoices.EMAIL:
+        from apps.common.validators import validate_email
+        if not isinstance(value, str):
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre une adresse email.")
+        try:
+            validate_email(value)
+        except Exception as exc:
+            raise BeneficiaryError(f"{question.label} : {exc}") from exc
+    elif field_type == FormField.TypeChoices.PHONE:
+        from apps.common.validators import validate_phone_senegal
+        if not isinstance(value, str):
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre un num?ro de t?l?phone.")
+        try:
+            validate_phone_senegal(value)
+        except Exception as exc:
+            raise BeneficiaryError(f"{question.label} : {exc}") from exc
+    elif field_type == FormField.TypeChoices.NUMBER:
+        if isinstance(value, bool) or not isinstance(value, (int, float, Decimal)):
+            raise BeneficiaryError(f"La réponse pour « {question.label} » doit être un nombre valide.")
+        try:
+            number = Decimal(str(value))
+            if not number.is_finite():
+                raise InvalidOperation
+        except (InvalidOperation, ValueError, TypeError):
+            raise BeneficiaryError(f"La réponse pour « {question.label} » doit être un nombre valide.")
+    elif field_type == FormField.TypeChoices.DATE:
+        if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre une date au format AAAA-MM-JJ.")
+        try:
+            date.fromisoformat(value)
+        except ValueError:
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre une date valide.")
+    elif field_type in (FormField.TypeChoices.SELECT, FormField.TypeChoices.RADIO):
+        options = question.options if isinstance(question.options, list) else []
+        if value not in options:
+            raise BeneficiaryError(f"Veuillez choisir une option valide pour ? {question.label} ?.")
+    elif field_type == FormField.TypeChoices.CHECKBOX:
+        options = question.options if isinstance(question.options, list) else []
+        if not isinstance(value, list) or any(option not in options for option in value):
+            raise BeneficiaryError(f"Les choix de ? {question.label} ? sont invalides.")
+    elif field_type == FormField.TypeChoices.YES_NO:
+        if not isinstance(value, bool):
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre un bool?en.")
+    elif field_type == FormField.TypeChoices.SCALE:
+        if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 5:
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre un entier compris entre 1 et 5.")
+    elif field_type in (FormField.TypeChoices.PHOTO, FormField.TypeChoices.FILE):
+        if not isinstance(value, str) or len(value) > 255 or any(ord(char) < 32 for char in value):
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit ?tre un nom de fichier valide.")
+    elif field_type == FormField.TypeChoices.GPS:
+        if not isinstance(value, dict) or set(value) - {"latitude", "longitude"}:
+            raise BeneficiaryError(f"La r?ponse ? ? {question.label} ? doit contenir uniquement des coordonn?es GPS.")
+        try:
+            if isinstance(value["latitude"], bool) or isinstance(value["longitude"], bool):
+                raise InvalidOperation
+            latitude = Decimal(str(value["latitude"]))
+            longitude = Decimal(str(value["longitude"]))
+            if not latitude.is_finite() or not longitude.is_finite() or not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+                raise InvalidOperation
+        except (KeyError, InvalidOperation, ValueError, TypeError):
+            raise BeneficiaryError(f"Les coordonn?es de ? {question.label} ? sont invalides.")
+
+
+def validate_form_responses(formulaire, responses):
+    """Ensure submitted answers belong to the selected form and required fields are answered."""
+    campaign = formulaire.campagne
+    if (
+        formulaire.organization_id != campaign.organization_id
+        or campaign.projet.organization_id != campaign.organization_id
+    ):
+        raise BeneficiaryError("Le formulaire, la campagne et le projet doivent appartenir à la même ONG.")
+
+    questions = {
+        str(question.id): question
+        for question in formulaire.fields.select_related("critere", "formulaire").all()
+    }
+    submitted = {str(item["question_id"]): item.get("value") for item in responses}
+
+    unknown_ids = set(submitted) - set(questions)
+    if unknown_ids:
+        raise BeneficiaryError("Une réponse référence une question qui ne fait pas partie de ce formulaire.")
+
+    for question_id, question in questions.items():
+        if question.critere_id:
+            if question.critere.projet_id != campaign.projet_id:
+                raise BeneficiaryError("Une question du formulaire est liée à un critère d'un autre projet.")
+        reverse_criteria = list(question.criteria.all())
+        if any(item.projet_id != campaign.projet_id for item in reverse_criteria):
+            raise BeneficiaryError("Une question du formulaire est liée à un critère d'un autre projet.")
+        if question.critere_id and any(item.pk != question.critere_id for item in reverse_criteria):
+            raise BeneficiaryError("Les liens question/critère du formulaire sont contradictoires.")
+        validate_dynamic_response_value(question, submitted.get(question_id))
 
 
 def create_beneficiary_with_responses(validated_data, user):
@@ -413,13 +587,29 @@ def create_beneficiary_with_responses(validated_data, user):
     Raises:
         BeneficiaryError: Si une validation échoue
     """
+    # Views validate first, but services can also be called by other internal
+    # entry points. Revalidate here so no direct caller can bypass payload
+    # shape, type, format, or field allow-list checks.
+    from .serializers import BeneficiaryCreateSerializer
+
+    serializer = BeneficiaryCreateSerializer(data=validated_data)
+    if not serializer.is_valid():
+        raise BeneficiaryError(
+            "Données de bénéficiaire invalides : "
+            + "; ".join(
+                f"{field}: {', '.join(str(error) for error in errors)}"
+                for field, errors in serializer.errors.items()
+            )
+        )
+    validated_data = serializer.validated_data
+
     campagne_id = validated_data["campagne_id"]
-    formulaire_id = validated_data["formulaire_id"]
+    formulaire_id = validated_data.get("formulaire_id")
     zone_id = validated_data["zone_id"]
-    local_id = validated_data["local_id"]
-    device_id = validated_data["device_id"]
+    local_id = validated_data.get("local_id") or uuid.uuid4()
+    device_id = validated_data.get("device_id") or "web"
     beneficiary_data = validated_data["beneficiary"]
-    responses_data = validated_data["responses"]
+    responses_data = validated_data.get("responses") or []
 
     # Récupérer les objets
     try:
@@ -432,66 +622,90 @@ def create_beneficiary_with_responses(validated_data, user):
     except Zone.DoesNotExist:
         raise BeneficiaryError("La zone spécifiée n'existe pas.")
 
-    try:
-        formulaire = Formulaire.objects.select_related("campagne", "organization").get(id=formulaire_id)
-    except Formulaire.DoesNotExist:
-        raise BeneficiaryError("Le formulaire spécifié n'existe pas.")
+    formulaire = None
+    if formulaire_id:
+        try:
+            formulaire = Formulaire.objects.select_related("campagne", "organization").get(id=formulaire_id)
+        except Formulaire.DoesNotExist:
+            formulaire = None
 
     # Vérifications de permissions
     validate_agent_permissions(user, campaign, zone, formulaire)
+    validate_form_responses(formulaire, responses_data)
 
     # Vérifier doublon de synchronisation (local_id + device_id)
-    sync_duplicate = check_sync_duplicate(local_id, device_id)
-    if sync_duplicate:
-        raise BeneficiaryError("Ce bénéficiaire a déjà été synchronisé depuis ce dispositif.")
+    if local_id and device_id != "web":
+        sync_duplicate = check_sync_duplicate(local_id, device_id, user.organization_id)
+        if sync_duplicate:
+            raise BeneficiaryError("Ce bénéficiaire a déjà été synchronisé depuis ce dispositif.")
 
     # Extraire les données personnelles
-    telephone = beneficiary_data["telephone"]
-    nom = beneficiary_data["nom"]
-    prenom = beneficiary_data["prenom"]
-    date_naissance = beneficiary_data["date_naissance"]
+    telephone = str(beneficiary_data["telephone"]).strip()
+    nom = str(beneficiary_data["nom"]).strip()
+    prenom = str(beneficiary_data["prenom"]).strip()
+    date_naissance = str(beneficiary_data["date_naissance"]).strip()
 
     # Vérifier doublon dans la campagne
     duplicate = check_duplicate_in_campaign(
         campaign, telephone, nom, prenom, date_naissance
     )
     if duplicate:
-        raise BeneficiaryError("Ce bénéficiaire est déjà inscrit dans cette campagne.")
+        zone_info = f" (Zone : {duplicate.zone.nom})" if duplicate.zone else ""
+        if duplicate.telephone == telephone:
+            raise BeneficiaryError(
+                f"Ce numéro de téléphone ({telephone}) est déjà enregistré dans cette campagne{zone_info}."
+            )
+        else:
+            raise BeneficiaryError(
+                f"Le bénéficiaire {nom} {prenom} (né(e) le {date_naissance}) est déjà enregistré dans cette campagne{zone_info}."
+            )
+
+    # Repli automatique sur les coordonnées de la zone ou région si non fournies
+    lat_val = beneficiary_data.get("latitude")
+    lng_val = beneficiary_data.get("longitude")
+
+    if not lat_val or str(lat_val).strip() in ("", "None", "0"):
+        lat_val = str(zone.latitude) if zone and zone.latitude else None
+    if not lng_val or str(lng_val).strip() in ("", "None", "0"):
+        lng_val = str(zone.longitude) if zone and zone.longitude else None
+    if lat_val is None or lng_val is None:
+        raise BeneficiaryError("La position GPS est indisponible et cette zone ne possède pas de coordonnées enregistrées.")
 
     # Créer le bénéficiaire et les réponses
     with transaction.atomic():
         beneficiary = Beneficiary.objects.create(
             campagne=campaign,
             zone=zone,
-            organization=user.organization,
+            organization=campaign.organization,
             nom=nom,
             prenom=prenom,
             telephone=telephone,
             sexe=beneficiary_data["sexe"],
             date_naissance=date_naissance,
-            latitude=beneficiary_data["latitude"],
-            longitude=beneficiary_data["longitude"],
+            latitude=str(lat_val),
+            longitude=str(lng_val),
             local_id=local_id,
             device_id=device_id,
             created_by=user,
             sync_status=Beneficiary.SyncStatus.SYNCED,
         )
 
-        # Récupérer toutes les questions du formulaire
-        questions = {str(q.id): q for q in formulaire.fields.all()}
-
-        # Créer les réponses
         created_responses = []
-        for resp_data in responses_data:
-            question_id = str(resp_data["question_id"])
-            value = resp_data["value"]
+        if formulaire:
+            # Récupérer toutes les questions du formulaire
+            questions = {str(q.id): q for q in formulaire.fields.all()}
 
-            if question_id not in questions:
-                raise BeneficiaryError(f"Question {question_id} non trouvée dans ce formulaire.")
+            # Créer les réponses
+            for resp_data in responses_data:
+                question_id = str(resp_data.get("question_id"))
+                value = resp_data.get("value")
 
-            question = questions[question_id]
-            response = store_response(beneficiary, formulaire, question, value)
-            created_responses.append(response)
+                if question_id in questions:
+                    question = questions[question_id]
+                    if resp_data.get("value") is None or resp_data.get("value") == "" or resp_data.get("value") == []:
+                        continue
+                    response = store_response(beneficiary, formulaire, question, value)
+                    created_responses.append(response)
 
         beneficiary = update_vulnerability_score(beneficiary)
 
@@ -564,14 +778,14 @@ def sync_pending_beneficiaries(pending_data_list, user):
             if is_duplicate:
                 results["duplicates"] += 1
                 results["details"].append({
-                    "local_id": str(data["local_id"]),
+                    "local_id": str(beneficiary.local_id),
                     "status": "DUPLICATE",
                     "beneficiary_id": str(beneficiary.id),
                 })
             else:
                 results["synced"] += 1
                 results["details"].append({
-                    "local_id": str(data["local_id"]),
+                    "local_id": str(beneficiary.local_id),
                     "status": "SYNCED",
                     "beneficiary_id": str(beneficiary.id),
                 })
@@ -624,10 +838,8 @@ def calculate_vulnerability_score(beneficiary):
     """
     Calcule le score de vulnérabilité d'un bénéficiaire selon les critères du projet.
 
-    Règles métier :
-    - Chaque critère du projet a un poids (ex: 30, 25, 20, 15, 10 → total 100).
-    - Si la réponse du bénéficiaire pour ce critère est "Oui" / vulnérable → on ajoute le poids.
-    - Score final = somme des poids cochés (entre 0 et 100).
+    Le score correspond à la part des poids vulnérables dans le total des poids
+    actifs, ramenée sur 100. Le total des poids n'a donc pas besoin d'être 100.
     """
     from decimal import Decimal
 
@@ -655,6 +867,10 @@ def calculate_vulnerability_score(beneficiary):
             normalize_region_name(r.question.label): r for r in responses if r.question and r.question.label
         }
 
+        total_weight = sum((Decimal(str(criterion.poids or 0)) for criterion in criteria), Decimal("0"))
+        if total_weight <= 0:
+            return Decimal("0")
+
         score = Decimal("0")
 
         for idx, criterion in enumerate(criteria):
@@ -668,7 +884,8 @@ def calculate_vulnerability_score(beneficiary):
             if response and _evaluate_vulnerability(response, criterion):
                 score += Decimal(str(criterion.poids or 0))
 
-        return min(score, Decimal("100")).quantize(Decimal("0.01"))
+        normalized_score = (score / total_weight) * Decimal("100")
+        return min(normalized_score, Decimal("100")).quantize(Decimal("0.01"))
 
     except Exception as e:
         logger.error(f"Score calculation failed for beneficiary {beneficiary.id}: {e}")
@@ -826,10 +1043,6 @@ def update_vulnerability_score(beneficiary):
     return beneficiary
 
 
-# Alias pour compatibilité avec les vues
-update_ai_score = update_vulnerability_score
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Carte des Priorités — Calcul des scores par région
 # ─────────────────────────────────────────────────────────────────────────────
@@ -876,6 +1089,19 @@ def _region_variants(region_name):
     ]
 
 
+def _region_ids_for_name(region_name):
+    """Resolve les variantes lisibles d'une région vers les IDs du modèle Region."""
+    variants = set(_region_variants(region_name))
+    if not variants:
+        return []
+    return [
+        region.pk
+        for region in Region.objects.only("id", "nom")
+        if region.nom in variants
+        or normalize_region_name(region.nom) == normalize_region_name(region_name)
+    ]
+
+
 def _generer_summary(region_name, zones, total_beneficiaires):
     """
     Génère automatiquement un résumé intelligent de la région.
@@ -900,7 +1126,9 @@ def _generer_summary(region_name, zones, total_beneficiaires):
     if zones:
         zone_top = zones[0]
         score_top = zone_top.get("score_moyen", 0)
-        if score_top >= 60:
+        if score_top is None:
+            summary += " Les scores de priorité ne sont pas disponibles dans les données fournies."
+        elif score_top >= 60:
             summary += (
                 f" {zone_top['nom']} présente le score moyen le plus élevé"
                 f" ({score_top}/100) et constitue la première priorité d'intervention."
@@ -912,7 +1140,10 @@ def _generer_summary(region_name, zones, total_beneficiaires):
             )
 
         # Mentionner les zones urgentes suivantes
-        urgentes = [z for z in zones[1:3] if z.get("score_moyen", 0) >= 40]
+        urgentes = [
+            z for z in zones[1:3]
+            if z.get("score_moyen") is not None and z["score_moyen"] >= 40
+        ]
         if urgentes:
             noms = " et ".join(z["nom"] for z in urgentes)
             verb = "nécessitent" if len(urgentes) > 1 else "nécessite"
@@ -925,6 +1156,9 @@ def _generer_observations(region_name, zones, total_beneficiaires):
     observations = []
     if not zones:
         return observations
+    scored_zones = [zone for zone in zones if zone.get("score_moyen") is not None]
+    if not scored_zones:
+        return ["Information non disponible dans les données fournies."]
     tres_elevees = [
         b
         for z in zones
@@ -938,14 +1172,14 @@ def _generer_observations(region_name, zones, total_beneficiaires):
             "Très élevée."
         )
 
-    zone_top = zones[0]
+    zone_top = scored_zones[0]
     observations.append(
         f"{zone_top['nom']} concentre la vulnérabilité la plus forte "
         f"(score moyen {zone_top.get('score_moyen', 0)}/100)."
     )
 
-    if len(zones) > 1:
-        zone_2 = zones[1]
+    if len(scored_zones) > 1:
+        zone_2 = scored_zones[1]
         observations.append(
             f"{zone_2['nom']} représente la deuxième zone prioritaire "
             f"(score moyen {zone_2.get('score_moyen', 0)}/100)."
@@ -961,14 +1195,18 @@ def _generer_recommandations(region_name, zones, total_beneficiaires):
             "Programmer une collecte terrain dans cette région.",
         ]
 
-    zone_top = zones[0]
+    scored_zones = [zone for zone in zones if zone.get("score_moyen") is not None]
+    if not scored_zones:
+        return ["Information non disponible dans les données fournies."]
+
+    zone_top = scored_zones[0]
     recommandations.append(
         f"Prioriser les distributions à {zone_top['nom']}."
     )
 
-    if len(zones) > 1:
+    if len(scored_zones) > 1:
         recommandations.append(
-            f"Renforcer l'équipe terrain à {zones[1]['nom']}."
+            f"Renforcer l'équipe terrain à {scored_zones[1]['nom']}."
         )
 
     recommandations.append(
@@ -1059,23 +1297,14 @@ def region_exists_in_project(project, region_name):
     region_normalized = normalize_region_name(region_name)
     if not region_normalized:
         return False
-    # 1) La region declaree sur le projet
-    if normalize_region_name(project.region) == region_normalized:
-        return True
-    variants = _region_variants(region_name)
-    # 2) Une zone portee par un beneficiaire du projet dans cette region
-    #    (on reste centre sur le projet et non sur toute l'organisation).
-    if Beneficiary.objects.filter(
-        campagne__projet=project,
-        zone__region__in=variants,
-    ).exists():
-        return True
-    # 3) Fallback : une zone de l'organisation correspond au nom, pour afficher
-    #    une region declaree mais encore sans beneficiaire.
-    return Zone.objects.filter(
-        organization=project.organization,
-        region__in=variants,
-    ).exists()
+
+    # La carte et le détail doivent partager la même source d'éligibilité :
+    # le projet, les bénéficiaires de ses campagnes et les zones de son ONG.
+    # Cela évite qu'une région visible sur la carte soit rejetée au clic.
+    return any(
+        normalize_region_name(item.get("region")) == region_normalized
+        for item in build_all_regions_scores(project)
+    )
 
 
 def _get_region_zones(project, region_name):
@@ -1087,19 +1316,27 @@ def _get_region_zones(project, region_name):
     #
     # Ces zones doivent etre renvoyees meme sans aucun beneficiaire afin que le
     # panneau lateral affiche l'integralite de la region (score 0 / 0 ben.).
-    variants = _region_variants(region_name)
-    if not variants:
+    region_ids = _region_ids_for_name(region_name)
+    if not region_ids:
         return []
 
     from apps.campaigns.models import Campaign
     project_zone_ids = (
         Campaign.objects
-        .filter(projet=project)
+        .filter(
+            projet=project,
+            organization_id=project.organization_id,
+            projet__organization_id=project.organization_id,
+        )
         .values_list("zones__id", flat=True)
     )
     zones = list(
         Zone.objects
-        .filter(id__in=project_zone_ids, region__in=variants)
+        .filter(
+            id__in=project_zone_ids,
+            region_id__in=region_ids,
+            organization_id=project.organization_id,
+        )
         .order_by("nom")
     )
     if zones:
@@ -1107,7 +1344,10 @@ def _get_region_zones(project, region_name):
     # Fallback : aucune campagne/zone rattachee au projet pour cette region.
     return list(
         Zone.objects
-        .filter(organization=project.organization, region__in=variants)
+        .filter(
+            organization_id=project.organization_id,
+            region_id__in=region_ids,
+        )
         .order_by("nom")
     )
 
@@ -1134,7 +1374,11 @@ def build_region_priorities(project, region_name):
         Beneficiary.objects
         .filter(
             campagne__projet=project,
-            zone__region__in=_region_variants(region_name),
+            organization_id=project.organization_id,
+            campagne__organization_id=project.organization_id,
+            campagne__projet__organization_id=project.organization_id,
+            zone__organization_id=project.organization_id,
+            zone__region_id__in=_region_ids_for_name(region_name),
         )
         .select_related("zone", "campagne")
         .prefetch_related("responses__question")
@@ -1151,6 +1395,7 @@ def build_region_priorities(project, region_name):
         zones_data[str(zone.id)] = {
             "id": str(zone.id),
             "nom": zone.nom,
+            "zone": zone,
             "scores": [],
             "beneficiaires": [],
         }
@@ -1168,16 +1413,18 @@ def build_region_priorities(project, region_name):
             zones_data[zone_id] = {
                 "id": zone_id,
                 "nom": zone.nom,
+                "zone": zone,
                 "scores": [],
                 "beneficiaires": [],
             }
 
-        score_b = int(b.score_vulnerabilite or 0)
-        zones_data[zone_id]["scores"].append(score_b)
+        score_b = int(b.score_vulnerabilite) if b.score_vulnerabilite is not None else None
+        if score_b is not None:
+            zones_data[zone_id]["scores"].append(score_b)
 
         age = _calculer_age(b.date_naissance)
         criteres_detail = _get_criteres_beneficiaire(b, criteria_list)
-        niveau_b, _ = _get_niveau_et_couleur(score_b)
+        niveau_b, _ = _get_niveau_et_couleur(score_b) if score_b is not None else (None, "grey")
 
         zones_data[zone_id]["beneficiaires"].append({
             "id": str(b.id),
@@ -1188,8 +1435,8 @@ def build_region_priorities(project, region_name):
             "sexe": b.sexe,
             "age": age,
             "date_naissance": str(b.date_naissance),
-            "quartier": b.zone.departement if b.zone else "",
-            "region": b.zone.region if b.zone else region_name,
+            "quartier": b.zone.departement.nom if b.zone and b.zone.departement_id else "",
+            "region": b.zone.region.nom if b.zone and b.zone.region_id else region_name,
             "zone_nom": b.zone.nom if b.zone else "",
             "score": score_b,
             "niveau": niveau_b,
@@ -1200,11 +1447,11 @@ def build_region_priorities(project, region_name):
     zones_list = []
     for zone_id, data in zones_data.items():
         scores = data["scores"]
-        score_moyen = round(sum(scores) / len(scores)) if scores else 0
-        niveau_zone, couleur_zone = _get_niveau_et_couleur(score_moyen)
+        score_moyen = round(sum(scores) / len(scores)) if scores else None
+        niveau_zone, couleur_zone = _get_niveau_et_couleur(score_moyen) if score_moyen is not None else (None, "grey")
 
         # Trier les bénéficiaires par score décroissant
-        bens_sorted = sorted(data["beneficiaires"], key=lambda x: x["score"], reverse=True)
+        bens_sorted = sorted(data["beneficiaires"], key=lambda x: x["score"] if x["score"] is not None else -1, reverse=True)
 
         zones_list.append({
             "id": zone_id,
@@ -1215,21 +1462,25 @@ def build_region_priorities(project, region_name):
             "score_moyen": score_moyen,
             "niveau": niveau_zone,
             "couleur": couleur_zone,
+            "latitude": str(data["zone"].latitude) if data.get("zone") else None,
+            "longitude": str(data["zone"].longitude) if data.get("zone") else None,
+            "rayon": data["zone"].rayon if data.get("zone") else None,
+            "region": data["zone"].region.nom if data.get("zone") else region_name,
             "total_beneficiaires": len(bens_sorted),
             "beneficiaires": bens_sorted,
         })
 
-    zones_list.sort(key=lambda z: z["score_moyen"], reverse=True)
+    zones_list.sort(key=lambda z: (z["score_moyen"] is None, -(z["score_moyen"] or 0)))
 
     # Score moyen de la région
-    all_scores = [b["score"] for z in zones_list for b in z["beneficiaires"]]
-    score_region = round(sum(all_scores) / len(all_scores)) if all_scores else 0
-    total_beneficiaires = len(all_scores)
+    all_scores = [b["score"] for z in zones_list for b in z["beneficiaires"] if b.get("score") is not None]
+    score_region = round(sum(all_scores) / len(all_scores)) if all_scores else None
+    total_beneficiaires = sum(zone["total_beneficiaires"] for zone in zones_list)
 
     summary = _generer_summary(region_name, zones_list, total_beneficiaires)
     observations = _generer_observations(region_name, zones_list, total_beneficiaires)
     recommandations = _generer_recommandations(region_name, zones_list, total_beneficiaires)
-    niveau_region, couleur_region = _get_niveau_et_couleur(score_region)
+    niveau_region, couleur_region = _get_niveau_et_couleur(score_region) if score_region is not None else (None, "grey")
 
     return {
         "region": region_name,
@@ -1261,7 +1512,13 @@ def build_all_regions_scores(project):
     result = (
         Beneficiary.objects
         .filter(campagne__projet=project)
-        .values("zone__region")
+        .filter(
+            organization_id=project.organization_id,
+            campagne__organization_id=project.organization_id,
+            campagne__projet__organization_id=project.organization_id,
+            zone__organization_id=project.organization_id,
+        )
+        .values("zone__region__nom")
         .annotate(
             score_moyen=Avg("score_vulnerabilite"),
             total=Count("id"),
@@ -1272,9 +1529,10 @@ def build_all_regions_scores(project):
     # Index par nom normalisé pour fusionner sans doublon les variantes de saisie.
     regions_by_key = {}
     for row in result:
-        region_name = row["zone__region"] or "Inconnue"
-        score = round(row["score_moyen"] or 0)
-        niveau, couleur = _get_niveau_et_couleur(score)
+        region_name = row["zone__region__nom"] or "Inconnue"
+        raw_score = row["score_moyen"]
+        score = round(raw_score) if raw_score is not None else 0
+        niveau, couleur = _get_niveau_et_couleur(score) if raw_score is not None else ("Aucune donnée", "grey")
         key = normalize_region_name(region_name)
         regions_by_key[key] = {
             "region": region_name,
@@ -1292,8 +1550,8 @@ def build_all_regions_scores(project):
         declared_names.append(project.region)
     declared_names.extend(
         Zone.objects
-        .filter(organization=project.organization)
-        .values_list("region", flat=True)
+        .filter(organization_id=project.organization_id)
+        .values_list("region__nom", flat=True)
         .distinct()
     )
 
@@ -1312,6 +1570,62 @@ def build_all_regions_scores(project):
             "couleur": "grey",
         }
 
+    # Les zones exposées sur la carte sont strictement celles rattachées aux
+    # campagnes de ce projet. Le score est agrégé depuis les scores Django.
+    project_zones = list(
+        Zone.objects
+        .filter(
+            organization_id=project.organization_id,
+            campaigns__projet=project,
+            campaigns__organization_id=project.organization_id,
+            campaigns__projet__organization_id=project.organization_id,
+        )
+        .select_related("region")
+        .distinct()
+        .order_by("nom", "pk")
+    )
+    zone_scores = {
+        row["zone_id"]: row
+        for row in (
+            Beneficiary.objects
+            .filter(
+                campagne__projet=project,
+                organization_id=project.organization_id,
+                campagne__organization_id=project.organization_id,
+                campagne__projet__organization_id=project.organization_id,
+                zone__organization_id=project.organization_id,
+                zone_id__in=[zone.pk for zone in project_zones],
+            )
+            .values("zone_id")
+            .annotate(score_moyen=Avg("score_vulnerabilite"), total=Count("id"))
+        )
+    }
+    for zone in project_zones:
+        region_key = normalize_region_name(zone.region.nom)
+        region_data = regions_by_key.get(region_key)
+        if region_data is None:
+            continue
+        score_data = zone_scores.get(zone.pk, {})
+        raw_score = score_data.get("score_moyen")
+        score = round(raw_score) if raw_score is not None else None
+        niveau, couleur = _get_niveau_et_couleur(score) if score is not None else (None, "grey")
+        region_data.setdefault("zones", []).append({
+            "id": str(zone.pk),
+            "nom": zone.nom,
+            "region": zone.region.nom,
+            "latitude": str(zone.latitude) if zone.latitude is not None else None,
+            "longitude": str(zone.longitude) if zone.longitude is not None else None,
+            "rayon": zone.rayon,
+            "score": score,
+            "score_moyen": score,
+            "niveau": niveau,
+            "couleur": couleur,
+            "total_beneficiaires": score_data.get("total", 0),
+        })
+
+    for region_data in regions_by_key.values():
+        region_data.setdefault("zones", [])
+
     # Tri : régions avec bénéficiaires d'abord, par score décroissant.
     regions_list = sorted(
         regions_by_key.values(),
@@ -1321,14 +1635,17 @@ def build_all_regions_scores(project):
     return regions_list
 
 
-def get_zone_beneficiaries_table_data(zone_id, user):
+def get_zone_beneficiaries_table_data(zone_id, user, project_id=None, params=None):
     """
     Retourne la liste complète des bénéficiaires d'une zone avec scores,
     informations personnelles et détails des critères répondus.
     """
     from apps.zones.models import Zone
     from apps.projects.models import Project, ProjectCriteria
-    from django.db.models import Q
+    from django.core.paginator import Paginator
+    from django.db.models import Avg, Q
+
+    params = params or {}
 
     zone = Zone.objects.filter(id=zone_id).first()
     if not zone:
@@ -1339,16 +1656,91 @@ def get_zone_beneficiaries_table_data(zone_id, user):
 
     beneficiaries = (
         Beneficiary.objects
-        .filter(zone=zone)
-        .select_related("campagne__projet", "created_by", "zone")
+        .filter(
+            zone=zone,
+            organization_id=zone.organization_id,
+            campagne__organization_id=zone.organization_id,
+            campagne__projet__organization_id=zone.organization_id,
+        )
+        .select_related("campagne__projet", "created_by", "zone__region", "zone__departement")
         .prefetch_related("responses__question")
         .order_by("-score_vulnerabilite")
     )
+
+    if project_id:
+        try:
+            project_id = int(project_id)
+        except (TypeError, ValueError):
+            raise BeneficiaryError("Identifiant de projet invalide.")
+        projects = Project.objects.filter(
+            pk=project_id,
+            organization_id=zone.organization_id,
+            archived=False,
+        )
+        if user.role == "CHEF_PROJET":
+            projects = projects.filter(chef_projet=user)
+        project = projects.first()
+        if not project:
+            raise BeneficiaryError("Projet introuvable dans votre périmètre.")
+        beneficiaries = beneficiaries.filter(campagne__projet=project)
 
     if user.role == "CHEF_PROJET":
         beneficiaries = beneficiaries.filter(
             Q(campagne__projet__chef_projet=user) | Q(created_by=user)
         )
+    elif user.role == "AGENT":
+        assignments = list(
+            CampagneAffectation.objects.filter(
+                agent=user,
+                campagne__organization_id=zone.organization_id,
+                campagne__projet__organization_id=zone.organization_id,
+                zone=zone.nom,
+            ).values_list("campagne_id", "zone")
+        )
+        assignment_scope = Q(pk__in=[])
+        for campaign_id, assigned_zone in assignments:
+            assignment_scope |= Q(campagne_id=campaign_id, zone__nom=assigned_zone)
+        beneficiaries = beneficiaries.filter(assignment_scope)
+
+    scoped_total = beneficiaries.count()
+    score_average = beneficiaries.exclude(
+        score_vulnerabilite__isnull=True,
+    ).aggregate(average=Avg("score_vulnerabilite"))["average"] or 0
+
+    search = (params.get("search") or "").strip()
+    if search:
+        beneficiaries = beneficiaries.filter(
+            Q(nom__icontains=search)
+            | Q(prenom__icontains=search)
+            | Q(telephone__icontains=search)
+            | Q(zone__departement__nom__icontains=search)
+        )
+
+    level = params.get("niveau")
+    if level == "Très élevée":
+        beneficiaries = beneficiaries.filter(score_vulnerabilite__gte=80)
+    elif level == "Élevée":
+        beneficiaries = beneficiaries.filter(score_vulnerabilite__gte=60, score_vulnerabilite__lt=80)
+    elif level == "Moyenne":
+        beneficiaries = beneficiaries.filter(score_vulnerabilite__gte=40, score_vulnerabilite__lt=60)
+    elif level == "Faible":
+        beneficiaries = beneficiaries.filter(Q(score_vulnerabilite__lt=40) | Q(score_vulnerabilite__isnull=True))
+
+    ordering = {
+        "score_asc": ("score_vulnerabilite", "nom", "prenom"),
+        "nom_asc": ("prenom", "nom"),
+        "nom_desc": ("-prenom", "-nom"),
+        # Birth date ascending means older beneficiaries appear first.
+        "age_desc": ("date_naissance", "nom", "prenom"),
+    }.get(params.get("sort"), ("-score_vulnerabilite", "nom", "prenom"))
+    beneficiaries = beneficiaries.order_by(*ordering)
+
+    try:
+        page_size = min(max(int(params.get("page_size", 20)), 1), 100)
+    except (TypeError, ValueError):
+        page_size = 20
+    paginator = Paginator(beneficiaries, page_size)
+    page_obj = paginator.get_page(params.get("page", 1))
 
     # Récupérer les critères des projets concernés
     project_ids = list(
@@ -1366,7 +1758,7 @@ def get_zone_beneficiaries_table_data(zone_id, user):
 
     bens_data = []
     scores = []
-    for b in beneficiaries:
+    for b in page_obj.object_list:
         score_val = int(b.score_vulnerabilite or 0)
         scores.append(score_val)
         age = _calculer_age(b.date_naissance)
@@ -1395,8 +1787,8 @@ def get_zone_beneficiaries_table_data(zone_id, user):
             "sexe": b.sexe,
             "date_naissance": str(b.date_naissance) if b.date_naissance else "",
             "age": age,
-            "quartier": zone.departement or zone.nom,
-            "region": zone.region,
+            "quartier": zone.departement.nom if zone.departement_id else zone.nom,
+            "region": zone.region.nom if zone.region_id else "",
             "zone_nom": zone.nom,
             "score": score_val,
             "niveau": niveau,
@@ -1410,21 +1802,29 @@ def get_zone_beneficiaries_table_data(zone_id, user):
             "created_at": b.created_at.isoformat() if hasattr(b, "created_at") and b.created_at else "",
         })
 
-    score_moyen = round(sum(scores) / len(scores)) if scores else 0
+    score_moyen = round(float(score_average)) if scoped_total else 0
     niveau_moyen, couleur_moyen = _get_niveau_et_couleur(score_moyen)
 
     return {
         "zone": {
             "id": str(zone.id),
             "nom": zone.nom,
-            "region": zone.region,
-            "departement": zone.departement or zone.nom,
+            "region": zone.region.nom if zone.region_id else "",
+            "departement": zone.departement.nom if zone.departement_id else zone.nom,
             "score_moyen": score_moyen,
             "niveau": niveau_moyen,
             "couleur": couleur_moyen,
-            "total_beneficiaires": len(bens_data),
+            "total_beneficiaires": scoped_total,
         },
         "beneficiaires": bens_data,
+        "pagination": {
+            "count": paginator.count,
+            "page": page_obj.number,
+            "page_size": page_size,
+            "num_pages": paginator.num_pages,
+            "next": page_obj.next_page_number() if page_obj.has_next() else None,
+            "previous": page_obj.previous_page_number() if page_obj.has_previous() else None,
+        },
         "criteres_projet": [
             {
                 "id": str(c.id),

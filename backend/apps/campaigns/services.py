@@ -21,14 +21,16 @@ def generate_campaign_code(project):
 
     year = timezone.now().year
     region_prefix = project.region[:3].upper() if project.region else "XXX"
+    prefix = f"CMP-{year}-{region_prefix}-O{project.organization_id}-"
 
     count = Campaign.objects.filter(
-        code_campagne__startswith=f"CMP-{year}-{region_prefix}-"
+        organization_id=project.organization_id,
+        code_campagne__startswith=prefix,
     ).count()
 
     sequence = count + 1
 
-    return f"CMP-{year}-{region_prefix}-{sequence:03d}"
+    return f"{prefix}{sequence:03d}"
 
 
 def validate_zones_for_organization(zone_ids, organization):
@@ -100,8 +102,8 @@ def validate_dates(date_debut, date_fin):
     Raises:
         ValueError: Si date_fin <= date_debut
     """
-    if date_debut and date_fin and date_fin <= date_debut:
-        raise ValueError("La date de fin doit être postérieure à la date de début.")
+    if date_debut and date_fin and date_fin < date_debut:
+        raise ValueError("La date de fin doit être égale ou postérieure à la date de début.")
 
 
 @transaction.atomic
@@ -139,26 +141,36 @@ def create_campaign(validated_data, user):
     except Project.DoesNotExist:
         raise ValueError("Le projet spécifié n'existe pas.")
 
-    if user.role == User.Role.SUPER_ADMIN:
-        organization = project.organization
-    else:
+    if user.role != User.Role.SUPER_ADMIN:
         validate_project_for_chef_projet(project, user)
-        organization = user.organization
+
+    # The project is the source of truth. Never derive the campaign tenant
+    # from a request payload or a second copy on the user object.
+    organization = project.organization
+    if organization is None:
+        raise ValueError("Le projet doit appartenir à une organisation.")
 
     validate_zones_for_organization(zone_ids, organization)
     validate_dates(date_debut, date_fin)
 
     code_campagne = generate_campaign_code(project)
 
+    campaign_data = {
+        "projet": project,
+        "organization": organization,
+        "nom": nom,
+        "code_campagne": code_campagne,
+        "description": description,
+        "date_debut": date_debut,
+        "date_fin": date_fin,
+        "type": validated_data.get("type", Campaign.Type.DISTRIBUTION),
+        "created_by": user,
+    }
+    if "statut" in validated_data:
+        campaign_data["statut"] = validated_data["statut"]
+
     campaign = Campaign.objects.create(
-        projet=project,
-        organization=organization,
-        nom=nom,
-        code_campagne=code_campagne,
-        description=description,
-        date_debut=date_debut,
-        date_fin=date_fin,
-        created_by=user,
+        **campaign_data,
     )
 
     if zone_ids:
@@ -203,6 +215,8 @@ def create_campaign(validated_data, user):
         agent = agents.get(agent_id)
         if not agent:
             raise ValueError(f"Agent introuvable : {agent_id}")
+        if agent.role != User.Role.AGENT:
+            raise ValueError("Seuls les agents terrain peuvent être affectés à une campagne.")
 
         # Une affectation est creee par zone affectee a l'agent.
         zone_names = list(assignment.get("zones") or [])

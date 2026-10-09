@@ -1,8 +1,4 @@
 from celery import shared_task
-from django.utils import timezone
-
-from apps.payment.services import check_and_expire_trials, check_expiring_subscriptions
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -34,7 +30,7 @@ def check_expiring_subscriptions():
 
 
 @shared_task
-def send_subscription_reminder(user_id, days_remaining, is_trial=True):
+def send_subscription_reminder(user_id, days_remaining, is_trial=True, organization_id=None):
     """
     Envoie un email de rappel avant expiration.
     """
@@ -42,7 +38,17 @@ def send_subscription_reminder(user_id, days_remaining, is_trial=True):
     from apps.accounts.models import User
 
     try:
-        user = User.objects.get(id=user_id)
+        if organization_id is None:
+            return
+        user = User.objects.get(id=user_id, organization_id=organization_id)
+        # Tasks may stay queued after the account is suspended or its role changes.
+        # Recheck current authorization state immediately before sending tenant data.
+        if (
+            user.role != User.Role.GERANT
+            or not user.can_login
+            or not user.organization_id
+        ):
+            return
         subscription = user.organization.subscription if user.organization else None
 
         if not subscription:

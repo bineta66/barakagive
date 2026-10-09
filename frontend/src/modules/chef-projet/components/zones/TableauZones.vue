@@ -46,7 +46,7 @@
 
               <RouterLink
                 :to="`/chef-projet/zones/modifier/${zone.id}`"
-                class="text-slate-500 hover:text-or p-1"
+                class="text-slate-500 hover:text-bleu-nuit p-1"
                 title="Modifier"
               >
                 <Pencil :size="16" />

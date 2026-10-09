@@ -58,7 +58,17 @@
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
+            <button
+              @click="activeTab = 'chat'"
+              class="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
+              :class="activeTab === 'chat' ? 'bg-white text-[#021B30]' : 'text-white/75 hover:bg-white/10'"
+            >Conversation</button>
+            <button
+              @click="activeTab = 'dashboard'"
+              class="rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
+              :class="activeTab === 'dashboard' ? 'bg-white text-[#021B30]' : 'text-white/75 hover:bg-white/10'"
+            >Vue d’ensemble</button>
             <button
               @click="fetchAssistantData"
               :disabled="loading"
@@ -93,7 +103,98 @@
         </div>
 
         <!-- Content Area -->
-        <div class="p-6 flex-1 overflow-y-auto space-y-6">
+        <div class="flex-1 min-h-0 overflow-y-auto">
+          <section v-if="activeTab === 'chat'" class="flex h-full min-h-[30rem] flex-col bg-slate-50/70">
+            <div ref="chatScroll" class="flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
+              <div v-if="messages.length === 0" class="mx-auto max-w-sm py-10 text-center">
+                <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#021B30] text-[#CCA43B]">✦</div>
+                <h3 class="text-base font-bold text-[#021B30]">Comment puis-je vous aider ?</h3>
+                <p class="mt-2 text-sm text-slate-500">Je peux rechercher dans les données de votre ONG et préparer une synthèse. Les chiffres affichés viennent de Django.</p>
+                <div class="mt-5 flex flex-wrap justify-center gap-2">
+                  <button v-for="suggestion in suggestions" :key="suggestion" @click="sendChat(suggestion)" class="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:border-[#CCA43B]">{{ suggestion }}</button>
+                </div>
+              </div>
+
+              <article v-for="(message, index) in messages" :key="`${sessionId}-${index}`" class="flex" :class="message.role === 'user' ? 'justify-end' : 'justify-start'">
+                <div class="max-w-[92%] space-y-3" :class="message.role === 'user' ? 'items-end' : 'items-start'">
+                  <div class="whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-relaxed" :class="message.role === 'user' ? 'rounded-br-md bg-[#021B30] text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-800'">{{ message.content }}</div>
+                  <div v-if="message.tool_results?.length" class="space-y-2">
+                    <div v-for="result in message.tool_results" :key="result.tool" class="rounded-xl border border-slate-200 bg-white p-3">
+                      <h4 class="text-xs font-bold text-[#021B30]">{{ result.title }}</h4>
+                      <div v-if="result.action" class="mt-2 space-y-2">
+                        <p class="text-xs leading-relaxed text-slate-600">{{ result.action.message }}</p>
+                        <ul v-if="result.action.required_fields?.length" class="list-inside list-disc space-y-1 text-xs text-slate-500">
+                          <li v-for="field in result.action.required_fields" :key="field">{{ field }}</li>
+                        </ul>
+                        <button v-if="result.action.route" type="button" @click="openActionRoute(result.action.route)" class="inline-flex rounded-lg bg-[#021B30] px-3 py-2 text-xs font-semibold text-white hover:bg-[#00313C]">
+                          Ouvrir le formulaire
+                        </button>
+                      </div>
+                      <p v-if="result.data?.message" class="mt-1 text-xs text-slate-600">{{ result.data.message }}</p>
+                      <p v-else-if="result.data?.total !== undefined" class="mt-1 text-sm font-semibold text-slate-800">{{ result.data.total }} résultat(s)</p>
+                      <div v-if="result.data?.sent !== undefined" class="mt-2 space-y-1 text-xs text-slate-600">
+                        <p v-if="result.data.sent > 0" class="font-semibold text-[#00313C]">{{ result.data.sent }} notification(s) interne(s) envoyée(s).</p>
+                        <p v-for="(notification, notificationIndex) in result.data.notifications" :key="notification.notification_id || notificationIndex">
+                          {{ notification.project }} · {{ notification.recipient }}
+                        </p>
+                        <p v-for="candidate in result.data.candidates || []" :key="candidate.id" class="rounded-lg bg-slate-50 px-2 py-1">
+                          {{ candidate.name }}
+                        </p>
+                      </div>
+                      <ul v-if="result.data?.par_region?.length" class="mt-2 space-y-1 text-xs text-slate-600">
+                        <li v-for="region in result.data.par_region" :key="region['zone__region__nom']">
+                          {{ region['zone__region__nom'] || 'Région non précisée' }} · {{ region.total }} prioritaire(s)
+                        </li>
+                      </ul>
+                      <p v-if="result.data?.beneficiaires_avec_action !== undefined" class="mt-2 text-xs text-slate-600">
+                        {{ result.data.beneficiaires_avec_action }} bénéficiaire(s) avec aide réalisée · {{ result.data.actions_realisees }} action(s)
+                      </p>
+                      <ul v-if="Array.isArray(result.data) && result.data.length" class="mt-2 space-y-1.5">
+                        <li v-for="(item, itemIndex) in result.data.slice(0, 8)" :key="item.id || itemIndex" class="text-xs text-slate-600">
+                          <span class="font-semibold text-slate-800">{{ item.name || item.nom || item.projet__name || item.type || 'Activité' }}</span>
+                          <span v-if="item.region || item.region__nom"> · {{ item.region || item.region__nom }}</span>
+                          <span v-if="item.montant !== undefined"> · {{ formatMoney(item.montant) }}</span>
+                          <span v-if="item.statut"> · {{ item.statut }}</span>
+                          <span v-if="item.end_date"> · échéance {{ formatDate(item.end_date) }}</span>
+                          <span v-if="item.chef_projet__first_name || item.chef_projet__last_name"> · {{ [item.chef_projet__first_name, item.chef_projet__last_name].filter(Boolean).join(' ') }}</span>
+                          <span v-if="item.date"> · {{ formatDate(item.date) }}</span>
+                        </li>
+                        <li v-if="result.data.length > 8" class="text-xs text-slate-400">+ {{ result.data.length - 8 }} autres éléments</li>
+                      </ul>
+                      <div v-if="result.data?.budget_total !== undefined" class="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
+                        <span>Budget : <b>{{ formatMoney(result.data.budget_total) }}</b></span>
+                        <span>Dépenses : <b>{{ formatMoney(result.data.depenses) }}</b></span>
+                        <span>Dons : <b>{{ formatMoney(result.data.dons) }}</b></span>
+                        <span>Solde : <b>{{ formatMoney(result.data.solde_dons_moins_depenses) }}</b></span>
+                      </div>
+                    </div>
+                  </div>
+                  <button v-if="message.role === 'assistant' && message.content" type="button" @click="speak(message.content)" class="text-[11px] font-medium text-slate-400 hover:text-[#021B30]">Écouter la réponse</button>
+                </div>
+              </article>
+
+              <div v-if="chatLoading" class="flex items-center gap-2 text-sm text-slate-500">
+                <span class="h-2 w-2 animate-pulse rounded-full bg-[#CCA43B]"></span> L’assistant analyse les données…
+              </div>
+            </div>
+
+            <form @submit.prevent="sendChat()" class="border-t border-slate-200 bg-white p-3 sm:p-4">
+              <div class="flex items-end gap-2 rounded-2xl border border-slate-300 bg-white p-2 focus-within:border-[#021B30] focus-within:ring-2 focus-within:ring-[#021B30]/10">
+                <textarea v-model="chatInput" rows="1" maxlength="4000" placeholder="Posez une question sur votre ONG…" class="max-h-32 min-h-10 flex-1 resize-y border-0 bg-transparent px-2 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:ring-0" @keydown.enter.exact.prevent="sendChat()"></textarea>
+                <button type="button" @click="toggleVoice" :disabled="!voiceSupported" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#021B30] hover:bg-slate-100 disabled:text-slate-300" :title="voiceListening ? 'Arrêter la dictée' : 'Dicter une demande'" :aria-pressed="voiceListening">
+                  <svg v-if="!voiceListening" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></svg>
+                  <span v-else class="h-3 w-3 rounded-sm bg-rose-600"></span>
+                </button>
+                <button type="submit" :disabled="chatLoading || !chatInput.trim()" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#021B30] text-white hover:bg-[#00313C] disabled:opacity-40" aria-label="Envoyer">
+                  <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 14-7-4 14-3-6-7-1Z"/><path d="m12 13 4-4"/></svg>
+                </button>
+              </div>
+              <p class="mt-2 text-center text-[10px] text-slate-400">L’assistant prépare les actions sensibles ; Django valide les droits et les données avant toute exécution.</p>
+              <p v-if="voiceError" class="mt-1 text-center text-xs text-rose-600">{{ voiceError }}</p>
+            </form>
+          </section>
+
+          <div v-else class="p-6 space-y-6">
           <!-- Loader -->
           <div v-if="loading" class="flex flex-col items-center justify-center py-16 space-y-4">
             <div class="w-12 h-12 border-3 border-[#CCA43B] border-t-transparent rounded-full animate-spin"></div>
@@ -125,7 +226,7 @@
             </div>
 
             <!-- Indicateurs Clés Métier (3 KPIs) -->
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:grid-cols-3">
               <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs text-center">
                 <span class="text-[11px] font-semibold text-slate-500 block uppercase">Projets</span>
                 <span class="text-2xl font-bold text-[#021B30] mt-0.5 block">
@@ -218,7 +319,7 @@
             <!-- Recommandations -->
             <div v-if="assistantData.recommandations && assistantData.recommandations.length" class="space-y-2">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-bleu-accent"></span>
                 Recommandations Prioritaires
               </h3>
               <div class="space-y-2">
@@ -242,6 +343,7 @@
               </p>
             </div>
           </template>
+          </div>
         </div>
       </div>
     </transition>
@@ -258,10 +360,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const isGerant = computed(() => authStore.role === 'GERANT')
 
@@ -269,6 +373,23 @@ const isOpen = ref(false)
 const loading = ref(false)
 const error = ref(null)
 const assistantData = ref(null)
+const activeTab = ref('chat')
+const chatInput = ref('')
+const chatLoading = ref(false)
+const messages = ref([])
+const chatScroll = ref(null)
+const voiceListening = ref(false)
+const voiceError = ref('')
+const sessionId = ref(globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`)
+let speechRecognition = null
+
+const suggestions = [
+  'Fais-moi le bilan de mon ONG',
+  'Quels projets sont en retard ?',
+  'Résume les activités récentes',
+  'Analyse les finances',
+]
+const voiceSupported = computed(() => typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window))
 
 const toggleDrawer = () => {
   isOpen.value = !isOpen.value
@@ -311,6 +432,91 @@ const formatTime = (iso) => {
     })
   } catch (e) {
     return iso
+  }
+}
+
+const formatDate = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString('fr-FR')
+}
+
+const sendChat = async (suggestion = '') => {
+  const question = String(suggestion || chatInput.value).trim()
+  if (!question || chatLoading.value) return
+  const history = messages.value.slice(-12).map(({ role, content }) => ({ role, content }))
+  messages.value.push({ role: 'user', content: question })
+  chatInput.value = ''
+  chatLoading.value = true
+  voiceError.value = ''
+  await nextTick()
+  chatScroll.value?.scrollTo({ top: chatScroll.value.scrollHeight, behavior: 'smooth' })
+  try {
+    const response = await api.post('/api/assistant/chat/', {
+      question,
+      history,
+      session_id: sessionId.value,
+    })
+    if (response.data?.session_id) sessionId.value = response.data.session_id
+    messages.value.push({
+      role: 'assistant',
+      content: response.data?.answer || 'Je n’ai pas obtenu de réponse exploitable.',
+      tool_results: response.data?.tool_results || [],
+      tools_used: response.data?.tools_used || [],
+      sources: response.data?.sources || [],
+    })
+  } catch (requestError) {
+    const detail = requestError.response?.data?.detail
+    messages.value.push({
+      role: 'assistant',
+      content: detail || 'Je ne peux pas joindre le service pour le moment. Réessayez dans quelques instants.',
+    })
+  } finally {
+    chatLoading.value = false
+    await nextTick()
+    chatScroll.value?.scrollTo({ top: chatScroll.value.scrollHeight, behavior: 'smooth' })
+  }
+}
+
+const toggleVoice = () => {
+  if (!voiceSupported.value) {
+    voiceError.value = 'La dictée vocale n’est pas prise en charge par ce navigateur.'
+    return
+  }
+  if (voiceListening.value) {
+    speechRecognition?.stop()
+    return
+  }
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
+  speechRecognition = new Recognition()
+  speechRecognition.lang = 'fr-FR'
+  speechRecognition.interimResults = true
+  speechRecognition.continuous = false
+  speechRecognition.onstart = () => { voiceListening.value = true; voiceError.value = '' }
+  speechRecognition.onresult = (event) => {
+    const transcript = Array.from(event.results).map((result) => result[0]?.transcript || '').join(' ')
+    chatInput.value = transcript.trim()
+  }
+  speechRecognition.onerror = () => { voiceError.value = 'La dictée a échoué. Vérifiez l’autorisation du microphone.' }
+  speechRecognition.onend = () => { voiceListening.value = false }
+  try { speechRecognition.start() } catch { voiceError.value = 'Le microphone est déjà utilisé.' }
+}
+
+const speak = (text) => {
+  if (!('speechSynthesis' in window)) {
+    voiceError.value = 'La lecture vocale n’est pas prise en charge par ce navigateur.'
+    return
+  }
+  window.speechSynthesis.cancel()
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'fr-FR'
+  window.speechSynthesis.speak(utterance)
+}
+
+const openActionRoute = (route) => {
+  if (typeof route === 'string' && route.startsWith('/gerant/')) {
+    isOpen.value = false
+    router.push(route)
   }
 }
 

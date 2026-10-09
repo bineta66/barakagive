@@ -23,17 +23,19 @@ export const financeApi = {
   getJustifications: (depenseId) => api.get(`/api/finance/depenses/${depenseId}/justifications/`),
   uploadJustification: (depenseId, fileOrFormData) => {
     let payload = fileOrFormData
-    let headers = {}
+    // Axios gère automatiquement le header Content-Type avec le boundary pour FormData
+    // Surtout ne PAS forcer "Content-Type": "multipart/form-data" manuellement
     if (fileOrFormData instanceof File) {
       payload = new FormData()
       payload.append("fichier", fileOrFormData)
       payload.append("type_fichier", fileOrFormData.type || "pdf")
       payload.append("statut", "A_VERIFIER")
-      headers = { "Content-Type": "multipart/form-data" }
-    } else if (fileOrFormData instanceof FormData) {
-      headers = { "Content-Type": "multipart/form-data" }
     }
-    return api.post(`/api/finance/depenses/${depenseId}/justifications/`, payload, { headers })
+    return api.post(`/api/finance/depenses/${depenseId}/justifications/`, payload, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    })
   },
   deleteJustification: (id) => api.delete(`/api/finance/justifications/${id}/`),
 

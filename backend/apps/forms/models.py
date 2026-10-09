@@ -68,14 +68,19 @@ class FormField(models.Model):
 
     class TypeChoices(models.TextChoices):
         TEXT = "TEXT", "Texte court"
+        EMAIL = "EMAIL", "Email"
         PHONE = "PHONE", "Téléphone"
         SELECT = "SELECT", "Liste déroulante"
+        RADIO = "RADIO", "Choix unique"
         CHECKBOX = "CHECKBOX", "Cases à cocher"
         YES_NO = "YES_NO", "Oui/Non"
         GPS = "GPS", "Coordonnées GPS"
         NUMBER = "NUMBER", "Nombre"
         DATE = "DATE", "Date"
         TEXTAREA = "TEXTAREA", "Texte long"
+        PHOTO = "PHOTO", "Photo"
+        FILE = "FILE", "Fichier"
+        SCALE = "SCALE", "Échelle de 1 à 5"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -84,6 +89,15 @@ class FormField(models.Model):
         on_delete=models.CASCADE,
         related_name="fields",
     )
+
+    critere = models.ForeignKey(
+        "projects.ProjectCriteria", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="form_fields",
+    )
+
+    source = models.CharField(max_length=10, choices=[("IA", "IA"), ("MANUEL", "Manuel")], default="MANUEL")
+
+    aide = models.CharField(max_length=500, blank=True, default="")
 
     label = models.CharField(max_length=300)
 

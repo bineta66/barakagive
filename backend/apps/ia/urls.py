@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     AssistantDashboardView,
+    AssistantChatView,
     ExecutiveInsightView,
     RegionZonesView,
     ZoneDetailView,
@@ -11,6 +12,7 @@ from .views import (
 
 urlpatterns = [
     path('dashboard/', AssistantDashboardView.as_view(), name='assistant_dashboard'),
+    path('chat/', AssistantChatView.as_view(), name='assistant_chat'),
     path('executive-insight', ExecutiveInsightView.as_view(), name='executive_insight'),
     path('regions/<str:id>/zones', RegionZonesView.as_view(), name='region_zones'),
     path('regions/<str:region_name>/analysis', RegionAnalysisView.as_view(), name='region_analysis'),

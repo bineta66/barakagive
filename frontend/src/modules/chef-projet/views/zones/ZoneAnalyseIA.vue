@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-or">Analyse de zone IA</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Analyse de zone IA</h1>
         <p class="text-sm text-gray-500 mt-1">
           Détail de l'analyse prioritaire pour la zone sélectionnée.
         </p>
@@ -37,8 +37,8 @@
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div class="bg-slate-50 p-4 rounded-lg text-center">
-            <p class="text-[10px] text-gray-500 uppercase">Score Total IA</p>
-            <p class="font-bold text-3xl text-or mt-1">{{ zone.score_total.toFixed(1) }}</p>
+            <p class="text-[10px] text-gray-500 uppercase">Score total de vulnérabilité</p>
+            <p class="font-bold text-3xl text-bleu-nuit mt-1">{{ zone.score_total.toFixed(1) }}</p>
           </div>
           <div class="bg-slate-50 p-4 rounded-lg text-center">
             <p class="text-[10px] text-gray-500 uppercase">Bénéficiaires</p>
@@ -67,7 +67,7 @@
       <!-- Recommandation IA -->
       <div class="bg-white border border-slate-200/60 rounded-xl p-6 shadow-sm">
         <h3 class="text-lg font-bold text-bleu-nuit mb-3 flex items-center gap-2">
-          <Lightbulb :size="20" class="text-or" />
+          <Lightbulb :size="20" class="text-bleu-nuit" />
           Recommandation IA
         </h3>
         <p class="font-semibold text-bleu-nuit bg-slate-50 p-4 rounded-lg border border-slate-200">
@@ -88,7 +88,7 @@
                 <th class="pb-2">Rang</th>
                 <th class="pb-2">Nom</th>
                 <th class="pb-2">Prénom</th>
-                <th class="pb-2">Score IA</th>
+                <th class="pb-2">Score de vulnérabilité</th>
                 <th class="pb-2">Vulnérabilité</th>
               </tr>
             </thead>
@@ -97,7 +97,7 @@
                 <td class="py-3 font-semibold text-bleu-nuit">{{ idx + 1 }}</td>
                 <td class="py-3 text-gray-700">{{ b.nom }}</td>
                 <td class="py-3 text-gray-700">{{ b.prenom }}</td>
-                <td class="py-3 font-bold text-or">{{ b.score }}</td>
+                <td class="py-3 font-bold text-bleu-nuit">{{ b.score }}</td>
                 <td class="py-3">
                   <span
                     class="px-2 py-1 rounded text-xs font-semibold"

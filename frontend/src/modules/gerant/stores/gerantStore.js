@@ -12,6 +12,10 @@ export const useGerantStore = defineStore("gerant", () => {
 
   const partenaires = ref([])
   const bailleurs = ref([])
+  const budgetsEnAttente = ref([])
+  const decisionDashboard = ref(null)
+  const usersPagination = ref({ count: 0, next: null, previous: null })
+  const usersQuery = ref({ page: 1, page_size: 20 })
 
   const chefsProjet = computed(() => users.value.filter((u) => u.role === "CHEF_PROJET"))
   const responsablesFinance = computed(() => users.value.filter((u) => u.role === "FINANCE"))
@@ -19,7 +23,7 @@ export const useGerantStore = defineStore("gerant", () => {
 
   const statistiques = computed(() => {
     const totalProj = projets.value.filter((p) => !p.archived).length
-    const totalUsers = users.value.length
+    const totalUsers = usersPagination.value.count || users.value.length
     const budgetTot = projets.value.reduce(
       (acc, p) => acc + (parseFloat(p.budget) || 0),
       0
@@ -44,13 +48,18 @@ export const useGerantStore = defineStore("gerant", () => {
     return parseFloat(montant).toLocaleString("fr-FR")
   }
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (params = null) => {
+    if (params) usersQuery.value = { ...usersQuery.value, ...params }
     loading.value = true
     error.value = null
     try {
-      const response = await api.get("/api/accounts/users/")
-      users.value = response.data
-      return response.data
+      const response = await api.get("/api/accounts/users/", { params: usersQuery.value })
+      const data = response.data
+      users.value = data?.results ?? data
+      usersPagination.value = Array.isArray(data)
+        ? { count: data.length, next: null, previous: null }
+        : { count: data?.count || 0, next: data?.next || null, previous: data?.previous || null }
+      return users.value
     } catch (e) {
       error.value = getErrorMessage(e)
       throw e
@@ -64,6 +73,21 @@ export const useGerantStore = defineStore("gerant", () => {
     error.value = null
     try {
       const response = await api.post("/api/accounts/users/create/", payload)
+      await fetchUsers().catch(() => { })
+      return response.data
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateUser = async (id, payload) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await api.patch(`/api/accounts/users/${id}/`, payload)
       await fetchUsers().catch(() => {})
       return response.data
     } catch (e) {
@@ -109,8 +133,8 @@ export const useGerantStore = defineStore("gerant", () => {
   const fetchProjets = async () => {
     try {
       const response = await api.get("/api/projects/")
-      projets.value = response.data
-      return response.data
+      projets.value = response.data?.results ?? response.data
+      return projets.value
     } catch (e) {
       error.value = getErrorMessage(e)
       return []
@@ -130,19 +154,30 @@ export const useGerantStore = defineStore("gerant", () => {
   const fetchCampaigns = async () => {
     try {
       const response = await api.get("/api/campaigns/")
-      campaigns.value = response.data
-      return response.data
+      campaigns.value = response.data?.results ?? response.data
+      return campaigns.value
     } catch (e) {
       error.value = getErrorMessage(e)
       return []
     }
   }
 
+  const fetchDecisionDashboard = async () => {
+    try {
+      const response = await api.get("/api/projects/dashboard/")
+      decisionDashboard.value = response.data
+      return response.data
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      return null
+    }
+  }
+
   const fetchBeneficiaries = async () => {
     try {
       const response = await api.get("/api/beneficiaries/")
-      beneficiaries.value = response.data
-      return response.data
+      beneficiaries.value = response.data?.results ?? response.data
+      return beneficiaries.value
     } catch (e) {
       error.value = getErrorMessage(e)
       return []
@@ -219,6 +254,31 @@ export const useGerantStore = defineStore("gerant", () => {
     return fetchPartenaires()
   }
 
+  // Budgets en attente d'approbation
+  const fetchBudgetsToApprove = async () => {
+    try {
+      const response = await api.get("/api/finance/budgets/approval/")
+      budgetsEnAttente.value = response.data
+      return response.data
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      return []
+    }
+  }
+
+  const approveBudget = async (budgetId, action) => {
+    try {
+      await api.post("/api/finance/budgets/approval/", {
+        budget_id: budgetId,
+        action: action,
+      })
+      return fetchBudgetsToApprove()
+    } catch (e) {
+      error.value = getErrorMessage(e)
+      throw e
+    }
+  }
+
   const fetchAll = async () => {
     loading.value = true
     error.value = null
@@ -228,6 +288,7 @@ export const useGerantStore = defineStore("gerant", () => {
         fetchProjets(),
         fetchCampaigns(),
         fetchBeneficiaries(),
+        fetchDecisionDashboard(),
         fetchBailleurs(),
         fetchPartenaires(),
       ])
@@ -238,11 +299,15 @@ export const useGerantStore = defineStore("gerant", () => {
 
   return {
     users,
+    usersPagination,
+    usersQuery,
     projets,
     campaigns,
     beneficiaries,
     partenaires,
     bailleurs,
+    budgetsEnAttente,
+    decisionDashboard,
     chefsProjet,
     responsablesFinance,
     agents,
@@ -252,11 +317,13 @@ export const useGerantStore = defineStore("gerant", () => {
     formatMontant,
     fetchUsers,
     createUser,
+    updateUser,
     toggleUserStatus,
     fetchUserDetail,
     fetchProjets,
     deleteProject,
     fetchCampaigns,
+    fetchDecisionDashboard,
     fetchBeneficiaries,
     fetchBailleurs,
     fetchPartenaires,
@@ -264,7 +331,8 @@ export const useGerantStore = defineStore("gerant", () => {
     savePartenaireApi,
     deleteBailleurApi,
     deletePartenaireApi,
+    fetchBudgetsToApprove,
+    approveBudget,
     fetchAll,
   }
 })
-

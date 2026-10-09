@@ -23,14 +23,14 @@
           v-for="b in zone.beneficiaires" 
           :key="b.id"
           @click="$emit('select-beneficiaire', b)"
-          class="bg-white border border-gray-100 rounded-xl p-4 flex justify-between items-center cursor-pointer hover:border-blue-300 hover:shadow-md transition-all group"
+          class="bg-white border border-gray-100 rounded-xl p-4 flex justify-between items-center cursor-pointer hover:border-bleu-accent/20 hover:shadow-md transition-all group"
         >
           <div class="flex items-center gap-4">
             <div class="h-12 w-12 rounded-full flex items-center justify-center font-bold text-lg" :class="getAvatarClass(b.score)">
               {{ b.prenom.charAt(0) }}{{ b.nom.charAt(0) }}
             </div>
             <div>
-              <h4 class="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{{ b.prenom }} {{ b.nom }}</h4>
+              <h4 class="font-bold text-gray-900 group-hover:text-bleu-accent transition-colors">{{ b.prenom }} {{ b.nom }}</h4>
               <p class="text-sm text-gray-500 mt-0.5">
                 {{ b.sexe }} • {{ b.age ? b.age + ' ans' : 'Âge inconnu' }}
                 <span v-if="b.quartier" class="ml-1 text-gray-400">•</span>
@@ -62,19 +62,9 @@ defineProps({
 
 defineEmits(['back', 'select-beneficiaire']);
 
-const getAvatarClass = (score) => {
-  if (score >= 80) return 'bg-red-100 text-red-700';
-  if (score >= 60) return 'bg-orange-100 text-orange-700';
-  if (score >= 40) return 'bg-yellow-100 text-yellow-700';
-  return 'bg-green-100 text-green-700';
-};
+const getAvatarClass = (score) => Number(score) >= 60 ? "bg-rose-baraka/10 text-rose-baraka" : "bg-bleu-nuit/10 text-bleu-nuit";
 
-const getTextColorClass = (score) => {
-  if (score >= 80) return 'text-red-600';
-  if (score >= 60) return 'text-orange-600';
-  if (score >= 40) return 'text-yellow-600';
-  return 'text-green-600';
-};
+const getTextColorClass = (score) => Number(score) >= 60 ? "text-rose-baraka" : "text-bleu-nuit";
 
 const getBadgeText = (score) => {
   if (score >= 80) return 'Très élevée';

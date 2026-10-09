@@ -9,7 +9,7 @@
             <th class="text-left px-4">Région</th>
             <th class="text-left px-4">Zone</th>
             <th class="text-left px-4">Campagne</th>
-            <th class="text-left px-4">Score IA</th>
+            <th class="text-left px-4">Score de vulnérabilité</th>
             <th class="text-left px-4">Statut</th>
             <th class="text-right px-4">Actions</th>
           </tr>
@@ -25,7 +25,7 @@
             <td class="px-4 py-4 text-sm text-slate-600">{{ beneficiaire.region }}</td>
             <td class="px-4 py-4 text-sm text-slate-600">{{ beneficiaire.zone }}</td>
             <td class="px-4 py-4 text-sm text-slate-600">{{ beneficiaire.campagne }}</td>
-            <td class="px-4 py-4 text-sm text-slate-600">{{ beneficiaire.scoreIA }}</td>
+            <td class="px-4 py-4 text-sm text-slate-600">{{ beneficiaire.scoreVulnerabilite ?? "—" }}</td>
             <td class="px-4 py-4">
                <StatusBadge :statut="beneficiaire.statut">{{ beneficiaire.statut }}</StatusBadge>
             </td>

@@ -7,7 +7,7 @@
     <div class="bg-white border border-slate-200 rounded-2xl shadow-xs-sm max-w-lg w-full">
       <div class="p-6">
         <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-or">Ajouter un critère</h2>
+          <h2 class="text-2xl font-bold text-bleu-nuit">Ajouter un critère</h2>
           <button
             @click="fermer"
             class="text-gray-400 hover:text-gray-600 transition"
@@ -38,8 +38,10 @@
             v-model="nom"
             type="text"
             placeholder="Ex: Femme enceinte"
-            class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+            class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-bleu-nuit/30 outline-none text-sm"
             :disabled="submitting"
+            minlength="2"
+            maxlength="200"
             required
           />
         </div>
@@ -53,8 +55,9 @@
             type="number"
             min="1"
             max="100"
+            step="1"
             placeholder="Ex: 25"
-            class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-or/30 outline-none text-sm"
+            class="w-full rounded-lg border border-gray-300 bg-slate-50 px-4 py-2.5 focus:ring-2 focus:ring-bleu-nuit/30 outline-none text-sm"
             :disabled="submitting"
             required
           />
@@ -112,10 +115,13 @@ const fermer = () => {
 const creer = async () => {
   if (submitting.value) return
   const nomValue = nom.value.trim()
-  const poidsValue = parseInt(poids.value, 10)
-  if (!nomValue || !poidsValue) return
-  if (poidsValue < 1 || poidsValue > 100) {
-    submitError.value = "Le poids doit être compris entre 1 et 100."
+  const poidsValue = Number(poids.value)
+  if (nomValue.length < 2 || nomValue.length > 200) {
+    submitError.value = "Le nom doit contenir entre 2 et 200 caractères."
+    return
+  }
+  if (!Number.isInteger(poidsValue) || poidsValue < 1 || poidsValue > 100) {
+    submitError.value = "Le poids doit être un entier compris entre 1 et 100."
     return
   }
   submitting.value = true

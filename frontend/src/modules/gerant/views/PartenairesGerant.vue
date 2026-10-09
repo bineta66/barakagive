@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-or">Partenaires</h1>
+        <h1 class="text-4xl font-bold text-bleu-nuit">Partenaires</h1>
         <p class="text-xs text-gray-500 mt-1">
           Gérez les organisations partenaires des missions humanitaires.
         </p>
@@ -19,7 +19,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Total partenaires</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ partenaires.length }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ partenaires.length }}</h3>
         </div>
         <Handshake class="text-bleu-nuit" :size="28" />
       </div>
@@ -27,7 +27,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Partenaires actifs</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ partenairesActifs }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ partenairesActifs }}</h3>
         </div>
         <CheckCircle class="text-bleu-nuit" :size="28" />
       </div>
@@ -35,7 +35,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Zones couvertes</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ zonesCouvrir }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ zonesCouvrir }}</h3>
         </div>
         <MapPinned class="text-bleu-nuit" :size="28" />
       </div>
@@ -43,7 +43,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Domaines d'intervention</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ domainesCount }}</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ domainesCount }}</h3>
         </div>
         <FolderKanban class="text-bleu-nuit" :size="28" />
       </div>
@@ -149,7 +149,7 @@
             :class="[
               'px-2.5 py-1 rounded text-sm font-medium transition-colors',
               page === currentPage
-                ? 'bg-or text-white'
+                ? 'bg-bleu-nuit text-white'
                 : 'text-bleu-nuit hover:bg-bleu-nuit/10'
             ]"
           >
@@ -171,6 +171,8 @@
       v-if="modalPartenaire"
       :ouvert="modalPartenaire"
       :partenaire="partenaireSelectionne"
+      :saving="savingPartenaire"
+      :erreur-backend="modalError"
       @fermer="modalPartenaire = false"
       @save="savePartenaire"
     />
@@ -254,6 +256,8 @@ const visiblePages = computed(() => {
 
 const modalPartenaire = ref(false)
 const partenaireSelectionne = ref(null)
+const savingPartenaire = ref(false)
+const modalError = ref("")
 
 const resetFilters = () => {
   search.value = ''
@@ -267,12 +271,20 @@ const openPartenaire = (partenaire) => {
 }
 
 const savePartenaire = async (partenaireData) => {
+  if (savingPartenaire.value) return
+  savingPartenaire.value = true
+  modalError.value = ""
   try {
     await store.savePartenaireApi(partenaireData, partenaireSelectionne.value?.id)
     modalPartenaire.value = false
     partenaireSelectionne.value = null
   } catch (error) {
-    store.error = error.response?.data?.detail || "Impossible d'enregistrer le partenaire."
+    const data = error.response?.data
+    modalError.value = data?.detail || (data && typeof data === "object"
+      ? Object.entries(data).map(([field, messages]) => `${field}: ${[].concat(messages).join(", ")}`).join("\n")
+      : error.message) || "Impossible d'enregistrer le partenaire."
+  } finally {
+    savingPartenaire.value = false
   }
 }
 

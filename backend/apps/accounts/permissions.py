@@ -66,3 +66,13 @@ class IsAgent(BasePermission):
             request.user.is_authenticated
             and request.user.role == User.Role.AGENT
         )
+
+
+class IsGerantOrChefProjet(BasePermission):
+    """Accès réservé au Gérant ou au Chef de projet"""
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated
+            and request.user.role in [User.Role.GERANT, User.Role.CHEF_PROJET]
+        )

@@ -6,20 +6,30 @@ from .views import (
     PaymentWebhookView,
     TransactionHistoryView,
     SubscriptionCheckView,
+    AdminSubscriptionListView,
+    AdminSubscriptionDetailView,
+    AdminSubscriptionSuspendView,
+    AdminSubscriptionReactivateView,
 )
 
 urlpatterns = [
-    # État de l'abonnement (pour banner, dashboard)
+    # Gérant — état abonnement
     path("subscription/", SubscriptionStatusView.as_view(), name="subscription-status"),
     path("subscription/detail/", SubscriptionDetailView.as_view(), name="subscription-detail"),
     path("subscription/check/", SubscriptionCheckView.as_view(), name="subscription-check"),
 
-    # Paiement
+    # Gérant — paiement
     path("subscribe/", InitiatePaymentView.as_view(), name="initiate-payment"),
 
-    # Webhook PayTech
+    # Gérant — historique
+    path("history/", TransactionHistoryView.as_view(), name="transaction-history"),
+
+    # Webhook PayTech (public)
     path("webhook/", PaymentWebhookView.as_view(), name="payment-webhook"),
 
-    # Historique
-    path("history/", TransactionHistoryView.as_view(), name="transaction-history"),
+    # Super Admin — gestion des abonnements
+    path("admin/subscriptions/", AdminSubscriptionListView.as_view(), name="admin-subscription-list"),
+    path("admin/subscriptions/<uuid:pk>/", AdminSubscriptionDetailView.as_view(), name="admin-subscription-detail"),
+    path("admin/subscriptions/<uuid:pk>/suspend/", AdminSubscriptionSuspendView.as_view(), name="admin-subscription-suspend"),
+    path("admin/subscriptions/<uuid:pk>/reactivate/", AdminSubscriptionReactivateView.as_view(), name="admin-subscription-reactivate"),
 ]

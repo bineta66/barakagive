@@ -1,6 +1,7 @@
 ﻿import { ref, computed, onMounted } from "vue"
 import { useBeneficiaryStore } from "@/stores/beneficiary.js"
 import { useZoneStore } from "@/stores/zone.js"
+import { watch } from "vue"
 
 export function useBeneficiaires() {
   const beneficiaryStore = useBeneficiaryStore()
@@ -20,8 +21,25 @@ export function useBeneficiaires() {
   ]
 
   onMounted(() => {
-    beneficiaryStore.fetchBeneficiaries().catch(() => {})
     zoneStore.fetchZones().catch(() => {})
+  })
+
+  watch([pageCourante, regionSelectionnee, zoneSelectionnee, recherche, filtreStatut], () => {
+    const params = {
+      page: pageCourante.value,
+      page_size: parPage,
+      search: recherche.value.trim(),
+    }
+    if (regionSelectionnee.value) params.region = regionSelectionnee.value
+    if (zoneSelectionnee.value) {
+      const selectedZone = zoneStore.zones.find((zone) => zone.nom === zoneSelectionnee.value)
+      if (selectedZone?.id) params.zone_id = selectedZone.id
+    }
+    if (filtreStatut.value) params.statut = filtreStatut.value
+    beneficiaryStore.fetchBeneficiaries(params).catch(() => {})
+  }, { immediate: true })
+  watch([regionSelectionnee, zoneSelectionnee, recherche, filtreStatut], () => {
+    if (pageCourante.value !== 1) pageCourante.value = 1
   })
 
   const regions = computed(() => {
@@ -37,6 +55,8 @@ export function useBeneficiaires() {
   })
 
   const normaliser = (b) => {
+    const score = Number(b.score_vulnerabilite)
+    const scoreValide = Number.isFinite(score) ? score : null
     return {
       id: b.id,
       nom: b.full_name || b.nom || "Anonyme",
@@ -45,8 +65,8 @@ export function useBeneficiaires() {
       nin: b.nin,
       region: b.zone?.region || b.region || "Dakar",
       zone: b.zone?.nom || b.zone || "Zone générale",
-      statut: (Number.isFinite(b.ai_score) ? b.ai_score : 0) >= 80 ? "Critique" : (Number.isFinite(b.ai_score) ? b.ai_score : 0) >= 50 ? "Élevé" : "Normal",
-      scoreIA: Number.isFinite(b.ai_score) ? b.ai_score : 50,
+      statut: scoreValide === null ? "Non évalué" : scoreValide >= 80 ? "Critique" : scoreValide >= 50 ? "Élevé" : "Normal",
+      scoreVulnerabilite: scoreValide,
       vulnerabilite: b.vulnerability_criteria || "Non spécifié",
     }
   }
@@ -62,7 +82,7 @@ export function useBeneficiaires() {
     const parZone = zoneSelectionnee.value ? base.filter((b) => b.zone === zoneSelectionnee.value) : base
 
     return {
-      total: parZone.length,
+      total: beneficiaryStore.pagination.count,
       critiques: parZone.filter((b) => b.statut === "Critique").length,
       eleves: parZone.filter((b) => b.statut === "Élevé").length,
       zones: new Set(parZone.map((b) => b.zone)).size,
@@ -77,7 +97,7 @@ export function useBeneficiaires() {
     if (zoneSelectionnee.value) {
       liste = liste.filter((b) => b.zone === zoneSelectionnee.value)
     }
-    return [...liste].sort((a, b) => b.scoreIA - a.scoreIA).slice(0, 5)
+    return [...liste].sort((a, b) => (b.scoreVulnerabilite ?? -1) - (a.scoreVulnerabilite ?? -1)).slice(0, 5)
   })
 
   const synthese = computed(() => {
@@ -109,11 +129,10 @@ export function useBeneficiaires() {
     return liste
   })
 
-  const totalPages = computed(() => Math.max(1, Math.ceil(beneficiairesFiltres.value.length / parPage)))
+  const totalPages = computed(() => Math.max(1, Math.ceil(beneficiaryStore.pagination.count / parPage)))
 
   const beneficiairesPage = computed(() => {
-    const start = (pageCourante.value - 1) * parPage
-    return beneficiairesFiltres.value.slice(start, start + parPage)
+    return beneficiairesFiltres.value
   })
 
   const selectionnerRegion = (region) => {

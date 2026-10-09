@@ -1,4 +1,5 @@
 import axios from "axios"
+import { showServerValidationErrors } from "./liveFormValidation"
 
 const baseURL = import.meta.env.VITE_API_URL || ""
 
@@ -30,6 +31,17 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // Let the browser add the multipart boundary for FormData requests.
+    // Keeping the instance-wide JSON content type here makes DRF reject uploads (415).
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      if (typeof config.headers?.delete === "function") {
+        config.headers.delete("Content-Type")
+      } else if (config.headers) {
+        for (const key of Object.keys(config.headers)) {
+          if (key.toLowerCase() === "content-type") delete config.headers[key]
+        }
+      }
+    }
     return config
   },
   (error) => Promise.reject(error)
@@ -40,6 +52,11 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+
+    if ([400, 422].includes(error.response?.status)
+      && ["post", "put", "patch"].includes(originalRequest?.method?.toLowerCase())) {
+      showServerValidationErrors(error)
+    }
 
     if (!originalRequest) {
       return Promise.reject(error)

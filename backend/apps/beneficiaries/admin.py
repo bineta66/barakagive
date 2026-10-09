@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin import SuperAdminOnlyModelAdmin
 from .models import Beneficiary, FormResponse
 
 
@@ -12,7 +13,7 @@ class FormResponseInline(admin.TabularInline):
 
 
 @admin.register(Beneficiary)
-class BeneficiaryAdmin(admin.ModelAdmin):
+class BeneficiaryAdmin(SuperAdminOnlyModelAdmin, admin.ModelAdmin):
     list_display = ["nom", "prenom", "telephone", "sexe", "campagne", "zone", "score_vulnerabilite", "sync_status", "created_by", "created_at"]
     list_filter = ["sexe", "sync_status", "campagne__organization", "campagne", "zone", "created_at"]
     search_fields = ["nom", "prenom", "telephone", "local_id", "device_id"]
@@ -22,7 +23,7 @@ class BeneficiaryAdmin(admin.ModelAdmin):
 
 
 @admin.register(FormResponse)
-class FormResponseAdmin(admin.ModelAdmin):
+class FormResponseAdmin(SuperAdminOnlyModelAdmin, admin.ModelAdmin):
     list_display = ["beneficiary", "formulaire", "question", "created_at"]
     list_filter = ["formulaire", "question__type", "created_at"]
     search_fields = ["beneficiary__nom", "beneficiary__prenom", "value_text"]

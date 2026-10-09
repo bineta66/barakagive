@@ -1,7 +1,7 @@
-<template>
+﻿<template>
   <div v-if="selectedRegion" class="mt-6 space-y-4 animate-fade-in">
     <div class="flex items-center justify-between">
-      <h3 class="text-lg font-bold text-or flex items-center gap-2">
+      <h3 class="text-lg font-bold text-bleu-nuit flex items-center gap-2">
         <MapPin :size="20" />
         Zones prioritaires IA — {{ selectedRegion }}
       </h3>
@@ -11,7 +11,7 @@
     </div>
 
     <div v-if="loading" class="flex justify-center items-center py-8">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-or"></div>
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-bleu-nuit"></div>
     </div>
 
     <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">

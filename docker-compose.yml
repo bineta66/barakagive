@@ -1,14 +1,12 @@
 services:
+
   db:
     image: postgis/postgis:16-3.4
     container_name: barakagive_db
     restart: always
     env_file:
-      - ./backend/.env
+      - .env
     environment:
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -76,6 +74,9 @@ services:
       dockerfile: Dockerfile
     container_name: barakagive_ia_service
     restart: always
+    working_dir: /app
+    volumes:
+      - ./ia_service:/app
     env_file:
       - ./ia_service/.env
     ports:
@@ -83,5 +84,19 @@ services:
     depends_on:
       - backend
 
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: barakagive_n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - backend
+
 volumes:
   postgres_data:
+  media_data:
+    name: barakagive_media_data
+  n8n_data:

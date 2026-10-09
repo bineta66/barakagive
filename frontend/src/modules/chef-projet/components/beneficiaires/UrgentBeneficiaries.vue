@@ -17,10 +17,10 @@
             <p class="text-xs text-gray-500">{{ beneficiaire.zone }}</p>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-xs font-semibold text-gray-700">Score IA: {{ beneficiaire.scoreIA }}</span>
+            <span class="text-xs font-semibold text-gray-700">Score de vulnérabilité: {{ beneficiaire.scoreVulnerabilite ?? "—" }}</span>
             <span
               class="px-2 py-1 rounded text-xs font-semibold"
-              :class="beneficiaire.statut === 'Critique' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'"
+              :class="beneficiaire.statut === 'Critique' ? 'bg-rose-baraka/10 text-rose-baraka' : 'bg-bleu-nuit/10 text-bleu-nuit'"
             >
               {{ beneficiaire.statut }}
             </span>

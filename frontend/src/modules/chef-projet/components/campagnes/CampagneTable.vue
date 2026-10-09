@@ -5,6 +5,7 @@
         <tr>
           <th class="text-left px-4 py-4">Campagne</th>
           <th class="text-left px-4">Projet</th>
+          <th class="text-left px-4">Type</th>
           <th class="text-left px-4">Zone</th>
           <th class="text-left px-4">Statut</th>
           <th class="text-right px-4">Actions</th>

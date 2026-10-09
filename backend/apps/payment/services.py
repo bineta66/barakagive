@@ -16,25 +16,26 @@ class PayTechService:
     """
 
     BASE_URL = "https://paytech.sn/api"
+    CHECKOUT_URL = "https://paytech.sn/payment/checkout"
 
     def __init__(self):
         self.api_key = getattr(settings, "PAYTECH_API_KEY", "")
         self.api_secret = getattr(settings, "PAYTECH_API_SECRET", "")
         self.success_url = getattr(
-            settings, "PAYTECH_SUCCESS_URL", "https://localhost/payment/success"
+            settings, "PAYTECH_SUCCESS_URL", "http://localhost:5173/payment/success"
         )
         self.cancel_url = getattr(
-            settings, "PAYTECH_CANCEL_URL", "https://localhost/payment/cancel"
+            settings, "PAYTECH_CANCEL_URL", "http://localhost:5173/payment/cancel"
         )
         self.ipn_url = getattr(
-            settings, "PAYTECH_IPN_URL", "https://localhost/api/payment/webhook/"
+            settings, "PAYTECH_IPN_URL", "http://localhost:8000/api/payment/webhook/"
         )
 
     def _headers(self):
         return {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
+            "API_KEY": self.api_key,
+            "API_SECRET": self.api_secret,
+            "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
         }
 
     def create_payment(self, subscription: Subscription) -> dict:
@@ -52,31 +53,56 @@ class PayTechService:
             statut=Transaction.Statut.PENDING,
         )
 
+        # PayTech attend un payload form-encodé (pas JSON)
+        # PayTech exige HTTPS pour toutes les URLs de callback
+        def to_https(url):
+            if url.startswith("http://"):
+                return url.replace("http://", "https://", 1)
+            return url
+
+        # En développement local, utiliser les URLs de test PayTech
+        success_url = to_https(self.success_url)
+        cancel_url = to_https(self.cancel_url)
+        ipn_url = to_https(self.ipn_url)
+
+        # Si les URLs sont localhost, utiliser les URLs mobile PayTech en mode test
+        if "localhost" in success_url or "127.0.0.1" in success_url:
+            success_url = "https://paytech.sn/mobile/success"
+        if "localhost" in cancel_url or "127.0.0.1" in cancel_url:
+            cancel_url = "https://paytech.sn/mobile/cancel"
+        if "localhost" in ipn_url or "127.0.0.1" in ipn_url:
+            ipn_url = "https://paytech.sn/mobile/success"  # URL factice valide pour le mode test
+
         payload = {
-            "item_name": f"Abonnement {subscription.ong.name}",
-            "item_price": int(subscription.prix),
+            "item_name": f"Abonnement BarakaGive - {subscription.ong.name}",
+            "item_price": str(int(subscription.prix)),
             "currency": "XOF",
             "ref_command": transaction_id,
-            "command_name": f"Abonnement mensuel {subscription.ong.name}",
-            "custom_field": str(subscription.id),
-            "success_url": self.success_url,
-            "cancel_url": self.cancel_url,
-            "ipn_url": self.ipn_url,
+            "command_name": "Abonnement mensuel BarakaGive",
+            "custom_field": f'{{"subscription_id": "{str(subscription.id)}"}}',
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "ipn_url": ipn_url,
             "env": "test",
         }
 
         try:
             response = requests.post(
-                f"{self.BASE_URL}/payment/request",
-                json=payload,
+                f"{self.BASE_URL}/payment/request-payment",
+                data=payload,           # form-encoded, pas json=
                 headers=self._headers(),
                 timeout=30,
             )
+            logger.info("PayTech payment request returned HTTP %s", response.status_code)
             response.raise_for_status()
             data = response.json()
 
-            if data.get("success") == 1:
-                payment_url = data.get("payment_url", "")
+
+            # PayTech retourne un token → URL = checkout/{token}
+            if "token" in data:
+                token = data["token"]
+                payment_url = f"{self.CHECKOUT_URL}/{token}"
+
                 transaction.payment_url = payment_url
                 transaction.raw_data = data
                 transaction.save(update_fields=["payment_url", "raw_data", "updated_at"])
@@ -86,15 +112,16 @@ class PayTechService:
                     "transaction_id": transaction_id,
                 }
             else:
-                error_msg = data.get("message", "Erreur PayTech inconnue")
-                logger.error(f"PayTech error: {error_msg}")
+                errors = data.get("error", data.get("message", "Erreur PayTech inconnue"))
+                error_msg = str(errors)
+                logger.error("PayTech rejected a payment request")
                 transaction.statut = Transaction.Statut.FAILED
                 transaction.raw_data = data
                 transaction.save(update_fields=["statut", "raw_data", "updated_at"])
                 raise Exception(f"PayTech: {error_msg}")
 
         except requests.RequestException as e:
-            logger.error(f"PayTech request failed: {e}")
+            logger.error("PayTech payment request failed")
             transaction.statut = Transaction.Statut.FAILED
             transaction.raw_data = {"error": str(e)}
             transaction.save(update_fields=["statut", "raw_data", "updated_at"])
@@ -106,7 +133,7 @@ class PayTechService:
         """
         try:
             response = requests.post(
-                f"{self.BASE_URL}/payment/verify",
+                f"{self.BASE_URL}/payment/check-status-payment",
                 json={"ref_command": transaction_id},
                 headers=self._headers(),
                 timeout=30,
@@ -114,8 +141,12 @@ class PayTechService:
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            logger.error(f"PayTech verify failed: {e}")
-            return {"success": 0, "message": str(e)}
+            logger.error("PayTech payment verification failed")
+            return {
+                "success": 0,
+                "message": "Payment verification unavailable",
+                "verification_unavailable": True,
+            }
 
 
 def create_subscription_for_ong(ong) -> Subscription:
@@ -199,23 +230,23 @@ def check_expiring_subscriptions():
     for sub in trial_3:
         if sub.ong.users.filter(role="GERANT").exists():
             gerant = sub.ong.users.filter(role="GERANT").first()
-            send_subscription_reminder.delay(gerant.id, 3, is_trial=True)
+            send_subscription_reminder.delay(gerant.id, 3, is_trial=True, organization_id=sub.ong_id)
 
     for sub in active_3:
         if sub.ong.users.filter(role="GERANT").exists():
             gerant = sub.ong.users.filter(role="GERANT").first()
-            send_subscription_reminder.delay(gerant.id, 3, is_trial=False)
+            send_subscription_reminder.delay(gerant.id, 3, is_trial=False, organization_id=sub.ong_id)
 
     # Envoyer rappels J-1
     for sub in trial_1:
         if sub.ong.users.filter(role="GERANT").exists():
             gerant = sub.ong.users.filter(role="GERANT").first()
-            send_subscription_reminder.delay(gerant.id, 1, is_trial=True)
+            send_subscription_reminder.delay(gerant.id, 1, is_trial=True, organization_id=sub.ong_id)
 
     for sub in active_1:
         if sub.ong.users.filter(role="GERANT").exists():
             gerant = sub.ong.users.filter(role="GERANT").first()
-            send_subscription_reminder.delay(gerant.id, 1, is_trial=False)
+            send_subscription_reminder.delay(gerant.id, 1, is_trial=False, organization_id=sub.ong_id)
 
     return {
         "trial_j3": trial_3.count(),

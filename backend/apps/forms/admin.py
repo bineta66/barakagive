@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from apps.common.admin import SuperAdminOnlyModelAdmin
 from .models import Formulaire, FormField
 
 
@@ -12,7 +13,7 @@ class FormFieldInline(admin.TabularInline):
 
 
 @admin.register(Formulaire)
-class FormulaireAdmin(admin.ModelAdmin):
+class FormulaireAdmin(SuperAdminOnlyModelAdmin, admin.ModelAdmin):
     list_display = ["nom", "campagne", "version", "statut", "created_by", "created_at"]
     list_filter = ["statut", "campagne__organization", "created_at"]
     search_fields = ["nom", "description", "campagne__nom"]
@@ -22,7 +23,7 @@ class FormulaireAdmin(admin.ModelAdmin):
 
 
 @admin.register(FormField)
-class FormFieldAdmin(admin.ModelAdmin):
+class FormFieldAdmin(SuperAdminOnlyModelAdmin, admin.ModelAdmin):
     list_display = ["label", "formulaire", "type", "obligatoire", "ordre"]
     list_filter = ["type", "obligatoire", "formulaire__statut"]
     search_fields = ["label", "formulaire__nom"]

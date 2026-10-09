@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
     <table class="w-full">
       <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
@@ -58,6 +58,15 @@
 
               <button
                 v-if="canManage && !projet.archived"
+                @click="$emit('edit', projet)"
+                class="text-slate-500 hover:text-bleu-nuit p-1"
+                title="Modifier le projet"
+              >
+                <Pencil :size="18" />
+              </button>
+
+              <button
+                v-if="canManage && !projet.archived"
                 @click="$emit('delete', projet.id)"
                 class="text-slate-500 hover:text-red-600 p-1"
                 title="Archiver"
@@ -84,7 +93,7 @@
 </template>
 
 <script setup>
-import { Eye, Trash2 } from "lucide-vue-next"
+import { Eye, Pencil, Trash2 } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
 
 defineProps({
@@ -98,7 +107,7 @@ defineProps({
   },
 })
 
-defineEmits(["delete"])
+defineEmits(["delete", "edit"])
 
 const formatBudget = (val) => {
   if (!val && val !== 0) return "-"

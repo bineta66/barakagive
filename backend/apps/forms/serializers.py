@@ -1,6 +1,20 @@
 from rest_framework import serializers
 
 from .models import Formulaire, FormField
+from apps.projects.models import ProjectCriteria
+
+
+def _validate_options(value):
+    if not isinstance(value, list) or not value or any(
+        not isinstance(option, str) or not option.strip() for option in value
+    ):
+        raise serializers.ValidationError(
+            "Les options doivent être une liste de choix textuels non vides."
+        )
+    normalized = [option.strip() for option in value]
+    if len(normalized) != len(set(normalized)):
+        raise serializers.ValidationError("Chaque option doit être unique.")
+    return normalized
 
 
 class FormFieldSerializer(serializers.ModelSerializer):
@@ -16,6 +30,9 @@ class FormFieldSerializer(serializers.ModelSerializer):
             "ordre",
             "placeholder",
             "options",
+            "critere",
+            "source",
+            "aide",
         ]
         read_only_fields = ["id"]
 
@@ -29,6 +46,9 @@ class FormFieldCreateSerializer(serializers.Serializer):
     ordre = serializers.IntegerField(min_value=0, required=False)
     placeholder = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
     options = serializers.JSONField(required=False, allow_null=True)
+    critere = serializers.PrimaryKeyRelatedField(queryset=ProjectCriteria.objects.all(), required=False, allow_null=True)
+    source = serializers.ChoiceField(choices=[("IA", "IA"), ("MANUEL", "Manuel")], default="MANUEL")
+    aide = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
     def validate_label(self, value):
         if not value or not value.strip():
@@ -39,12 +59,17 @@ class FormFieldCreateSerializer(serializers.Serializer):
         field_type = attrs.get("type")
         options = attrs.get("options")
 
-        if field_type in [FormField.TypeChoices.SELECT, FormField.TypeChoices.CHECKBOX] and not options:
+        if field_type in [FormField.TypeChoices.SELECT, FormField.TypeChoices.RADIO, FormField.TypeChoices.CHECKBOX] and not options:
             raise serializers.ValidationError({
                 "options": "Les types SELECT et CHECKBOX nécessitent des options."
             })
+        if field_type in [FormField.TypeChoices.SELECT, FormField.TypeChoices.RADIO, FormField.TypeChoices.CHECKBOX]:
+            try:
+                attrs["options"] = _validate_options(options)
+            except serializers.ValidationError as exc:
+                raise serializers.ValidationError({"options": exc.detail})
 
-        if field_type not in [FormField.TypeChoices.SELECT, FormField.TypeChoices.CHECKBOX] and options:
+        if field_type not in [FormField.TypeChoices.SELECT, FormField.TypeChoices.RADIO, FormField.TypeChoices.CHECKBOX] and options:
             raise serializers.ValidationError({
                 "options": "Les options ne sont autorisées que pour les types SELECT et CHECKBOX."
             })
@@ -61,6 +86,9 @@ class FormFieldUpdateSerializer(serializers.Serializer):
     ordre = serializers.IntegerField(min_value=0, required=False)
     placeholder = serializers.CharField(max_length=500, required=False, allow_blank=True, allow_null=True)
     options = serializers.JSONField(required=False, allow_null=True)
+    critere = serializers.PrimaryKeyRelatedField(queryset=ProjectCriteria.objects.all(), required=False, allow_null=True)
+    source = serializers.ChoiceField(choices=[("IA", "IA"), ("MANUEL", "Manuel")], required=False)
+    aide = serializers.CharField(max_length=500, required=False, allow_blank=True)
 
     def validate_label(self, value):
         if value is not None and (not value or not value.strip()):
@@ -68,17 +96,26 @@ class FormFieldUpdateSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
-        field_type = attrs.get("type")
-        options = attrs.get("options")
+        field_type = attrs.get("type", getattr(self.instance, "type", None))
+        options = attrs.get("options", getattr(self.instance, "options", None))
+        uses_options = field_type in [FormField.TypeChoices.SELECT, FormField.TypeChoices.RADIO, FormField.TypeChoices.CHECKBOX]
 
-        if field_type in [FormField.TypeChoices.SELECT, FormField.TypeChoices.CHECKBOX] and options is not None and not options:
+        if uses_options and not options:
             raise serializers.ValidationError({
                 "options": "Les types SELECT et CHECKBOX nécessitent des options."
             })
-
-        if field_type and field_type not in [FormField.TypeChoices.SELECT, FormField.TypeChoices.CHECKBOX] and options:
+        if uses_options:
+            try:
+                attrs["options"] = _validate_options(options)
+            except serializers.ValidationError as exc:
+                raise serializers.ValidationError({"options": exc.detail})
+        elif "options" in attrs and options:
             raise serializers.ValidationError({
                 "options": "Les options ne sont autorisées que pour les types SELECT et CHECKBOX."
+            })
+        elif "type" in attrs and "options" not in attrs and field_type not in [FormField.TypeChoices.SELECT, FormField.TypeChoices.RADIO, FormField.TypeChoices.CHECKBOX] and getattr(self.instance, "options", None):
+            raise serializers.ValidationError({
+                "options": "Supprimez les options avant de changer le type de question."
             })
 
         return attrs

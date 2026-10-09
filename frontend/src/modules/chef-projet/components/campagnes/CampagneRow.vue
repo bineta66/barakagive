@@ -12,6 +12,10 @@
     </td>
 
     <td class="px-4 text-sm text-slate-600">
+      {{ typeCampagneLabel(campagne.type) }}
+    </td>
+
+    <td class="px-4 text-sm text-slate-600">
       {{ campagne.zone }}
     </td>
 
@@ -25,7 +29,7 @@
           <Eye :size="18" />
         </RouterLink>
 
-        <RouterLink :to="`/chef-projet/campagnes/modifier/${campagne.id}`" class="text-slate-500 hover:text-or">
+        <RouterLink :to="`/chef-projet/campagnes/modifier/${campagne.id}`" class="text-slate-500 hover:text-bleu-nuit">
           <Pencil :size="18" />
         </RouterLink>
 
@@ -41,6 +45,17 @@
 import StatusBadge from "@/components/ui/StatusBadge.vue"
 import { Eye, Pencil, Archive } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
+
+const typeCampagneLabel = (type) => ({
+  COLLECTE: "Collecte de fonds (ancien type)",
+  COLLECTE_BESOINS: "Collecte des besoins",
+  DISTRIBUTION: "Distribution",
+  SANTE: "Santé",
+  ALIMENTATION: "Alimentation",
+  URGENCE: "Urgence",
+  SENSIBILISATION: "Sensibilisation",
+  SUIVI_EVALUATION: "Suivi et évaluation",
+}[type] || "—")
 
 defineProps({
   campagne: {

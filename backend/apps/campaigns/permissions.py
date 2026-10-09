@@ -53,10 +53,25 @@ class CanManageCampaign(BasePermission):
         if request.user.role == User.Role.SUPER_ADMIN:
             return True
 
+        if obj.organization != request.user.organization:
+            return False
+
+        if request.user.role == User.Role.GERANT:
+            return request.method in ["GET", "HEAD", "OPTIONS"]
+
+        if request.user.role == User.Role.FINANCE:
+            return (
+                request.method in ["GET", "HEAD", "OPTIONS"]
+                and obj.projet.responsable_finance == request.user
+            )
+
+        if request.user.role == User.Role.AGENT:
+            return (
+                request.method in ["GET", "HEAD", "OPTIONS"]
+                and obj.affectations.filter(agent=request.user).exists()
+            )
+
         if request.user.role != User.Role.CHEF_PROJET:
             return False
 
-        return (
-            obj.organization == request.user.organization
-            and obj.projet.chef_projet == request.user
-        )
+        return obj.projet.chef_projet == request.user

@@ -3,7 +3,7 @@
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-or">Carte des zones</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Carte des zones</h1>
         <p class="text-xs text-gray-500 mt-1">
           Consultez les zones enregistrées sur la carte interactive du Sénégal.
         </p>

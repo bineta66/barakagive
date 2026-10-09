@@ -14,7 +14,7 @@ async def analyze_region_zones(region_id: str, request: RegionAnalysisRequest):
         result = gemini_service.analyze_region(data)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erreur interne du service IA.")
 
 
 @router.get("/regions/{region_id}/zones")
@@ -24,7 +24,7 @@ async def get_region_zones(region_id: str):
         result = gemini_service.analyze_zones({"region": region_id})
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erreur interne du service IA.")
 
 
 @router.post("/zones/{zone_id}/analyze", response_model=ZoneDetailResponse)
@@ -35,7 +35,7 @@ async def analyze_zone_detail(zone_id: str, request: dict):
         result["generated_at"] = datetime.utcnow().isoformat()
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erreur interne du service IA.")
 
 
 @router.get("/zones/{zone_id}")
@@ -46,4 +46,4 @@ async def get_zone_detail(zone_id: str):
         result["generated_at"] = datetime.utcnow().isoformat()
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Erreur interne du service IA.")

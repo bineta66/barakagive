@@ -20,7 +20,7 @@ const props = defineProps({
 const badgeClass = computed(() => {
   switch (props.status) {
     case "En cours":
-      return "bg-or text-white"
+      return "bg-bleu-nuit text-white"
     case "Planifié":
       return "bg-bleu-nuit text-white"
     case "Terminé":

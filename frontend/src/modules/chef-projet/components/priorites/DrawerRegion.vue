@@ -56,7 +56,7 @@
 
         <!-- État de chargement -->
         <div v-if="chargement" class="flex flex-col items-center justify-center py-20 gap-3">
-          <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+          <div class="w-10 h-10 border-4 border-bleu-accent/20 border-t-blue-500 rounded-full animate-spin"></div>
           <p class="text-sm text-slate-500">Chargement des données...</p>
         </div>
 
@@ -81,9 +81,9 @@
           </div>
 
           <!-- Résumé automatique -->
-          <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
+          <div class="bg-bleu-accent/10 border border-bleu-accent/20 rounded-xl p-4">
             <div class="flex items-start gap-2">
-              <Sparkles :size="16" class="text-blue-500 mt-0.5 flex-shrink-0" />
+              <Sparkles :size="16" class="text-bleu-accent mt-0.5 flex-shrink-0" />
               <p class="text-sm text-slate-700 leading-relaxed">
                 {{ detail.summary }}
               </p>

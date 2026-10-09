@@ -56,10 +56,27 @@ class Campaign(models.Model):
         TERMINE = "TERMINE", "Terminée"
         ANNULEE = "ANNULEE", "Annulée"
 
+    class Type(models.TextChoices):
+        COLLECTE = "COLLECTE", "Collecte de fonds (ancien type)"
+        COLLECTE_BESOINS = "COLLECTE_BESOINS", "Collecte des besoins"
+        DISTRIBUTION = "DISTRIBUTION", "Distribution"
+        SANTE = "SANTE", "Santé / Médical"
+        ALIMENTATION = "ALIMENTATION", "Alimentation"
+        EAU_HYGIENE = "EAU_HYGIENE", "Eau et hygiène"
+        SENSIBILISATION = "SENSIBILISATION", "Sensibilisation"
+        URGENCE = "URGENCE", "Urgence"
+        SUIVI_EVALUATION = "SUIVI_EVALUATION", "Suivi et évaluation"
+
     statut = models.CharField(
         max_length=20,
         choices=Statut.choices,
         default=Statut.EN_COURS,
+    )
+
+    type = models.CharField(
+        max_length=30,
+        choices=Type.choices,
+        default=Type.DISTRIBUTION,
     )
 
     created_by = models.ForeignKey(

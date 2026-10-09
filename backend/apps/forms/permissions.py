@@ -55,6 +55,8 @@ class CanManageFormulaire(BasePermission):
 
         return (
             obj.organization == request.user.organization
+            and obj.campagne.organization_id == obj.organization_id
+            and obj.campagne.projet.organization_id == obj.organization_id
             and obj.campagne.projet.chef_projet == request.user
         )
 
@@ -71,6 +73,11 @@ class CanViewFormulaire(BasePermission):
             return False
 
         if obj.organization != request.user.organization:
+            return False
+        if (
+            obj.campagne.organization_id != obj.organization_id
+            or obj.campagne.projet.organization_id != obj.organization_id
+        ):
             return False
 
         if request.user.role == User.Role.AGENT:
@@ -104,6 +111,8 @@ class CanManageQuestion(BasePermission):
                 ).get(id=formulaire_id)
                 return (
                     formulaire.organization == request.user.organization
+                    and formulaire.campagne.organization_id == formulaire.organization_id
+                    and formulaire.campagne.projet.organization_id == formulaire.organization_id
                     and formulaire.campagne.projet.chef_projet == request.user
                     and formulaire.statut == Formulaire.Statut.BROUILLON
                 )
@@ -130,6 +139,8 @@ class CanManageQuestionObject(BasePermission):
         formulaire = obj.formulaire
         return (
             formulaire.organization == request.user.organization
+            and formulaire.campagne.organization_id == formulaire.organization_id
+            and formulaire.campagne.projet.organization_id == formulaire.organization_id
             and formulaire.campagne.projet.chef_projet == request.user
             and formulaire.statut == Formulaire.Statut.BROUILLON
         )

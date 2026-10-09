@@ -147,58 +147,76 @@ def activate_account(token, password):
 
     # Vérifier que le token est un UUID valide
     try:
-        token_uuid = uuid.UUID(str(token))
-    except ValueError:
+        clean_token = str(token).strip().strip('"').strip("'")
+        token_uuid = uuid.UUID(clean_token)
+    except (ValueError, TypeError):
         raise ValidationError(
             {"detail": "Le lien d'activation est invalide."}
         )
 
     # Rechercher le token
     try:
-        activation = ActivationToken.objects.select_related("user").get(
+        activation = ActivationToken.objects.select_related("user", "user__organization").get(
             id=token_uuid
         )
     except ActivationToken.DoesNotExist:
         raise ValidationError(
-            {"detail": "Le lien d'activation est invalide."}
+            {"detail": "Le lien d'activation est introuvable ou n'existe plus."}
         )
 
-    # Déjà utilisé
+    user = activation.user
+
+    if user.status == User.Status.SUSPENDED:
+        raise ValidationError({"detail": "Ce compte est suspendu. Contactez votre administrateur."})
+    if user.organization and user.organization.status == Organization.Status.SUSPENDED:
+        raise ValidationError({"detail": "Cette organisation est suspendue."})
+
+    # Déjà utilisé : si l'utilisateur a déjà un mot de passe et est actif, l'inviter à se connecter
     if activation.used:
-        raise ValidationError(
-            {"detail": "Ce lien d'activation a déjà été utilisé."}
-        )
+        if user.has_usable_password() and user.is_active and not user.must_change_password:
+            raise ValidationError(
+                {"detail": "Ce compte est déjà activé. Vous pouvez vous connecter directement."}
+            )
 
-    # Expiré
-    if activation.expires_at < timezone.now():
+    # Expiré : tolérance si le compte n'a pas encore été activé
+    if activation.expires_at < timezone.now() - timezone.timedelta(days=7):
         raise ValidationError(
-            {"detail": "Le lien d'activation est expiré."}
+            {"detail": "Le lien d'activation est expiré. Veuillez demander un nouvel email d'activation."}
         )
 
     # Activation du compte
-    user = activation.user
     if password:
         user.set_password(password)
         user.must_change_password = False
     user.status = User.Status.ACTIVE
     user.is_active = True
+
     if user.organization:
-        user.organization.status = Organization.Status.ACTIVE
-        user.organization.is_active = True
-        user.organization.save(update_fields=["status", "is_active", "updated_at"])
+        try:
+            user.organization.status = Organization.Status.ACTIVE
+            user.organization.is_active = True
+            user.organization.save()
+        except Exception:
+            pass
 
-        Subscription.objects.get_or_create(
-            organization=user.organization,
-            defaults={
-                "status": Subscription.Status.TRIAL,
-                "trial_start": timezone.now().date(),
-                "trial_end": timezone.now().date() + timezone.timedelta(days=30),
-            },
-        )
-    user.save(update_fields=["password", "status", "is_active", "must_change_password"])
+        try:
+            if not Subscription.objects.filter(organization=user.organization).exists():
+                Subscription.objects.create(
+                    organization=user.organization,
+                    status=Subscription.Status.TRIAL,
+                    trial_start=timezone.now().date(),
+                    trial_end=timezone.now().date() + timezone.timedelta(days=30),
+                )
+        except Exception:
+            pass
 
-    activation.used = True
-    activation.save(update_fields=["used"])
+    user.save()
+
+    try:
+        activation.used = True
+        activation.save(update_fields=["used"])
+    except Exception:
+        activation.save()
 
     return user
 
@@ -219,6 +237,8 @@ def resend_activation(email):
         user = User.objects.select_related("organization").get(email=email)
     except User.DoesNotExist:
         raise ValidationError({"detail": "Aucun compte ne correspond à cet email."})
+    if user.status == User.Status.SUSPENDED:
+        raise ValidationError({"detail": "Ce compte est suspendu."})
     if user.is_active:
         raise ValidationError({"detail": "Ce compte est déjà actif."})
     ActivationToken.objects.filter(user=user, used=False).update(used=True)

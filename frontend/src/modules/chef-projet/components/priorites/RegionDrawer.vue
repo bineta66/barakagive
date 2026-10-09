@@ -13,7 +13,7 @@
       :class="isOpen ? 'translate-x-0' : 'translate-x-full'"
     >
       <div v-if="!regionData" class="flex-1 flex items-center justify-center">
-        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-or"></div>
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-bleu-nuit"></div>
       </div>
       
       <div v-else-if="currentView === 'region'" class="flex-1 overflow-y-auto">
@@ -37,10 +37,10 @@
         <!-- Résumé Intelligent -->
         <div class="p-6 border-b border-gray-100 bg-gradient-to-br from-blue-50 to-indigo-50/30">
           <div class="flex items-start gap-3">
-            <Sparkles class="text-blue-500 mt-1 flex-shrink-0" :size="20" />
+            <Sparkles class="text-bleu-accent mt-1 flex-shrink-0" :size="20" />
             <div>
-              <h3 class="text-sm font-bold text-blue-900 mb-2 uppercase tracking-wider">Résumé intelligent</h3>
-              <p class="text-sm text-blue-800 leading-relaxed font-medium">
+              <h3 class="text-sm font-bold text-bleu-nuit mb-2 uppercase tracking-wider">Résumé intelligent</h3>
+              <p class="text-sm text-or leading-relaxed font-medium">
                 {{ regionData.summary }}
               </p>
             </div>
@@ -55,7 +55,7 @@
             <div 
               v-for="zone in regionData.zones" 
               :key="zone.id"
-              class="border border-gray-100 rounded-xl p-5 hover:border-blue-200 hover:shadow-md transition-all bg-white"
+              class="border border-gray-100 rounded-xl p-5 hover:border-bleu-accent/20 hover:shadow-md transition-all bg-white"
             >
               <div class="flex justify-between items-start mb-3">
                 <div>

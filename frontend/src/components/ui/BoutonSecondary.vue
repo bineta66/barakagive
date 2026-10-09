@@ -28,7 +28,7 @@ const filteredAttrs = computed(() => {
 })
 
 const allClasses = computed(() => [
-  "border border-slate-300 text-bleu-nuit hover:bg-bleu-nuit hover:text-white px-5 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-colors",
+  "border border-slate-300 bg-white text-bleu-nuit hover:bg-bleu-nuit hover:text-white hover:border-bleu-nuit px-5 py-2.5 rounded-xl active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-baraka/30 focus-visible:ring-offset-2 flex items-center justify-center gap-2 text-sm font-semibold transition-all duration-200",
   attrs.class,
 ].filter(Boolean))
 

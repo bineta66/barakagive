@@ -35,9 +35,12 @@
         v-model="form.nom"
         type="text"
         required
+        maxlength="200"
         placeholder="Ex : Zone Nord Pikine"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
+        @input="validateNom"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-bleu-nuit/30 outline-none"
       />
+      <p v-if="errors.nom" class="mt-1 text-xs text-red-600">{{ errors.nom }}</p>
     </div>
 
     <!-- Description -->
@@ -49,7 +52,7 @@
         v-model="form.description"
         rows="3"
         placeholder="Ex : Zone d'intervention"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none resize-y"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-bleu-nuit/30 outline-none resize-y"
       ></textarea>
     </div>
 
@@ -63,10 +66,15 @@
         type="number"
         required
         min="1"
+        step="1"
         placeholder="Ex : 1000"
-        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-or/30 outline-none"
+        @input="validateRayon"
+        class="w-full rounded-lg border border-gray-300 bg-slate-50 px-3 py-2 text-sm focus:ring-2 focus:ring-bleu-nuit/30 outline-none"
       />
+      <p v-if="errors.rayon" class="mt-1 text-xs text-red-600">{{ errors.rayon }}</p>
     </div>
+
+    <p v-if="errors.position" role="alert" class="text-xs text-red-600">{{ errors.position }}</p>
 
     <!-- Boutons -->
     <div class="flex gap-3 pt-2">
@@ -74,8 +82,8 @@
         Annuler
       </BoutonSecondary>
 
-      <BoutonPrimary type="submit" class="flex-1">
-        Enregistrer
+      <BoutonPrimary type="submit" class="flex-1" :disabled="saving">
+        {{ saving ? "Enregistrement..." : "Enregistrer" }}
       </BoutonPrimary>
     </div>
   </form>
@@ -95,6 +103,7 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  saving: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(["submit"])
@@ -109,6 +118,7 @@ const form = reactive({
   latitude: null,
   longitude: null,
 })
+const errors = reactive({ nom: "", rayon: "", position: "" })
 
 watch(
   () => props.initialData,
@@ -121,14 +131,32 @@ watch(
 )
 
 const submit = () => {
-  if (!form.latitude || !form.longitude) {
-    alert("Veuillez sélectionner un point sur la carte.")
-    return
-  }
-  if (!form.rayon || Number(form.rayon) <= 0) {
-    alert("Veuillez renseigner un rayon valide.")
-    return
-  }
+  if (props.saving) return
+  validateNom()
+  validateRayon()
+  const latitude = Number(form.latitude)
+  const longitude = Number(form.longitude)
+  errors.position = Number.isFinite(latitude) && latitude >= -90 && latitude <= 90 &&
+    Number.isFinite(longitude) && longitude >= -180 && longitude <= 180
+    ? ""
+    : "Veuillez sélectionner un point valide sur la carte."
+  if (errors.nom || errors.rayon || errors.position) return
   emit("submit", { ...form })
+}
+
+const validateNom = () => {
+  const value = String(form.nom || "").trim()
+  errors.nom = !value
+    ? "Ce champ est obligatoire."
+    : value.length > 200
+      ? "Le nom ne peut pas dépasser 200 caractères."
+      : ""
+}
+
+const validateRayon = () => {
+  const rayon = Number(form.rayon)
+  errors.rayon = !Number.isInteger(rayon) || rayon <= 0
+    ? "Le rayon doit être un nombre entier supérieur à 0."
+    : ""
 }
 </script>

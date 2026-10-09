@@ -4,6 +4,7 @@ from .views import (
     FormulaireListCreateView,
     FormulaireDetailView,
     FormulairePublishView,
+    GenerateFormQuestionsView,
     QuestionListCreateView,
     QuestionDetailView,
     QuestionDuplicateView,
@@ -11,6 +12,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path("campaigns/<uuid:campaign_id>/generate-questions/", GenerateFormQuestionsView.as_view(), name="form-generate-questions"),
     # Formulaires
     path("", FormulaireListCreateView.as_view(), name="formulaire-list-create"),
     path("<uuid:pk>/", FormulaireDetailView.as_view(), name="formulaire-detail"),

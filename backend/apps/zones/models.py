@@ -49,9 +49,17 @@ class Zone(models.Model):
 
     nom = models.CharField(max_length=200)
 
-    region = models.CharField(max_length=100)
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.PROTECT,
+        related_name="zones",
+    )
 
-    departement = models.CharField(max_length=100)
+    departement = models.ForeignKey(
+        Department,
+        on_delete=models.PROTECT,
+        related_name="zones",
+    )
 
     latitude = models.DecimalField(max_digits=10, decimal_places=7)
 

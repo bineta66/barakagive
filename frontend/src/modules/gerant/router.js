@@ -14,7 +14,7 @@ import paymentRoutes from "./router/payment.js";
 const routes = [
   {
     path: "/gerant",
-     component: DashboardLayout,
+    component: DashboardLayout,
     redirect: { name: "gerant-dashboard" },
     children: [
       {
@@ -40,12 +40,12 @@ const routes = [
       {
         path: "projets/modifier/:id",
         name: "gerant-projets-modifier",
-        redirect: { name: "gerant-projets" },
+        component: () => import("./views/ModifierProjetGerant.vue"),
       },
       {
         path: "projets/:id",
         name: "gerant-projets-detail",
-        redirect: { name: "gerant-projets" },
+        component: () => import("./views/DetailProjetGerant.vue"),
       },
       {
         path: "utilisateurs",
@@ -76,6 +76,11 @@ const routes = [
         path: "rapports",
         name: "gerant-rapports",
         component: RapportsGerant,
+      },
+      {
+        path: "assistant",
+        name: "gerant-assistant",
+        component: () => import("./views/AssistantIAPage.vue"),
       },
       ...paymentRoutes,
     ],

@@ -76,6 +76,21 @@ class Beneficiary(models.Model):
         help_text="Score de vulnérabilité calculé automatiquement",
     )
 
+    class Statut(models.TextChoices):
+        IDENTIFIE = "IDENTIFIE", "Identifié"
+        EVALUE = "EVALUE", "Évalué"
+        PRIORITAIRE = "PRIORITAIRE", "Prioritaire"
+        PRIS_EN_CHARGE = "PRIS_EN_CHARGE", "Pris en charge"
+        SORTI = "SORTI", "Sorti"
+
+    statut = models.CharField(
+        max_length=30,
+        choices=Statut.choices,
+        default=Statut.IDENTIFIE,
+    )
+
+    date_derniere_evaluation = models.DateTimeField(null=True, blank=True)
+
     sync_status = models.CharField(
         max_length=20,
         choices=SyncStatus.choices,
@@ -147,3 +162,62 @@ class FormResponse(models.Model):
         verbose_name_plural = "Réponses formulaires"
         ordering = ["created_at"]
         unique_together = ["beneficiary", "question"]
+
+
+class HumanitarianAction(models.Model):
+    """Trace d'une aide fournie à un bénéficiaire pendant une campagne."""
+
+    class TypeAide(models.TextChoices):
+        ALIMENTAIRE = "ALIMENTAIRE", "Aide alimentaire"
+        SANTE = "SANTE", "Santé"
+        VETEMENTS = "VETEMENTS", "Vêtements"
+        FOURNITURES = "FOURNITURES", "Fournitures"
+        URGENCE = "URGENCE", "Aide d'urgence"
+        AUTRE = "AUTRE", "Autre"
+
+    class Statut(models.TextChoices):
+        REALISEE = "REALISEE", "Réalisée"
+        ANNULEE = "ANNULEE", "Annulée"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    beneficiary = models.ForeignKey(
+        Beneficiary,
+        on_delete=models.CASCADE,
+        related_name="humanitarian_actions",
+    )
+    campagne = models.ForeignKey(
+        "campaigns.Campaign",
+        on_delete=models.PROTECT,
+        related_name="humanitarian_actions",
+    )
+    agent = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="humanitarian_actions",
+    )
+    type_aide = models.CharField(max_length=20, choices=TypeAide.choices)
+    date_action = models.DateField()
+    quantite = models.DecimalField(max_digits=12, decimal_places=2, default=1)
+    statut = models.CharField(
+        max_length=20,
+        choices=Statut.choices,
+        default=Statut.REALISEE,
+    )
+    resultat = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date_action", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["beneficiary", "date_action"],
+                name="humanact_beneficiary_date_idx",
+            ),
+            models.Index(
+                fields=["campagne", "statut"],
+                name="humanact_campaign_status_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.get_type_aide_display()} - {self.beneficiary}"

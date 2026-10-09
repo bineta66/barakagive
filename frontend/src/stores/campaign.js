@@ -8,6 +8,9 @@ export const useCampaignStore = defineStore("campaign", () => {
   const agents = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const pagination = ref({ count: 0, next: null, previous: null })
+  const campaignQuery = ref({ page: 1, page_size: 20 })
+  let agentRequestId = 0
 
   const activeCampaigns = computed(() => {
     const today = new Date().toISOString().split("T")[0]
@@ -16,15 +19,20 @@ export const useCampaignStore = defineStore("campaign", () => {
     )
   })
 
-  const totalCampaigns = computed(() => campaigns.value.length)
+  const totalCampaigns = computed(() => pagination.value.count || campaigns.value.length)
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = async (params = null) => {
+    if (params) campaignQuery.value = { ...campaignQuery.value, ...params }
     loading.value = true
     error.value = null
     try {
-      const response = await api.get("/api/campaigns/")
-      campaigns.value = response.data
-      return response.data
+      const response = await api.get("/api/campaigns/", { params: campaignQuery.value })
+      const data = response.data
+      campaigns.value = Array.isArray(data) ? data : (data.results || [])
+      pagination.value = Array.isArray(data)
+        ? { count: data.length, next: null, previous: null }
+        : { count: data.count || 0, next: data.next || null, previous: data.previous || null }
+      return campaigns.value
     } catch (err) {
       error.value = getErrorMessage(err)
       throw err
@@ -33,13 +41,17 @@ export const useCampaignStore = defineStore("campaign", () => {
     }
   }
 
-  const fetchAgentCampaigns = async () => {
+  const fetchAgentCampaigns = async (params = {}) => {
     loading.value = true
     error.value = null
     try {
-      const response = await api.get("/api/agent/campagnes/")
-      campaigns.value = response.data
-      return response.data
+      const response = await api.get("/api/agent/campagnes/", { params: { page: 1, page_size: 20, ...params } })
+      const data = response.data
+      campaigns.value = Array.isArray(data) ? data : (data.results || [])
+      pagination.value = Array.isArray(data)
+        ? { count: data.length, next: null, previous: null }
+        : { count: data.count || 0, next: data.next || null, previous: data.previous || null }
+      return campaigns.value
     } catch (err) {
       error.value = getErrorMessage(err)
       throw err
@@ -63,12 +75,15 @@ export const useCampaignStore = defineStore("campaign", () => {
     }
   }
 
-  const fetchAgents = async () => {
+  const fetchAgents = async (params = {}) => {
+    const requestId = ++agentRequestId
     error.value = null
     try {
-      const response = await api.get("/api/accounts/agents/")
-      agents.value = response.data
-      return response.data
+      const response = await api.get("/api/accounts/agents/", { params })
+      const page = response.data?.results ? response.data : null
+      const result = page?.results || response.data
+      if (requestId === agentRequestId) agents.value = result
+      return result
     } catch (err) {
       error.value = getErrorMessage(err)
       throw err
@@ -143,6 +158,8 @@ export const useCampaignStore = defineStore("campaign", () => {
 
   return {
     campaigns,
+    pagination,
+    campaignQuery,
     currentCampaign,
     agents,
     loading,

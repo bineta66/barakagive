@@ -6,8 +6,11 @@ export const useProjectStore = defineStore("project", () => {
   const projects = ref([])
   const currentProject = ref(null)
   const criteria = ref([])
+  const decisionDashboard = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const pagination = ref({ count: 0, next: null, previous: null })
+  const projectQuery = ref({ page: 1, page_size: 20 })
 
   const activeProjects = computed(() => projects.value.filter((p) => !p.archived))
   const archivedProjects = computed(() => projects.value.filter((p) => p.archived))
@@ -15,13 +18,18 @@ export const useProjectStore = defineStore("project", () => {
     return activeProjects.value.reduce((acc, p) => acc + (parseFloat(p.budget) || 0), 0)
   })
 
-  const fetchProjects = async () => {
+  const fetchProjects = async (params = null) => {
+    if (params) projectQuery.value = { ...projectQuery.value, ...params }
     loading.value = true
     error.value = null
     try {
-      const response = await api.get("/api/projects/")
-      projects.value = response.data
-      return response.data
+      const response = await api.get("/api/projects/", { params: projectQuery.value })
+      const data = response.data
+      projects.value = data?.results ?? (Array.isArray(data) ? data : [])
+      pagination.value = Array.isArray(data)
+        ? { count: data.length, next: null, previous: null }
+        : { count: data?.count || 0, next: data?.next || null, previous: data?.previous || null }
+      return projects.value
     } catch (err) {
       error.value = getErrorMessage(err)
       throw err
@@ -42,6 +50,17 @@ export const useProjectStore = defineStore("project", () => {
       throw err
     } finally {
       loading.value = false
+    }
+  }
+
+  const fetchDecisionDashboard = async (params = {}) => {
+    try {
+      const response = await api.get("/api/projects/dashboard/", { params })
+      decisionDashboard.value = response.data
+      return response.data
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
     }
   }
 
@@ -76,6 +95,20 @@ export const useProjectStore = defineStore("project", () => {
   }
 
   const archiveProject = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      await api.delete(`/api/projects/${id}/`)
+      await fetchProjects().catch(() => {})
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteProject = async (id) => {
     loading.value = true
     error.value = null
     try {
@@ -131,8 +164,11 @@ export const useProjectStore = defineStore("project", () => {
 
   return {
     projects,
+    pagination,
+    projectQuery,
     currentProject,
     criteria,
+    decisionDashboard,
     loading,
     error,
     activeProjects,
@@ -140,9 +176,11 @@ export const useProjectStore = defineStore("project", () => {
     totalBudget,
     fetchProjects,
     fetchProject,
+    fetchDecisionDashboard,
     createProject,
     updateProject,
     archiveProject,
+    deleteProject,
     fetchCriteria,
     createCriteria,
     updateCriteria,

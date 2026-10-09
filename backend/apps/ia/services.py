@@ -46,12 +46,11 @@ def compute_region_zones_data(campaign: Campaign, region_name: str) -> dict:
         dict with region, campaign, zones list containing:
         - name, score (0-100), beneficiaries count, level, top5 beneficiaries
     """
-    # 1. Retrieve organization zones, optionally scoped to the campaign
+    # Campaign zones are the authorization boundary for this analysis.
     zones = Zone.objects.filter(
-        organization=campaign.organization
+        organization_id=campaign.organization_id,
+        campaigns=campaign,
     )
-    if campaign.zones.exists():
-        zones = zones.filter(campaigns=campaign)
     
     # 2. Filter by region if a specific region is requested
     is_all_regions = not region_name or region_name.lower().strip() in [
@@ -71,13 +70,11 @@ def compute_region_zones_data(campaign: Campaign, region_name: str) -> dict:
         zone_beneficiaries = Beneficiary.objects.filter(
             campagne=campaign,
             zone=zone,
+            organization_id=campaign.organization_id,
+            zone__organization_id=campaign.organization_id,
         )
 
         beneficiaries_count = zone_beneficiaries.count()
-        if beneficiaries_count == 0:
-            # Fallback : bénéficiaires de cette zone, toutes campagnes confondues
-            zone_beneficiaries = Beneficiary.objects.filter(zone=zone)
-            beneficiaries_count = zone_beneficiaries.count()
 
         total_beneficiaries += beneficiaries_count
         scored = zone_beneficiaries.exclude(score_vulnerabilite__isnull=True)
@@ -145,7 +142,7 @@ def compute_all_regions_zones_data(campaign: Campaign) -> dict:
     """
     regions = Zone.objects.filter(
         campaigns=campaign,
-        organization=campaign.organization
+        organization_id=campaign.organization_id,
     ).values_list("region", flat=True).distinct()
     
     all_regions_data = []
@@ -170,11 +167,17 @@ def get_zone_beneficiaries_detail(campaign: Campaign, zone_id: str) -> dict:
     """
     Get detailed beneficiaries data for a specific zone.
     """
-    zone = Zone.objects.get(id=zone_id, campaigns=campaign)
+    zone = Zone.objects.get(
+        id=zone_id,
+        campaigns=campaign,
+        organization_id=campaign.organization_id,
+    )
     
     beneficiaries = Beneficiary.objects.filter(
         campagne=campaign,
-        zone=zone
+        zone=zone,
+        organization_id=campaign.organization_id,
+        zone__organization_id=campaign.organization_id,
     ).exclude(score_vulnerabilite__isnull=True).order_by("-score_vulnerabilite")
     
     top5 = []

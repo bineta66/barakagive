@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-or">Analyse de la région</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Analyse de la région</h1>
         <p class="text-sm text-gray-500 mt-1">
           Analyse IA des zones prioritaires pour la région sélectionnée.
         </p>
@@ -91,7 +91,7 @@
       <!-- Recommandations -->
       <div class="bg-white border border-slate-200/60 rounded-xl p-6 shadow-sm">
         <h2 class="text-xl font-bold text-bleu-nuit mb-4 flex items-center gap-2">
-          <Lightbulb :size="22" class="text-or" />
+          <Lightbulb :size="22" class="text-bleu-nuit" />
           Recommandations
         </h2>
 
@@ -101,7 +101,7 @@
             :key="index"
             class="flex items-start gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg"
           >
-            <span class="w-6 h-6 rounded-full bg-or text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="w-6 h-6 rounded-full bg-bleu-nuit text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
               {{ index + 1 }}
             </span>
             <p class="text-gray-700 leading-relaxed">{{ rec }}</p>

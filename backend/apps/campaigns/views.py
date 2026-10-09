@@ -1,13 +1,17 @@
+from django.db import models
+from django.db.models import Q
+from django.db.models import Prefetch
+import uuid
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from apps.common.pagination import StandardPagination
 
 from drf_spectacular.utils import extend_schema
 
-from apps.projects.models import Project
 from apps.zones.models import Zone
-from .models import Campaign
+from .models import Campaign, CampagneAffectation
 from .serializers import (
     AgentZonesAssignmentSerializer,
     CampagneAffectationSerializer,
@@ -25,7 +29,6 @@ from .services import (
     create_campaign,
     validate_zones_for_organization,
     validate_dates,
-    validate_project_for_chef_projet,
 )
 
 
@@ -53,12 +56,51 @@ class CampaignListCreateView(APIView):
         ).order_by("-created_at")
 
         if request.user.role != "SUPER_ADMIN":
-            campaigns = campaigns.filter(organization=request.user.organization)
+            if not request.user.organization_id:
+                campaigns = campaigns.none()
+            else:
+                campaigns = campaigns.filter(organization_id=request.user.organization_id)
+        campaigns = campaigns.filter(projet__organization_id=models.F("organization_id"))
         if request.user.role == "AGENT":
             campaigns = campaigns.filter(affectations__agent=request.user).distinct()
+        elif request.user.role == "CHEF_PROJET":
+            campaigns = campaigns.filter(projet__chef_projet=request.user)
+        elif request.user.role == "FINANCE":
+            campaigns = campaigns.filter(projet__responsable_finance=request.user)
 
-        serializer = CampaignListSerializer(campaigns, many=True)
-        return Response(serializer.data)
+        search = (request.query_params.get("search") or "").strip()
+        if search:
+            campaigns = campaigns.filter(
+                Q(nom__icontains=search)
+                | Q(code_campagne__icontains=search)
+                | Q(projet__name__icontains=search)
+            )
+        raw_ids = (request.query_params.get("ids") or "").strip()
+        if raw_ids:
+            ids = []
+            for value in raw_ids.split(",")[:100]:
+                try:
+                    ids.append(uuid.UUID(value.strip()))
+                except (TypeError, ValueError, AttributeError):
+                    continue
+            campaigns = campaigns.filter(pk__in=ids)
+        statut = request.query_params.get("statut")
+        if statut:
+            campaigns = campaigns.filter(statut=statut)
+        projet = request.query_params.get("projet") or request.query_params.get("project_id")
+        if projet:
+            if str(projet).isdigit():
+                campaigns = campaigns.filter(projet_id=projet)
+            else:
+                campaigns = campaigns.filter(projet__name__iexact=projet)
+        zone = request.query_params.get("zone") or request.query_params.get("zone_id")
+        if zone:
+            campaigns = campaigns.filter(zones__pk=zone).distinct()
+
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(campaigns, request, view=self)
+        serializer = CampaignListSerializer(page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     @extend_schema(
         request=CampaignCreateSerializer,
@@ -109,15 +151,26 @@ class CampaignDetailView(APIView):
         try:
             queryset = Campaign.objects.select_related(
                 "projet", "created_by", "organization"
-            ).prefetch_related(
-                "zones"
             ).filter(pk=pk)
             if user.role != "SUPER_ADMIN":
                 queryset = queryset.filter(organization=user.organization)
+            queryset = queryset.filter(projet__organization_id=models.F("organization_id"))
             if user.role == "AGENT":
                 # Un agent peut avoir plusieurs affectations (une par zone),
                 # d'ou le distinct pour eviter les doublons de jointure.
                 queryset = queryset.filter(affectations__agent=user).distinct()
+                allowed_zone_names = CampagneAffectation.objects.filter(
+                    campagne_id=pk, agent=user,
+                ).values_list("zone", flat=True)
+                queryset = queryset.prefetch_related(
+                    Prefetch("zones", queryset=Zone.objects.filter(nom__in=allowed_zone_names))
+                )
+            elif user.role == "CHEF_PROJET":
+                queryset = queryset.filter(projet__chef_projet=user)
+            elif user.role == "FINANCE":
+                queryset = queryset.filter(projet__responsable_finance=user)
+            else:
+                queryset = queryset.prefetch_related("zones")
             return queryset.get()
         except (Campaign.DoesNotExist, Campaign.MultipleObjectsReturned):
             return None
@@ -139,7 +192,10 @@ class CampaignDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = CampaignDetailSerializer(campaign)
+        serializer = CampaignDetailSerializer(
+            campaign,
+            context={"agent": request.user if request.user.role == "AGENT" else None},
+        )
         return Response(serializer.data)
 
     @extend_schema(
@@ -161,7 +217,7 @@ class CampaignDetailView(APIView):
 
         self.check_object_permissions(request, campaign)
 
-        serializer = CampaignUpdateSerializer(data=request.data, partial=True)
+        serializer = CampaignUpdateSerializer(instance=campaign, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
@@ -172,10 +228,16 @@ class CampaignDetailView(APIView):
         if "description" in validated_data:
             campaign.description = validated_data["description"]
 
+        if "statut" in validated_data:
+            campaign.statut = validated_data["statut"]
+
+        if "type" in validated_data:
+            campaign.type = validated_data["type"]
+
         if "zone_ids" in validated_data:
             zone_ids = validated_data["zone_ids"]
             try:
-                zones = validate_zones_for_organization(zone_ids, request.user.organization)
+                zones = validate_zones_for_organization(zone_ids, campaign.organization)
                 campaign.zones.set(zones)
             except ValueError as e:
                 return Response(

@@ -119,6 +119,16 @@ export const useFormStore = defineStore("form", () => {
     }
   }
 
+  const generateQuestions = async (campaignId) => {
+    try {
+      const response = await api.post(`/api/forms/campaigns/${campaignId}/generate-questions/`)
+      return response.data
+    } catch (err) {
+      error.value = getErrorMessage(err)
+      throw err
+    }
+  }
+
   const updateQuestion = async (questionId, questionData) => {
     loading.value = true
     error.value = null
@@ -203,6 +213,7 @@ export const useFormStore = defineStore("form", () => {
     deleteForm,
     publishForm,
     addQuestion,
+    generateQuestions,
     updateQuestion,
     deleteQuestion,
     duplicateQuestion,

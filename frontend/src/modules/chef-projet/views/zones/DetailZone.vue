@@ -1,8 +1,8 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-or">Détail de la zone</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Détail de la zone</h1>
         <p class="text-sm text-gray-600 mt-1">
           Informations complètes de la zone d'intervention.
         </p>

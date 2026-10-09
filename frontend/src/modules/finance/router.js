@@ -1,11 +1,13 @@
-import DashboardLayout from "@/components/layout/DashboardLayout.vue";
-import FinanceDashboard from "@/module/finance/FinanceDashboard.vue";
-import BudgetList from "@/module/finance/BudgetList.vue";
-import DonationList from "@/module/finance/DonationList.vue";
-import ExpenseList from "@/module/finance/ExpenseList.vue";
-import JustificationList from "@/module/finance/JustificationList.vue";
-import FinanceAIAssistant from "@/module/finance/FinanceAIAssistant.vue";
-import FinanceReports from "@/module/finance/FinanceReports.vue";
+import DashboardLayout from "@/components/layout/DashboardLayout.vue"
+import FinanceDashboard from "@/modules/finance/views/FinanceDashboard.vue"
+import Budgets from "@/modules/finance/views/Budgets.vue"
+import Dons from "@/modules/finance/views/Dons.vue"
+import Depenses from "@/modules/finance/views/Depenses.vue"
+import Justifications from "@/modules/finance/views/Justifications.vue"
+import FinanceReports from "@/modules/finance/views/FinanceReports.vue"
+import FinanceLines from "@/modules/finance/views/FinanceLines.vue"
+import Financements from "@/modules/finance/views/Financements.vue"
+import BudgetDetail from "@/modules/finance/views/BudgetDetail.vue"
 
 const routes = [
   {
@@ -19,39 +21,39 @@ const routes = [
         component: FinanceDashboard,
       },
       {
-        path: "projets",
-        name: "finance-projets",
-        component: BudgetList,
-      },
-      {
         path: "budgets",
         name: "finance-budgets",
-        component: BudgetList,
+        component: Budgets,
+      },
+      {
+        path: "budgets/:id",
+        name: "finance-budget-detail",
+        component: BudgetDetail,
+      },
+      {
+        path: "lignes-budgetaires",
+        name: "finance-lignes-budgetaires",
+        component: FinanceLines,
+      },
+      {
+        path: "financements",
+        name: "finance-financements",
+        component: Financements,
       },
       {
         path: "dons",
         name: "finance-dons",
-        component: DonationList,
+        component: Dons,
       },
       {
         path: "depenses",
         name: "finance-depenses",
-        component: ExpenseList,
-      },
-      {
-        path: "justifications",
-        name: "finance-justifications",
-        component: JustificationList,
+        component: Depenses,
       },
       {
         path: "justificatifs",
         name: "finance-justificatifs",
-        component: JustificationList,
-      },
-      {
-        path: "ai-assistant",
-        name: "finance-ai-assistant",
-        component: FinanceAIAssistant,
+        component: Justifications,
       },
       {
         path: "rapports",
@@ -60,6 +62,6 @@ const routes = [
       },
     ],
   },
-];
+]
 
-export default routes;
+export default routes

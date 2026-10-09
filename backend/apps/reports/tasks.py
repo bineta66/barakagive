@@ -13,7 +13,7 @@ from apps.campaigns.models import Campaign
 from apps.beneficiaries.models import Beneficiary
 from apps.finance.models import Budget, Depense
 from apps.organizations.models import Organization
-from django.db.models import Sum, Count, Avg
+from django.db.models import Sum, Q
 
 def build_pdf_report(org: Organization, params: dict = None) -> bytes:
     """Generate a PDF report for a single organization.
@@ -25,11 +25,30 @@ def build_pdf_report(org: Organization, params: dict = None) -> bytes:
     projects = Project.objects.filter(organization=org, archived=False)
     p_ids = list(projects.values_list("id", flat=True))
     campaigns = Campaign.objects.filter(projet_id__in=p_ids, organization=org)
-    beneficiaries = Beneficiary.objects.filter(organization=org)
-    depenses = Depense.objects.filter(organization=org)
+    beneficiaries = Beneficiary.objects.filter(
+        organization=org,
+        campagne__organization=org,
+        campagne__projet__organization=org,
+        zone__organization=org,
+    )
+    depenses = Depense.objects.filter(organization=org).filter(
+        Q(projet__isnull=True) | Q(projet__organization=org),
+        Q(campagne__isnull=True) | Q(
+            campagne__organization=org,
+            campagne__projet__organization=org,
+        ),
+        Q(budget__isnull=True) | Q(
+            budget__organization=org,
+            budget__projet__organization=org,
+        ),
+        Q(ligne_budgetaire__isnull=True) | Q(
+            ligne_budgetaire__budget__organization=org,
+            ligne_budgetaire__budget__projet__organization=org,
+        ),
+    )
     budgets = Budget.objects.filter(projet_id__in=p_ids, organization=org)
 
-    total_budget = budgets.aggregate(s=Sum("montant_total"))["s"] or 0
+    total_budget = budgets.aggregate(s=Sum("montant"))["s"] or 0
     total_depenses = depenses.aggregate(s=Sum("montant"))["s"] or 0
     taux = round(float(total_depenses) / float(total_budget) * 100, 1) if total_budget else 0
 
@@ -113,8 +132,14 @@ def build_pdf_report(org: Organization, params: dict = None) -> bytes:
     story.append(Paragraph("Projets", section_style))
     proj_rows = [["Code", "Nom", "Région", "Budget (FCFA)", "Bénéficiaires"]]
     for p in projects.order_by("-start_date")[:20]:
-        nb_ben = Beneficiary.objects.filter(campagne__projet=p, organization=org).count()
-        b_total = Budget.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant_total"))["s"] or 0
+        nb_ben = Beneficiary.objects.filter(
+            campagne__projet=p,
+            organization=org,
+            campagne__organization=org,
+            campagne__projet__organization=org,
+            zone__organization=org,
+        ).count()
+        b_total = Budget.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant"))["s"] or 0
         proj_rows.append([
             p.code,
             p.name[:30],

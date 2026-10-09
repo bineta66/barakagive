@@ -24,8 +24,6 @@ class ProjectCriteria(models.Model):
 
     poids = models.PositiveIntegerField()
 
-    actif = models.BooleanField(default=True)
-
     # Configuration de vulnérabilité pour ce critère
     vulnerable_values = models.JSONField(
         default=list,
@@ -79,8 +77,6 @@ class Project(models.Model):
 
     end_date = models.DateField()
 
-    budget = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-
     chef_projet = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -97,6 +93,12 @@ class Project(models.Model):
         "organizations.Organization",
         on_delete=models.CASCADE,
         related_name="projects",
+    )
+
+    partenaires = models.ManyToManyField(
+        "finance.Partenaire",
+        blank=True,
+        related_name="projets",
     )
 
     created_by = models.ForeignKey(

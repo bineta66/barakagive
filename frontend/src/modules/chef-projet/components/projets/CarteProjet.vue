@@ -3,7 +3,7 @@
     <div class="p-8">
       <div class="flex justify-between items-start mb-6">
         <div>
-          <h2 class="text-2xl font-bold text-or mb-1">
+          <h2 class="text-2xl font-bold text-bleu-nuit mb-1">
             {{ projet.nom }}
           </h2>
           <p class="text-sm text-gray-500">{{ projet.code }}</p>

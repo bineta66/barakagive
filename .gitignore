@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .env
 .env.*
+!.env.example
 
 # Vue / Node
 node_modules/
@@ -23,3 +24,18 @@ normalize_shadows.py
 normalize_strings.py
 add_borders.py
 test_api.py
+
+*.env
+!*.env.example
+
+# Fichiers locaux et données téléversées potentiellement sensibles
+/backend/media/
+/backend/clear_db.py/
+/backend/rest_finance.py/
+/ia_service/app/chroma_db/
+
+# Artefacts générés
+/backend/staticfiles/
+**/.pytest_cache/
+/ia_service/pytest-cache-files-*/
+**/pytest-cache-files-*/

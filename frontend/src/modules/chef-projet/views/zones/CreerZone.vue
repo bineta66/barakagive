@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-3xl font-bold text-or">Créer une zone</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Créer une zone</h1>
         <p class="text-xs text-gray-500 mt-1">
           Sélectionnez une région sur la carte, puis cliquez sur le centre de la zone.
         </p>
@@ -34,7 +34,7 @@
       </div>
 
       <div class="w-full lg:w-96 bg-white border border-slate-200 p-6 overflow-y-auto rounded-xl shadow-xs-sm">
-        <h2 class="text-xl font-bold text-or mb-1">Formulaire de zone</h2>
+        <h2 class="text-xl font-bold text-bleu-nuit mb-1">Formulaire de zone</h2>
         <p class="text-xs text-gray-500 mb-6">
           Remplissez les informations de la zone après avoir cliqué sur la carte.
         </p>
@@ -42,6 +42,7 @@
         <FormulaireZone
           mode="creation"
           :initial-data="form"
+          :saving="saving"
           @submit="onSubmit"
         />
       </div>
@@ -50,7 +51,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from "vue"
+import { reactive, ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { List } from "lucide-vue-next"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
@@ -65,6 +66,7 @@ const zoneStore = useZoneStore()
 const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
 
 const feedback = reactive({ type: "success", message: "" })
+const saving = ref(false)
 
 const form = reactive({
   region: "",
@@ -95,6 +97,7 @@ const onMapClick = ({ latitude, longitude }) => {
 }
 
 const onSubmit = async (data) => {
+  if (saving.value) return
   feedback.message = ""
 
   if (!data.latitude || !data.longitude) {
@@ -103,6 +106,7 @@ const onSubmit = async (data) => {
     return
   }
 
+  saving.value = true
   try {
     await zoneStore.createZone({
       nom: data.nom,
@@ -122,6 +126,8 @@ const onSubmit = async (data) => {
   } catch (err) {
     feedback.type = "error"
     feedback.message = zoneStore.error || "Erreur lors de la création de la zone."
+  } finally {
+    saving.value = false
   }
 }
 </script>

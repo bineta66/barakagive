@@ -1,9 +1,7 @@
 from datetime import date
 from io import BytesIO
 
-from django.db.models import (
-    Count, Sum, Avg, Q, F, ExpressionWrapper, DecimalField
-)
+from django.db.models import Count, Sum, Avg, Q
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
@@ -11,12 +9,12 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from apps.accounts.permissions import IsAccountActive
 
 from apps.projects.models import Project
 from apps.campaigns.models import Campaign
 from apps.beneficiaries.models import Beneficiary
 from apps.finance.models import Budget, Depense, Don
-from apps.zones.models import Zone
 
 
 ALLOWED_ROLES = {"GERANT", "CHEF_PROJET", "FINANCE"}
@@ -24,6 +22,8 @@ ALLOWED_ROLES = {"GERANT", "CHEF_PROJET", "FINANCE"}
 
 def _filter_projects(user):
     """Returns queryset of projects visible to the user."""
+    if not user.organization_id:
+        return Project.objects.none()
     org = user.organization
     if user.role == "CHEF_PROJET":
         return Project.objects.filter(chef_projet=user, organization=org, archived=False)
@@ -31,6 +31,18 @@ def _filter_projects(user):
         return Project.objects.filter(responsable_finance=user, organization=org, archived=False)
     # GERANT — tous les projets de l'ONG
     return Project.objects.filter(organization=org, archived=False)
+
+
+def _campaign_report_beneficiaries(campaign, organization):
+    """Keep report aggregates inside one consistent organization lineage."""
+    return Beneficiary.objects.filter(
+        campagne=campaign,
+        organization=organization,
+        campagne__organization=organization,
+        campagne__projet__organization=organization,
+        zone__organization=organization,
+        zone__campaigns=campaign,
+    )
 
 
 def _apply_common_filters(qs_model, user, params):
@@ -55,8 +67,15 @@ def _parse_date(val):
 # Helper: build Beneficiary base queryset
 # ─────────────────────────────────────────────
 def _beneficiary_qs(user, params):
+    if not user.organization_id:
+        return Beneficiary.objects.none()
     org = user.organization
-    qs = Beneficiary.objects.filter(organization=org)
+    qs = Beneficiary.objects.filter(
+        organization=org,
+        campagne__organization=org,
+        campagne__projet__organization=org,
+        zone__organization=org,
+    )
 
     project_id = params.get("project_id")
     campaign_id = params.get("campaign_id")
@@ -69,7 +88,7 @@ def _beneficiary_qs(user, params):
     if campaign_id:
         qs = qs.filter(campagne_id=campaign_id)
     if region:
-        qs = qs.filter(zone__region=region)
+        qs = qs.filter(zone__region__nom=region)
     if date_debut:
         qs = qs.filter(created_at__date__gte=date_debut)
     if date_fin:
@@ -87,8 +106,24 @@ def _beneficiary_qs(user, params):
 # Helper: build Depense base queryset
 # ─────────────────────────────────────────────
 def _depense_qs(user, params):
+    if not user.organization_id:
+        return Depense.objects.none()
     org = user.organization
-    qs = Depense.objects.filter(organization=org)
+    qs = Depense.objects.filter(organization=org).filter(
+        Q(projet__isnull=True) | Q(projet__organization=org),
+        Q(campagne__isnull=True) | Q(
+            campagne__organization=org,
+            campagne__projet__organization=org,
+        ),
+        Q(budget__isnull=True) | Q(
+            budget__organization=org,
+            budget__projet__organization=org,
+        ),
+        Q(ligne_budgetaire__isnull=True) | Q(
+            ligne_budgetaire__budget__organization=org,
+            ligne_budgetaire__budget__projet__organization=org,
+        ),
+    )
 
     project_id = params.get("project_id")
     date_debut = _parse_date(params.get("date_debut"))
@@ -97,9 +132,9 @@ def _depense_qs(user, params):
     if project_id:
         qs = qs.filter(projet_id=project_id)
     if date_debut:
-        qs = qs.filter(date_depense__gte=date_debut)
+        qs = qs.filter(date__gte=date_debut)
     if date_fin:
-        qs = qs.filter(date_depense__lte=date_fin)
+        qs = qs.filter(date__lte=date_fin)
 
     if user.role == "CHEF_PROJET":
         qs = qs.filter(projet__chef_projet=user)
@@ -113,7 +148,7 @@ def _depense_qs(user, params):
 # 1.  /api/reports/dashboard/  — Tableau de bord global
 # ─────────────────────────────────────────────────────────
 class ReportDashboardView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -137,7 +172,7 @@ class ReportDashboardView(APIView):
         depenses = _depense_qs(user, params)
         budgets = Budget.objects.filter(projet_id__in=p_ids, organization=org)
 
-        total_budget = budgets.aggregate(s=Sum("montant_total"))["s"] or 0
+        total_budget = budgets.aggregate(s=Sum("montant"))["s"] or 0
         total_depenses = depenses.aggregate(s=Sum("montant"))["s"] or 0
 
         # Taux d'exécution global
@@ -199,7 +234,7 @@ class ReportDashboardView(APIView):
 # 2.  /api/reports/projets/  — Rapport Projets
 # ─────────────────────────────────────────────────────────
 class ReportProjetsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -230,11 +265,15 @@ class ReportProjetsView(APIView):
         for project in projects.order_by("-start_date"):
             nb_campagnes = Campaign.objects.filter(projet=project, organization=org).count()
             nb_beneficiaires = Beneficiary.objects.filter(
-                campagne__projet=project, organization=org
+                campagne__projet=project,
+                organization=org,
+                campagne__organization=org,
+                campagne__projet__organization=org,
+                zone__organization=org,
             ).count()
             budgets = Budget.objects.filter(projet=project, organization=org)
-            total_budget = budgets.aggregate(s=Sum("montant_total"))["s"] or 0
-            total_depenses = Depense.objects.filter(projet=project, organization=org).aggregate(
+            total_budget = budgets.aggregate(s=Sum("montant"))["s"] or 0
+            total_depenses = _depense_qs(user, params).filter(projet=project).aggregate(
                 s=Sum("montant")
             )["s"] or 0
             taux = round((float(total_depenses) / float(total_budget) * 100), 1) if total_budget else 0
@@ -275,7 +314,7 @@ class ReportProjetsView(APIView):
 # 3.  /api/reports/campagnes/  — Rapport Campagnes
 # ─────────────────────────────────────────────────────────
 class ReportCampagnesView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -299,6 +338,8 @@ class ReportCampagnesView(APIView):
             campaigns = campaigns.filter(projet_id=project_id)
         if campaign_id:
             campaigns = campaigns.filter(id=campaign_id)
+            if not campaigns.exists():
+                return Response({"detail": "Campagne introuvable."}, status=status.HTTP_404_NOT_FOUND)
         if region:
             campaigns = campaigns.filter(projet__region=region)
         if date_debut:
@@ -308,15 +349,16 @@ class ReportCampagnesView(APIView):
 
         campagnes_data = []
         for c in campaigns.select_related("projet").order_by("-date_debut"):
-            nb_ben = Beneficiary.objects.filter(campagne=c).count()
-            nb_ben_f = Beneficiary.objects.filter(campagne=c, sexe="F").count()
-            nb_ben_m = Beneficiary.objects.filter(campagne=c, sexe="M").count()
-            nb_zones = c.zones.count()
-            nb_agents = c.agents.count()
+            beneficiaries = _campaign_report_beneficiaries(c, org)
+            nb_ben = beneficiaries.count()
+            nb_ben_f = beneficiaries.filter(sexe="F").count()
+            nb_ben_m = beneficiaries.filter(sexe="M").count()
+            nb_zones = c.zones.filter(organization=org).count()
+            nb_agents = c.agents.filter(organization=org).count()
 
             # Score moyen
             score_avg = (
-                Beneficiary.objects.filter(campagne=c, score_vulnerabilite__isnull=False)
+                beneficiaries.filter(score_vulnerabilite__isnull=False)
                 .aggregate(avg=Avg("score_vulnerabilite"))["avg"]
             )
 
@@ -344,7 +386,7 @@ class ReportCampagnesView(APIView):
 # 4.  /api/reports/beneficiaires/  — Rapport Bénéficiaires
 # ─────────────────────────────────────────────────────────
 class ReportBeneficiairesView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -446,7 +488,7 @@ class ReportBeneficiairesView(APIView):
 # 5.  /api/reports/finance/  — Rapport Financier
 # ─────────────────────────────────────────────────────────
 class ReportFinanceView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -460,14 +502,19 @@ class ReportFinanceView(APIView):
 
         depenses = _depense_qs(user, params)
         budgets = Budget.objects.filter(projet_id__in=p_ids, organization=org)
-        dons = Don.objects.filter(organization=org, projet_id__in=p_ids)
+        dons = Don.objects.filter(organization=org).filter(
+            Q(donateur__isnull=True) | Q(donateur__organization=org),
+        ).filter(
+            Q(campagne__isnull=True)
+            | Q(campagne__organization=org, campagne__projet__organization=org)
+        )
 
         project_id = params.get("project_id")
         if project_id:
-            dons = dons.filter(projet_id=project_id)
+            dons = dons.filter(campagne__projet_id=project_id)
             budgets = budgets.filter(projet_id=project_id)
 
-        total_budget = budgets.aggregate(s=Sum("montant_total"))["s"] or 0
+        total_budget = budgets.aggregate(s=Sum("montant"))["s"] or 0
         total_depenses = depenses.aggregate(s=Sum("montant"))["s"] or 0
         total_dons = dons.aggregate(s=Sum("montant"))["s"] or 0
         taux_exec = round(float(total_depenses) / float(total_budget) * 100, 1) if total_budget else 0
@@ -483,8 +530,8 @@ class ReportFinanceView(APIView):
         from django.utils import timezone as tz
         twelve_months_ago = tz.now() - tz.timedelta(days=365)
         dep_par_mois = (
-            depenses.filter(date_depense__gte=twelve_months_ago.date())
-            .annotate(mois=TruncMonth("date_depense"))
+            depenses.filter(date__gte=twelve_months_ago.date())
+            .annotate(mois=TruncMonth("date"))
             .values("mois")
             .annotate(montant=Sum("montant"))
             .order_by("mois")
@@ -492,7 +539,7 @@ class ReportFinanceView(APIView):
 
         # Top postes budgétaires dépensés
         top_postes = (
-            depenses.values("poste_budgetaire__libelle")
+            depenses.values("categorie")
             .annotate(total=Sum("montant"))
             .order_by("-total")[:10]
         )
@@ -529,7 +576,7 @@ class ReportFinanceView(APIView):
             ],
             "top_postes": [
                 {
-                    "poste": p["poste_budgetaire__libelle"],
+                    "poste": p["categorie"],
                     "total": float(p["total"] or 0),
                 }
                 for p in top_postes
@@ -549,7 +596,7 @@ class ReportFinanceView(APIView):
 # 6.  /api/reports/export/pdf/  — Export PDF
 # ─────────────────────────────────────────────────────────
 class ReportExportPDFView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -576,13 +623,18 @@ class ReportExportPDFView(APIView):
 
         # Collect data
         projects = _filter_projects(user)
+        project_id = params.get("project_id")
+        if project_id:
+            projects = projects.filter(pk=project_id)
+            if not projects.exists():
+                return Response({"detail": "Projet introuvable."}, status=status.HTTP_404_NOT_FOUND)
         p_ids = list(projects.values_list("id", flat=True))
         campaigns = Campaign.objects.filter(projet_id__in=p_ids, organization=org)
         beneficiaries = _beneficiary_qs(user, params)
         depenses = _depense_qs(user, params)
         budgets = Budget.objects.filter(projet_id__in=p_ids, organization=org)
 
-        total_budget = budgets.aggregate(s=Sum("montant_total"))["s"] or 0
+        total_budget = budgets.aggregate(s=Sum("montant"))["s"] or 0
         total_depenses = depenses.aggregate(s=Sum("montant"))["s"] or 0
         taux = round(float(total_depenses) / float(total_budget) * 100, 1) if total_budget else 0
 
@@ -624,7 +676,7 @@ class ReportExportPDFView(APIView):
         # Title
         story.append(Paragraph("BarakaGive360 — Rapport d'activité", title_style))
         story.append(Paragraph(
-            f"Généré le {timezone.now().strftime('%d/%m/%Y à %H:%M')} — Organisation : {org.nom if org else 'N/A'}",
+            f"Généré le {timezone.now().strftime('%d/%m/%Y à %H:%M')} — Organisation : {org.name if org else 'N/A'}",
             subtitle_style
         ))
         story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#021427")))
@@ -661,8 +713,14 @@ class ReportExportPDFView(APIView):
         story.append(Paragraph("Projets", section_style))
         proj_rows = [["Code", "Nom", "Région", "Budget (FCFA)", "Bénéficiaires"]]
         for p in projects.order_by("-start_date")[:20]:
-            nb_ben = Beneficiary.objects.filter(campagne__projet=p, organization=org).count()
-            b_total = Budget.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant_total"))["s"] or 0
+            nb_ben = Beneficiary.objects.filter(
+                campagne__projet=p,
+                organization=org,
+                campagne__organization=org,
+                campagne__projet__organization=org,
+                zone__organization=org,
+            ).count()
+            b_total = Budget.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant"))["s"] or 0
             proj_rows.append([
                 p.code, p.name[:30], p.region,
                 f"{float(b_total):,.0f}".replace(",", " "),
@@ -696,7 +754,7 @@ class ReportExportPDFView(APIView):
 # 7.  /api/reports/export/excel/  — Export Excel
 # ─────────────────────────────────────────────────────────
 class ReportExportExcelView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:
@@ -705,7 +763,6 @@ class ReportExportExcelView(APIView):
         try:
             import openpyxl
             from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-            from openpyxl.utils import get_column_letter
             from django.http import HttpResponse
         except ImportError:
             return Response(
@@ -716,6 +773,13 @@ class ReportExportExcelView(APIView):
         user = request.user
         params = request.query_params
         org = user.organization
+
+        projects = _filter_projects(user)
+        project_id = params.get("project_id")
+        if project_id:
+            projects = projects.filter(pk=project_id)
+            if not projects.exists():
+                return Response({"detail": "Projet introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
         wb = openpyxl.Workbook()
 
@@ -757,14 +821,13 @@ class ReportExportExcelView(APIView):
         ws1.column_dimensions["A"].width = 35
         ws1.column_dimensions["B"].width = 20
 
-        projects = _filter_projects(user)
         p_ids = list(projects.values_list("id", flat=True))
         campaigns = Campaign.objects.filter(projet_id__in=p_ids, organization=org)
         beneficiaries = _beneficiary_qs(user, params)
         depenses = _depense_qs(user, params)
         budgets = Budget.objects.filter(projet_id__in=p_ids, organization=org)
 
-        total_budget = float(budgets.aggregate(s=Sum("montant_total"))["s"] or 0)
+        total_budget = float(budgets.aggregate(s=Sum("montant"))["s"] or 0)
         total_depenses = float(depenses.aggregate(s=Sum("montant"))["s"] or 0)
         taux = round(total_depenses / total_budget * 100, 1) if total_budget else 0
 
@@ -795,9 +858,15 @@ class ReportExportExcelView(APIView):
             ws2.column_dimensions[col].width = 18
 
         for i, p in enumerate(projects.order_by("-start_date"), 2):
-            nb_ben = Beneficiary.objects.filter(campagne__projet=p, organization=org).count()
-            b_total = float(Budget.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant_total"))["s"] or 0)
-            d_total = float(Depense.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant"))["s"] or 0)
+            nb_ben = Beneficiary.objects.filter(
+                campagne__projet=p,
+                organization=org,
+                campagne__organization=org,
+                campagne__projet__organization=org,
+                zone__organization=org,
+            ).count()
+            b_total = float(Budget.objects.filter(projet=p, organization=org).aggregate(s=Sum("montant"))["s"] or 0)
+            d_total = float(_depense_qs(user, params).filter(projet=p).aggregate(s=Sum("montant"))["s"] or 0)
             t = round(d_total / b_total * 100, 1) if b_total else 0
             write_row(ws2, [
                 p.code, p.name, p.region,
@@ -813,19 +882,21 @@ class ReportExportExcelView(APIView):
         for idx, letter in enumerate("ABCDEFGHIJKL", 0):
             ws3.column_dimensions[letter].width = 18
 
-        p_ids2 = list(_filter_projects(user).values_list("id", flat=True))
+        p_ids2 = list(projects.values_list("id", flat=True))
         camp_qs = Campaign.objects.filter(projet_id__in=p_ids2, organization=org).select_related("projet")
         for i, c in enumerate(camp_qs.order_by("-date_debut"), 2):
-            nb = Beneficiary.objects.filter(campagne=c).count()
-            nbf = Beneficiary.objects.filter(campagne=c, sexe="F").count()
-            nbm = Beneficiary.objects.filter(campagne=c, sexe="M").count()
-            sc = Beneficiary.objects.filter(campagne=c, score_vulnerabilite__isnull=False).aggregate(
+            beneficiaries = _campaign_report_beneficiaries(c, org)
+            nb = beneficiaries.count()
+            nbf = beneficiaries.filter(sexe="F").count()
+            nbm = beneficiaries.filter(sexe="M").count()
+            sc = beneficiaries.filter(score_vulnerabilite__isnull=False).aggregate(
                 avg=Avg("score_vulnerabilite")
             )["avg"]
             write_row(ws3, [
                 c.code_campagne, c.nom, c.projet.name, c.statut,
                 c.date_debut.strftime("%d/%m/%Y"), c.date_fin.strftime("%d/%m/%Y"),
-                nb, nbf, nbm, c.zones.count(), c.agents.count(),
+                nb, nbf, nbm, c.zones.filter(organization=org).count(),
+                c.agents.filter(organization=org).count(),
                 round(float(sc), 2) if sc else "",
             ], row=i, alt=(i % 2 == 0))
 
@@ -837,10 +908,10 @@ class ReportExportExcelView(APIView):
         for col in ["A", "B", "C", "D", "E", "F", "G", "H"]:
             ws4.column_dimensions[col].width = 20
 
-        ben_qs = _beneficiary_qs(user, params).select_related("zone", "campagne").order_by("-score_vulnerabilite")
+        ben_qs = _beneficiary_qs(user, params).select_related("zone__region", "campagne").order_by("-score_vulnerabilite")
         for i, b in enumerate(ben_qs[:1000], 2):
             write_row(ws4, [
-                b.prenom, b.nom, b.sexe, b.zone.nom, b.zone.region,
+                b.prenom, b.nom, b.sexe, b.zone.nom, b.zone.region.nom,
                 b.campagne.nom,
                 float(b.score_vulnerabilite) if b.score_vulnerabilite is not None else "",
                 b.sync_status,
@@ -853,12 +924,20 @@ class ReportExportExcelView(APIView):
         for col in ["A", "B", "C", "D", "E", "F", "G"]:
             ws5.column_dimensions[col].width = 20
 
-        dep_qs = _depense_qs(user, params).select_related("projet", "poste_budgetaire").order_by("-date_depense")
+        dep_qs = _depense_qs(user, params).select_related(
+            "projet", "budget__projet", "ligne_budgetaire__budget__projet", "campagne__projet"
+        ).order_by("-date")
         for i, d in enumerate(dep_qs[:1000], 2):
+            project = (
+                d.projet
+                or (d.budget.projet if d.budget_id else None)
+                or (d.ligne_budgetaire.budget.projet if d.ligne_budgetaire_id else None)
+                or (d.campagne.projet if d.campagne_id else None)
+            )
             write_row(ws5, [
-                d.reference, d.projet.name, d.libelle,
-                d.poste_budgetaire.libelle,
-                float(d.montant), d.date_depense.strftime("%d/%m/%Y"), d.statut,
+                d.reference, project.name if project else "—", d.description or d.categorie,
+                d.ligne_budgetaire.libelle if d.ligne_budgetaire_id else d.categorie,
+                float(d.montant), d.date.strftime("%d/%m/%Y"), d.statut,
             ], row=i, alt=(i % 2 == 0))
 
         # Save
@@ -880,7 +959,7 @@ class ReportExportExcelView(APIView):
 # 8.  /api/reports/filters/  — Options de filtres
 # ─────────────────────────────────────────────────────────
 class ReportFiltersView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAccountActive]
 
     def get(self, request):
         if request.user.role not in ALLOWED_ROLES:

@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-or">Rapports</h1>
+        <h1 class="text-4xl font-bold text-bleu-nuit">Rapports</h1>
         <p class="text-xs text-gray-500 mt-1">
           Rapports d'impact et financiers de l'organisation.
         </p>
@@ -13,8 +13,8 @@
     <!-- Rapports -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div class="bg-white border border-slate-200/60 rounded-xl p-6 flex flex-col items-center text-center">
-        <div class="w-16 h-16 rounded-full bg-or/10 flex items-center justify-center mb-4">
-          <FileText class="text-or" :size="32" />
+        <div class="w-16 h-16 rounded-full bg-bleu-nuit/10 flex items-center justify-center mb-4">
+          <FileText class="text-bleu-nuit" :size="32" />
         </div>
         <h3 class="text-lg font-bold text-slate-900 mb-2">Rapport d'exécution</h3>
         <p class="text-sm text-gray-500 mb-4">Synthèse budgétaire et taux d'exécution par projet.</p>
@@ -24,8 +24,8 @@
       </div>
 
       <div class="bg-white border border-slate-200/60 rounded-xl p-6 flex flex-col items-center text-center">
-        <div class="w-16 h-16 rounded-full bg-or/10 flex items-center justify-center mb-4">
-          <BarChart3 class="text-or" :size="32" />
+        <div class="w-16 h-16 rounded-full bg-bleu-nuit/10 flex items-center justify-center mb-4">
+          <BarChart3 class="text-bleu-nuit" :size="32" />
         </div>
         <h3 class="text-lg font-bold text-slate-900 mb-2">Rapport d'impact</h3>
         <p class="text-sm text-gray-500 mb-4">Bénéficiaires, zones d'intervention et indicateurs clés.</p>

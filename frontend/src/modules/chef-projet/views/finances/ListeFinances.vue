@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- Titre -->
     <div class="flex justify-between items-center  pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-or">Finances</h1>
+        <h1 class="text-4xl font-bold text-bleu-nuit">Finances</h1>
         <p class="text-xs text-gray-500 mt-1">
           Suivi budgétaire et exécutive des projets humanitaires.
         </p>
@@ -15,7 +15,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Volume budgétaire alloué</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ formatMontant(statistiques.budgetTotal) }} FCFA</h3>
         </div>
         <Wallet class="text-bleu-nuit" :size="28" />
       </div>
@@ -23,7 +23,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Taux d'exécution</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ statistiques.tauxExecution }} %</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ statistiques.tauxExecution }} %</h3>
         </div>
         <Activity class="text-bleu-nuit" :size="28" />
       </div>
@@ -31,7 +31,7 @@
       <div class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between">
         <div>
           <p class="text-xs font-bold uppercase text-slate-900">Montant restant</p>
-          <h3 class="text-xl font-bold text-or mt-2">{{ formatMontant(statistiques.totalRestant) }} FCFA</h3>
+          <h3 class="text-xl font-bold text-bleu-nuit mt-2">{{ formatMontant(statistiques.totalRestant) }} FCFA</h3>
         </div>
         <PiggyBank class="text-bleu-nuit" :size="28" />
       </div>

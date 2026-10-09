@@ -1,7 +1,10 @@
 from celery import shared_task
 from django.conf import settings
+import logging
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -66,9 +69,9 @@ def send_invitation_email(
 
     try:
         response = api_instance.send_transac_email(email_data)
-        print("BREVO OK :", response)
+        logger.info("Invitation email sent successfully")
         return str(response)
 
-    except ApiException as e:
-        print("BREVO ERROR :", e)
+    except ApiException:
+        logger.error("Invitation email delivery failed")
         raise

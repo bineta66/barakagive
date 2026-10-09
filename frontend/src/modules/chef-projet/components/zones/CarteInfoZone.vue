@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="bg-white rounded-xl border border-slate-200/60 p-5">
     <div class="flex items-center justify-between mb-4">
-      <h3 class="text-lg font-bold text-or">{{ zone.nom }}</h3>
+      <h3 class="text-lg font-bold text-bleu-nuit">{{ zone.nom }}</h3>
       <span
         class="px-2 py-1 rounded text-xs font-semibold"
         :class="isActive ? 'bg-bleu-nuit/10 text-bleu-nuit' : 'bg-gray-100 text-gray-600'"

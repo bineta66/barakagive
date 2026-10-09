@@ -27,8 +27,8 @@
           <p class="text-sm font-medium text-gray-900 mt-1">{{ synthese.projetPrincipal }}</p>
         </div>
         <div class="col-span-2">
-          <p class="text-xs font-semibold text-gray-500">Urgences élevées (Score IA)</p>
-          <p class="text-sm font-medium text-red-700 mt-1">{{ synthese.urgencesElevees }}</p>
+          <p class="text-xs font-semibold text-gray-500">Situations de vulnérabilité élevée</p>
+          <p class="text-sm font-medium text-rose-baraka mt-1">{{ synthese.urgencesElevees }}</p>
         </div>
       </div>
     </div>

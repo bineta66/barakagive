@@ -7,8 +7,13 @@ from rest_framework.views import APIView
 from rest_framework.exceptions import AuthenticationFailed
 
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.exceptions import InvalidToken
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import get_user_model
 
 from .models import User
 
@@ -27,13 +32,27 @@ class JWTLoginSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        try:
+            data = super().validate(attrs)
+        except Exception:
+            raise AuthenticationFailed(
+                "Email ou mot de passe incorrect."
+            )
 
         user = self.user
 
-        if user.status != User.Status.ACTIVE or not user.is_active:
+        if not user.is_active:
             raise AuthenticationFailed(
-                "Votre compte n'est pas encore activé."
+                "Votre compte n'est pas encore activé. Vérifiez votre email pour le lien d'activation."
+            )
+
+        if user.status != User.Status.ACTIVE:
+            if user.status == User.Status.SUSPENDED:
+                raise AuthenticationFailed(
+                    "Votre compte a été suspendu. Contactez votre administrateur."
+                )
+            raise AuthenticationFailed(
+                "Votre compte n'est pas encore activé. Vérifiez votre email pour le lien d'activation."
             )
 
         data["user"] = {
@@ -70,25 +89,38 @@ class JWTLoginView(TokenObtainPairView):
         return response
 
 
+class ActiveTokenRefreshSerializer(TokenRefreshSerializer):
+    """Reject refreshes when the account's current database status is inactive."""
+
+    def validate(self, attrs):
+        refresh = self.token_class(attrs["refresh"])
+        user_id = refresh.payload.get(api_settings.USER_ID_CLAIM)
+        user_model = get_user_model()
+        try:
+            user = user_model.objects.get(**{api_settings.USER_ID_FIELD: user_id})
+        except (user_model.DoesNotExist, TypeError, ValueError):
+            raise InvalidToken("Le compte associé à ce jeton est introuvable.")
+        if not user.can_login:
+            raise InvalidToken("Le compte associé à ce jeton est inactif ou suspendu.")
+        return super().validate(attrs)
+
+
+class ActiveTokenRefreshView(TokenRefreshView):
+    serializer_class = ActiveTokenRefreshSerializer
+
+
 class LogoutView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         refresh = request.data.get("refresh")
 
-        if not refresh:
-            return Response(
-                {"detail": "Refresh token requis."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            token = RefreshToken(refresh)
-            token.blacklist()
-        except Exception:
-            return Response(
-                {"detail": "Token invalide."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if refresh:
+            try:
+                token = RefreshToken(refresh)
+                token.blacklist()
+            except Exception:
+                pass
 
         return Response(
             {"detail": "Déconnexion réussie."},

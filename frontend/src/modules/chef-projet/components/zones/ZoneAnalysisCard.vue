@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
     <div class="flex items-start justify-between mb-3">
       <div class="flex items-center gap-2">
@@ -20,8 +20,8 @@
 
     <div class="grid grid-cols-2 gap-3 mb-3">
       <div class="bg-slate-50 p-2 rounded-lg text-center">
-        <p class="text-[10px] text-gray-500 uppercase">Score IA</p>
-        <p class="font-bold text-or">{{ zone.score.toFixed(1) }}</p>
+        <p class="text-[10px] text-gray-500 uppercase">Score moyen de vulnérabilité</p>
+        <p class="font-bold text-bleu-nuit">{{ zone.score.toFixed(1) }}</p>
       </div>
       <div class="bg-slate-50 p-2 rounded-lg text-center">
         <p class="text-[10px] text-gray-500 uppercase">Bénéficiaires</p>

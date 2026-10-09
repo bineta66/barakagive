@@ -9,16 +9,13 @@ import {
   Landmark,
   BarChart3,
   Receipt,
-  PiggyBank,
   Banknote,
-  Activity,
   FileText,
   Building2,
   CreditCard,
   Smartphone,
-  Cloud,
-  RefreshCw,
-  Sparkles
+  Sparkles,
+  UserCog,
 } from "lucide-vue-next";
 
 export const menusConfig = {
@@ -26,8 +23,8 @@ export const menusConfig = {
     { nom: "Tableau de bord", route: "/super-admin/dashboard", icon: LayoutDashboard },
     { nom: "Demandes ONG", route: "/super-admin/demandes", icon: FileText },
     { nom: "ONG", route: "/super-admin/ongs", icon: Building2 },
+    { nom: "Gérants", route: "/super-admin/gerants", icon: UserCog },
     { nom: "Abonnements", route: "/super-admin/abonnements", icon: CreditCard },
-    { nom: "Statistiques", route: "/super-admin/statistiques", icon: BarChart3 },
   ],
 
   "Chef de projet": [
@@ -43,15 +40,17 @@ export const menusConfig = {
   "Responsable Finance": [
     { nom: "Tableau de bord", route: "/finance/dashboard", icon: LayoutDashboard },
     { nom: "Budgets", route: "/finance/budgets", icon: Wallet },
-    { nom: "Dons & Financements", route: "/finance/dons", icon: Banknote },
+    { nom: "Lignes budgétaires", route: "/finance/lignes-budgetaires", icon: ClipboardList },
+    { nom: "Financements", route: "/finance/financements", icon: Landmark },
+    { nom: "Dons", route: "/finance/dons", icon: Banknote },
     { nom: "Dépenses", route: "/finance/depenses", icon: Receipt },
     { nom: "Justificatifs", route: "/finance/justificatifs", icon: ClipboardList },
-    { nom: "Assistant Financier IA", route: "/finance/ai-assistant", icon: Sparkles },
     { nom: "Rapports financiers", route: "/finance/rapports", icon: BarChart3 },
   ],
 
   "Gérant": [
     { nom: "Tableau de bord", route: "/gerant/dashboard", icon: LayoutDashboard },
+    { nom: "Assistant IA", route: "/gerant/assistant", icon: Sparkles },
     { nom: "Mon ONG", route: "/gerant/mon-ong", icon: Building2 },
     { nom: "Utilisateurs", route: "/gerant/utilisateurs", icon: Users },
     { nom: "Projets", route: "/gerant/projets", icon: FolderKanban },
@@ -62,9 +61,11 @@ export const menusConfig = {
   ],
 
   "Agent de terrain": [
+    { nom: "Tableau de bord", route: "/agent/dashboard", icon: LayoutDashboard },
     { nom: "Mes campagnes", route: "/agent/campagnes", icon: FolderKanban },
-      { nom: "Synchronisation", route: "/agent/synchronisation", icon: Smartphone },
-      { nom: "Profil", route: "/agent/profil", icon: Users },
+    { nom: "Mes zones", route: "/agent/zones", icon: MapPinned },
+    { nom: "Bénéficiaires", route: "/agent/beneficiaires", icon: Users },
+    { nom: "Synchronisation", route: "/agent/synchronisation", icon: Smartphone },
   ],
 };
 

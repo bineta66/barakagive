@@ -1,22 +1,14 @@
-<template>
+﻿<template>
   <div class="relative w-full h-full min-h-[420px] select-none flex flex-col">
     <div class="flex items-center justify-between mb-3 flex-shrink-0 gap-3">
       <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">
         Carte interactive du Sénégal
       </h3>
-      <div class="flex flex-wrap items-center justify-end gap-3 text-xs text-slate-600">
-        <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span> Très élevée (80–100)
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded-full bg-orange-400 inline-block"></span> Élevée (60–79)
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span> Moyenne (40–59)
-        </span>
-        <span class="flex items-center gap-1">
-          <span class="w-3 h-3 rounded-full bg-green-400 inline-block"></span> Faible (0–39)
-        </span>
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-600" aria-label="Légende des niveaux de priorité">
+        <span class="inline-flex items-center gap-1"><i class="h-2.5 w-2.5 rounded-full bg-red-600"></i>Très élevée</span>
+        <span class="inline-flex items-center gap-1"><i class="h-2.5 w-2.5 rounded-full bg-orange-500"></i>Élevée</span>
+        <span class="inline-flex items-center gap-1"><i class="h-2.5 w-2.5 rounded-full bg-yellow-500"></i>Moyenne</span>
+        <span class="inline-flex items-center gap-1"><i class="h-2.5 w-2.5 rounded-full bg-green-600"></i>Faible</span>
       </div>
     </div>
 
@@ -43,7 +35,7 @@
         class="absolute inset-0 z-[500] flex items-center justify-center bg-white/60"
       >
         <div class="bg-white rounded-xl shadow-lg px-5 py-4 text-center">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-or mx-auto mb-2"></div>
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-bleu-nuit mx-auto mb-2"></div>
           <p class="text-sm font-medium text-slate-600">Chargement de la carte...</p>
         </div>
       </div>
@@ -60,11 +52,13 @@ import geoJsonSenegalRaw from "@/data/senegal-regions.geojson?raw";
 
 const props = defineProps({
   regions: { type: Array, default: () => [] },
+  zones: { type: Array, default: () => [] },
   regionSelectionnee: { type: String, default: null },
+  zoneSelectionneeId: { type: String, default: null },
   chargement: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["region-selectionnee"]);
+const emit = defineEmits(["region-selectionnee", "zone-selectionnee"]);
 
 const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw);
 const senegalBounds = L.geoJSON(geoJsonSenegal).getBounds().pad(0.03);
@@ -94,6 +88,10 @@ const DISPLAY_NAMES = {
 let mapInstance = null;
 let geoJsonLayer = null;
 let selectedLayer = null;
+let zoneMarkersLayer = null;
+const zoneMarkers = new Map();
+
+const unavailable = "Information non disponible dans les données fournies.";
 
 function normalizeString(s) {
   if (!s) return "";
@@ -118,39 +116,27 @@ function getRegionData(nomRegion) {
 function getScore(nomRegion) {
   const r = getRegionData(nomRegion);
   if (!r) return null;
+  if (r.couleur === "grey" || r.niveau === "Aucune donnée") return null;
   const score = r.score ?? r.score_region;
   return score == null ? null : Number(score);
 }
 
-function styleForScore(score, selected = false) {
-  let fillColor = "#cbd5e1";
-  let color = "#94a3b8";
-  if (score >= 80) {
-    fillColor = "#ef4444";
-    color = "#b91c1c";
-  } else if (score >= 60) {
-    fillColor = "#fb923c";
-    color = "#c2410c";
-  } else if (score >= 40) {
-    fillColor = "#facc15";
-    color = "#a16207";
-  } else if (score > 0) {
-    fillColor = "#4ade80";
-    color = "#15803d";
-  }
-
+function styleForScore(_score, selected = false) {
+  const score = _score == null ? null : Number(_score);
+  const data = Number.isFinite(score) ? score : null;
+  const fillColor = data == null ? "#cbd5e1" : data >= 80 ? "#d20c4f" : data >= 60 ? "#f97316" : data >= 40 ? "#eab308" : "#16a34a";
   return {
-    color: selected ? "#021427" : color,
-    weight: selected ? 3 : 1.5,
+    color: selected ? "#00313c" : "#64748b",
+    weight: selected ? 3 : 2,
     fillColor,
-    fillOpacity: selected ? 0.75 : 0.55,
+    fillOpacity: data == null ? 0.55 : selected ? 0.82 : 0.68,
   };
 }
 
 function featureStyle(feature) {
   const name = feature?.properties?.shapeName || feature?.properties?.name || "";
   const selected = normalizeString(name) === normalizeString(props.regionSelectionnee);
-  return styleForScore(getScore(name) ?? 0, selected);
+  return styleForScore(getScore(name), selected);
 }
 
 function tooltipHtml(featureName) {
@@ -163,9 +149,9 @@ function tooltipHtml(featureName) {
     score != null
       ? `${score}/100${niveau ? ` — ${niveau}` : ""}`
       : "Aucune donnée";
-  const totalLine = total
+  const totalLine = data
     ? `<div>${total} bénéficiaire${total > 1 ? "s" : ""}</div>`
-    : "";
+    : "<div>Aucun bénéficiaire enregistré</div>";
   return `<strong>${display}</strong><div>${scoreLine}</div>${totalLine}`;
 }
 
@@ -175,6 +161,89 @@ function onFeatureClick(event) {
   if (!propsData) return;
   const raw = propsData.shapeName || propsData.name || "";
   emit("region-selectionnee", displayName(raw));
+}
+
+function validCoordinates(zone) {
+  const latRaw = zone?.latitude ?? zone?.lat;
+  const lngRaw = zone?.longitude ?? zone?.lng;
+  if (latRaw == null || lngRaw == null || String(latRaw).trim() === "" || String(lngRaw).trim() === "") return null;
+  const lat = Number(latRaw);
+  const lng = Number(lngRaw);
+  return Number.isFinite(lat) && Number.isFinite(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+    ? [lat, lng]
+    : null;
+}
+
+function zoneColor(zone) {
+  const score = Number(zone?.score_moyen ?? zone?.score);
+  if (!Number.isFinite(score)) return "#64748b";
+  if (score >= 80) return "#dc2626";
+  if (score >= 60) return "#f97316";
+  if (score >= 40) return "#eab308";
+  return "#16a34a";
+}
+
+function addPopupLine(container, label, value) {
+  const line = document.createElement("p");
+  line.style.margin = "4px 0";
+  const title = document.createElement("strong");
+  title.textContent = `${label} : `;
+  line.append(title, document.createTextNode(value || unavailable));
+  container.append(line);
+}
+
+function popupForZone(zone) {
+  const content = document.createElement("div");
+  const title = document.createElement("strong");
+  title.textContent = zone.nom || "Zone";
+  content.append(title);
+
+  const score = zone.score_moyen ?? zone.score;
+  addPopupLine(content, "Score", score == null ? unavailable : `${score}/100`);
+  addPopupLine(content, "Priorité", zone.priorite_ia || zone.priorite || zone.niveau);
+  addPopupLine(content, "Bénéficiaires", zone.total_beneficiaires == null ? unavailable : String(zone.total_beneficiaires));
+  addPopupLine(content, "Observation IA", zone.observation_ia || zone.observation);
+  addPopupLine(content, "Recommandation", zone.recommandation_ia || zone.recommandation || zone.recommendation);
+  return content;
+}
+
+function renderZoneMarkers() {
+  if (!mapInstance) return;
+  if (zoneMarkersLayer) mapInstance.removeLayer(zoneMarkersLayer);
+  zoneMarkers.clear();
+  zoneMarkersLayer = L.layerGroup();
+
+  for (const zone of props.zones) {
+    const coordinates = validCoordinates(zone);
+    if (!coordinates || !zone.id) continue;
+    const color = zoneColor(zone);
+    const marker = L.circleMarker(coordinates, {
+      radius: zone.id === props.zoneSelectionneeId ? 10 : 7,
+      color: "#ffffff",
+      weight: zone.id === props.zoneSelectionneeId ? 3 : 2,
+      fillColor: color,
+      fillOpacity: 0.95,
+    });
+    marker.bindTooltip(zone.nom || "Zone", { direction: "top", offset: [0, -7] });
+    marker.bindPopup(popupForZone(zone));
+    marker.on("click", () => emit("zone-selectionnee", zone));
+    zoneMarkers.set(String(zone.id), marker);
+    zoneMarkersLayer.addLayer(marker);
+  }
+  zoneMarkersLayer.addTo(mapInstance);
+}
+
+function focusZone(zoneId) {
+  const marker = zoneMarkers.get(String(zoneId));
+  if (!marker || !mapInstance) return;
+  for (const [id, item] of zoneMarkers) {
+    const zone = props.zones.find(entry => String(entry.id) === id);
+    const color = zoneColor(zone);
+    item.setRadius(id === String(zoneId) ? 10 : 7);
+    item.setStyle({ weight: id === String(zoneId) ? 3 : 2, fillColor: color });
+  }
+  mapInstance.setView(marker.getLatLng(), Math.max(mapInstance.getZoom(), 9), { animate: true });
+  marker.openPopup();
 }
 
 function lockToSenegal({ animate = false } = {}) {
@@ -203,7 +272,7 @@ function addGeoJsonLayer() {
       layer.on("click", onFeatureClick);
       layer.on("mouseover", () => {
         if (layer !== selectedLayer) {
-          layer.setStyle({ weight: 2.5, fillOpacity: 0.8 });
+          layer.setStyle({ weight: 2.5, fillOpacity: 0.9 });
         }
       });
       layer.on("mouseout", () => {
@@ -236,7 +305,7 @@ function highlightSelection() {
     const name = layer?.feature?.properties?.shapeName || layer?.feature?.properties?.name || "";
     if (normalizeString(name) === target) {
       selectedLayer = layer;
-      layer.setStyle(styleForScore(getScore(name) ?? 0, true));
+      layer.setStyle(styleForScore(getScore(name), true));
     } else {
       geoJsonLayer.resetStyle(layer);
     }
@@ -254,6 +323,7 @@ function restyleAll() {
 function onMapReady(map) {
   mapInstance = map;
   addGeoJsonLayer();
+  renderZoneMarkers();
   nextTick(() => {
     map.invalidateSize();
     lockToSenegal();
@@ -271,6 +341,22 @@ watch(
 );
 
 watch(
+  () => props.zones,
+  () => {
+    renderZoneMarkers();
+    if (props.zoneSelectionneeId) focusZone(props.zoneSelectionneeId);
+  },
+  { deep: true }
+);
+
+watch(
+  () => props.zoneSelectionneeId,
+  (zoneId) => {
+    if (zoneId) focusZone(zoneId);
+  }
+);
+
+watch(
   () => props.regionSelectionnee,
   () => highlightSelection()
 );
@@ -279,6 +365,7 @@ onUnmounted(() => {
   if (mapInstance && geoJsonLayer) {
     mapInstance.removeLayer(geoJsonLayer);
   }
+  if (mapInstance && zoneMarkersLayer) mapInstance.removeLayer(zoneMarkersLayer);
 });
 </script>
 

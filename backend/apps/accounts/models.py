@@ -68,12 +68,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def can_login(self):
         """
-        L'utilisateur peut se connecter uniquement
-        si son compte est ACTIVE.
+        L'utilisateur peut se connecter si son compte est actif
+        et non suspendu.
         """
         return (
-            self.status == self.Status.ACTIVE
-            and self.is_active
+            self.is_active
+            and self.status != self.Status.SUSPENDED
         )
 
     @property
@@ -98,3 +98,35 @@ class ActivationToken(models.Model):
 
     def __str__(self):
         return f"ActivationToken {self.id} for {self.user.email}"
+
+
+class InAppNotification(models.Model):
+    """Organization-scoped notification delivered inside BarakaGive360."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    recipient = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="in_app_notifications"
+    )
+    organization = models.ForeignKey(
+        "organizations.Organization", on_delete=models.CASCADE, related_name="notifications"
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="created_in_app_notifications",
+    )
+    project = models.ForeignKey(
+        "projects.Project", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="assistant_notifications",
+    )
+    title = models.CharField(max_length=180)
+    message = models.TextField(max_length=2000)
+    source = models.CharField(max_length=40, default="ASSISTANT")
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["recipient", "read_at", "created_at"], name="acct_notif_r_created_idx")]
+
+    def __str__(self):
+        return f"{self.title} -> {self.recipient_id}"

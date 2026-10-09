@@ -1,4 +1,6 @@
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+
+from apps.common.scoping import is_super_admin, object_belongs_to_user_org
 
 
 class IsGerantOrFinanceOrAgent(BasePermission):
@@ -9,7 +11,7 @@ class IsGerantOrFinanceOrAgent(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated
-            and request.user.role in ["GERANT", "CHEF_PROJET", "FINANCE", "AGENT"]
+            and request.user.role in ["SUPER_ADMIN", "GERANT", "CHEF_PROJET", "FINANCE", "AGENT"]
         )
 
 
@@ -27,6 +29,9 @@ class CanManageProject(BasePermission):
         action = getattr(view, "action", None)
         method = request.method
 
+        if request.user.role == "SUPER_ADMIN":
+            return method in SAFE_METHODS
+
         if request.user.role == "AGENT":
             return method in ["GET", "HEAD", "OPTIONS"] or action in ["list", "retrieve"]
         if request.user.role == "FINANCE":
@@ -40,19 +45,41 @@ class CanManageProject(BasePermission):
     def has_object_permission(self, request, view, obj):
         if not request.user.is_authenticated:
             return False
+        if not object_belongs_to_user_org(obj, request.user):
+            return False
         action = getattr(view, "action", None)
         method = request.method
 
+        if is_super_admin(request.user):
+            return True
         if request.user.role == "AGENT":
-            return method in ["GET", "HEAD", "OPTIONS"] or action in ["retrieve"]
+            return method in SAFE_METHODS or action in ["retrieve"]
         if request.user.role == "FINANCE":
             if action == "update_budget" or "budget" in request.path:
                 return True
-            return method in ["GET", "HEAD", "OPTIONS"] or action in ["list", "retrieve"]
+            return method in SAFE_METHODS or action in ["list", "retrieve"]
         if request.user.role == "GERANT":
-            if method in ["PATCH", "PUT", "DELETE"] or action in ["update", "destroy"]:
-                return obj.organization == request.user.organization
             return True
         if request.user.role == "CHEF_PROJET":
-            return method in ["GET", "HEAD", "OPTIONS"] and obj.chef_projet == request.user
+            return method in SAFE_METHODS and obj.chef_projet == request.user
+        return False
+
+
+class CanManageProjectCriteria(BasePermission):
+    """Only a gérant or the assigned project lead may change project criteria."""
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        return request.user.role in ["SUPER_ADMIN", "GERANT", "CHEF_PROJET"]
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+        if request.user.role == "SUPER_ADMIN":
+            return True
+        if request.user.role == "GERANT":
+            return True
+        if request.user.role == "CHEF_PROJET":
+            return obj.projet.chef_projet == request.user
         return False
