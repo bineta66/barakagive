@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div
@@ -23,71 +23,63 @@
     <div v-else class="space-y-6">
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-        <div
-          class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between items-center"
-        >
+        <div class="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-white p-4 shadow-sm">
           <div>
             <p class="text-xs font-bold uppercase text-slate-500">
               Budget total
             </p>
-            <h3 class="text-2xl font-bold text-bleu-nuit mt-1">
+            <h3 class="mt-1 break-words text-2xl font-bold text-sky-700">
               {{ formatMontant(store.dashboard?.budget_total) }}
             </h3>
             <span class="text-xs text-slate-400">FCFA</span>
           </div>
-          <Wallet class="text-bleu-nuit" :size="32" />
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700"><Wallet :size="26" /></span>
         </div>
 
-        <div
-          class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between items-center"
-        >
+        <div class="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-white p-4 shadow-sm">
           <div>
             <p class="text-xs font-bold uppercase text-slate-500">Financements reçus</p>
-            <h3 class="text-2xl font-bold text-emerald-600 mt-1">
+            <h3 class="mt-1 break-words text-2xl font-bold text-emerald-600">
               {{ formatMontant(store.dashboard?.financements_recus) }}
             </h3>
             <span class="text-xs text-slate-400">FCFA</span>
           </div>
-          <HandCoins class="text-bleu-nuit" :size="32" />
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><HandCoins :size="26" /></span>
         </div>
 
-        <div
-          class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between items-center"
-        >
+        <div class="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-white p-4 shadow-sm">
           <div>
             <p class="text-xs font-bold uppercase text-slate-500">
               Dons reçus
             </p>
-            <h3 class="text-2xl font-bold text-emerald-600 mt-1">
+            <h3 class="mt-1 break-words text-2xl font-bold text-orange-600">
               {{ formatMontant(store.dashboard?.dons_recus) }}
             </h3>
             <span class="text-xs text-slate-400">FCFA</span>
           </div>
-          <HandCoins class="text-bleu-nuit" :size="32" />
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600"><HandCoins :size="26" /></span>
         </div>
 
-        <div class="bg-white border border-slate-200/60 rounded-xl p-4 flex justify-between items-center">
+        <div class="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-white p-4 shadow-sm">
           <div>
             <p class="text-xs font-bold uppercase text-slate-500">Dépenses validées</p>
-            <h3 class="text-2xl font-bold text-red-500 mt-1">{{ formatMontant(store.dashboard?.depenses_validees) }}</h3>
+            <h3 class="mt-1 break-words text-2xl font-bold text-rose-600">{{ formatMontant(store.dashboard?.depenses_validees) }}</h3>
             <span class="text-xs text-slate-400">FCFA</span>
           </div>
-          <TrendingDown class="text-bleu-nuit" :size="32" />
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600"><TrendingDown :size="26" /></span>
         </div>
 
-        <div
-          class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between items-center"
-        >
+        <div class="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-slate-200/60 bg-white p-4 shadow-sm">
           <div>
             <p class="text-xs font-bold uppercase text-slate-500">
               Solde disponible
             </p>
-            <h3 class="text-2xl font-bold text-bleu-nuit mt-1">
+            <h3 class="mt-1 break-words text-2xl font-bold text-amber-600">
               {{ formatMontant(store.dashboard?.solde_disponible ?? store.dashboard?.solde) }}
             </h3>
             <span class="text-xs text-slate-400">FCFA</span>
           </div>
-          <PiggyBank class="text-bleu-nuit" :size="32" />
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600"><PiggyBank :size="26" /></span>
         </div>
       </div>
 
@@ -107,7 +99,7 @@
               {{ alert.message }}
             </div>
           </div>
-          <p v-else class="mt-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800">Aucune alerte financière détectée.</p>
+          <p v-else class="mt-4 rounded-lg bg-bleu-accent/10 border border-bleu-accent/20 p-3 text-sm text-bleu-accent font-medium">Aucune alerte financière détectée.</p>
         </div>
       </section>
 
@@ -123,7 +115,7 @@
         </div>
         <div class="bg-white border border-slate-200/60 rounded-xl p-5">
           <div class="flex items-center justify-between"><div><h2 class="text-base font-bold text-slate-900">Exécution budgétaire</h2><p class="text-xs text-slate-500">Calculée à partir des budgets et dépenses validées.</p></div><span class="text-xl font-extrabold text-bleu-nuit">{{ store.dashboard?.execution_budgetaire?.taux_execution ?? 0 }}%</span></div>
-          <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-emerald-600 transition-all" :style="{ width: `${Math.min(100, store.dashboard?.execution_budgetaire?.taux_execution || 0)}%` }" /></div>
+          <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-bleu-accent transition-all" :style="{ width: `${Math.min(100, store.dashboard?.execution_budgetaire?.taux_execution || 0)}%` }" /></div>
           <div class="mt-3 flex flex-wrap justify-between gap-2 text-xs text-slate-600"><span>Prévu : {{ formatMontant(store.dashboard?.execution_budgetaire?.budget_prevu) }} FCFA</span><span>Validé : {{ formatMontant(store.dashboard?.execution_budgetaire?.depenses_validees) }} FCFA</span><span>Disponible : {{ formatMontant(store.dashboard?.execution_budgetaire?.disponible) }} FCFA</span></div>
           <p v-if="store.dashboard?.execution_budgetaire?.budget_revise == null" class="mt-2 text-[11px] text-slate-400">Aucun budget révisé enregistré.</p>
         </div>
@@ -245,7 +237,7 @@
                 <td
                   class="px-6 py-3.5 font-semibold"
                   :class="
-                    item.type === 'Don' ? 'text-emerald-600' : 'text-red-500'
+                    item.type === 'Don' ? 'text-bleu-accent' : 'text-rose-baraka'
                   "
                 >
                   {{ item.type === "Don" ? "+" : "-"
@@ -298,9 +290,9 @@ const fundingStatusLabel = (key) => ({ PREVU: "Prévus", CONFIRME: "Confirmés",
 
 const tauxColor = computed(() => {
   const t = store.dashboard?.taux_execution ?? 0;
-  if (t >= 90) return "bg-red-500";
+  if (t >= 90) return "bg-rose-baraka";
   if (t >= 70) return "bg-bleu-nuit";
-  return "bg-emerald-500";
+  return "bg-bleu-accent";
 });
 
 // ── Donut répartition financière ─────────────────────────────────

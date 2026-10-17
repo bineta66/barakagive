@@ -39,6 +39,8 @@ class ReverseGeocodeResponseSerializer(serializers.Serializer):
 
     departement = serializers.CharField()
 
+    departements = serializers.ListField(child=serializers.CharField(), required=False)
+
     latitude = serializers.DecimalField(max_digits=10, decimal_places=7)
 
     longitude = serializers.DecimalField(max_digits=10, decimal_places=7)
@@ -46,6 +48,7 @@ class ReverseGeocodeResponseSerializer(serializers.Serializer):
 
 class ZoneSerializer(serializers.ModelSerializer):
     region_nom = serializers.CharField(source="region.nom", read_only=True)
+    departement_nom = serializers.CharField(source="departement.nom", read_only=True)
 
     def to_internal_value(self, data):
         data = data.copy() if hasattr(data, "copy") else dict(data)
@@ -75,6 +78,21 @@ class ZoneSerializer(serializers.ModelSerializer):
                             data["departement"] = department.pk
                 except (InvalidOperation, TypeError, ValueError):
                     pass
+
+        raw_dept = data.get("departement")
+        if isinstance(raw_dept, str) and raw_dept.strip() and not raw_dept.strip().isdigit():
+            reg_id = data.get("region")
+            reg_obj = Region.objects.filter(pk=reg_id).first() if reg_id else None
+            if reg_obj:
+                dept_obj = Department.objects.filter(nom__iexact=raw_dept.strip(), region=reg_obj).first()
+                if not dept_obj:
+                    dept_obj, _ = Department.objects.get_or_create(
+                        nom=raw_dept.strip(),
+                        region=reg_obj,
+                        defaults={"geometrie": reg_obj.geometrie},
+                    )
+                if dept_obj:
+                    data["departement"] = dept_obj.pk
 
         return super().to_internal_value(data)
 
@@ -107,6 +125,7 @@ class ZoneSerializer(serializers.ModelSerializer):
             "region",
             "region_nom",
             "departement",
+            "departement_nom",
             "latitude",
             "longitude",
             "location",
@@ -166,22 +185,61 @@ class ZoneCreateSerializer(serializers.ModelSerializer):
         region_name = (validated_data.pop("region", "") or "").strip()
         department_name = (validated_data.pop("departement", "") or "").strip()
 
-        department_query = Department.objects.select_related("region")
-        if department_name:
-            department_query = department_query.filter(nom__iexact=department_name)
+        department = None
+
+        # 1. Try exact spatial match: department whose geometry contains the point
+        dept_qs = Department.objects.select_related("region").filter(geometrie__contains=location)
         if region_name:
-            department_query = department_query.filter(region__nom__iexact=region_name)
-        department = department_query.filter(geometrie__contains=location).first()
+            dept_qs = dept_qs.filter(region__nom__iexact=region_name)
+        department = dept_qs.first()
+
+        # 2. Fallback: find department by name (ignore geometry)
         if department is None and department_name:
-            department = department_query.first()
+            dept_qs2 = Department.objects.select_related("region").filter(nom__iexact=department_name)
+            if region_name:
+                dept_qs2 = dept_qs2.filter(region__nom__iexact=region_name)
+            department = dept_qs2.first()
+
+        # 3. Match or create for the specified region
+        if department is None and region_name:
+            from django.contrib.gis.geos import GEOSGeometry
+            default_geom = GEOSGeometry("POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))", srid=4326)
+            region_obj = Region.objects.filter(nom__iexact=region_name).first()
+            if not region_obj:
+                region_obj, _ = Region.objects.get_or_create(
+                    nom=region_name,
+                    defaults={"geometrie": default_geom},
+                )
+            target_dept_name = department_name if department_name else region_obj.nom
+            department = Department.objects.filter(nom__iexact=target_dept_name, region=region_obj).first()
+            if department is None:
+                department, _ = Department.objects.get_or_create(
+                    nom=target_dept_name,
+                    region=region_obj,
+                    defaults={"geometrie": region_obj.geometrie or default_geom},
+                )
+
+        # 4. Try any department in DB whose region geometry contains the point
+        if department is None:
+            region_by_geom = Region.objects.filter(geometrie__contains=location).first()
+            if region_by_geom:
+                target_dept_name = department_name if department_name else region_by_geom.nom
+                department = Department.objects.filter(nom__iexact=target_dept_name, region=region_by_geom).first()
+                if department is None:
+                    department, _ = Department.objects.get_or_create(
+                        nom=target_dept_name,
+                        region=region_by_geom,
+                        defaults={"geometrie": region_by_geom.geometrie},
+                    )
+
         if department is None:
             raise serializers.ValidationError({
-                "departement": "Sélectionnez un département valide correspondant au point choisi."
+                "departement": (
+                    "Aucune région reconnue pour ce point. "
+                    "Assurez-vous de cliquer dans les limites du Sénégal."
+                )
             })
-        if region_name and department.region.nom.casefold() != region_name.casefold():
-            raise serializers.ValidationError({
-                "region": "Le département sélectionné n'appartient pas à cette région."
-            })
+
         validated_data["region"] = department.region
         validated_data["departement"] = department
         validated_data["location"] = location

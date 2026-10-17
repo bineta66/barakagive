@@ -61,3 +61,24 @@ class AssistantInteraction(models.Model):
 
     def __str__(self):
         return f"Assistant interaction {self.id} ({self.user_id})"
+
+
+class ProjectCreationSession(models.Model):
+    """Server-owned draft for a conversational project creation flow."""
+
+    conversation_id = models.UUIDField()
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    organization = models.ForeignKey("organizations.Organization", on_delete=models.CASCADE)
+    state = models.JSONField(default=dict)
+    project = models.ForeignKey(
+        "projects.Project", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="assistant_creation_sessions",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=("conversation_id", "user"), name="ia_project_session_user_uniq"),
+        ]
+        ordering = ["-updated_at"]

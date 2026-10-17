@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <aside class="w-64 min-h-screen bg-bleu-nuit/80 backdrop-blur-2xl flex flex-col justify-between">
     <!-- Haut : Logo + Menu -->
     <div>
@@ -43,6 +43,7 @@
           v-for="item in menus"
           :key="item.nom"
           :to="item.route"
+          @click="$emit('close')"
           class="flex items-center gap-3 h-12 px-4 rounded-xl transition-all duration-300"
           :class="
             route.path === item.route ||

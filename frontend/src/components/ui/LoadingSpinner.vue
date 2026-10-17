@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col items-center justify-center p-8 space-y-3" :class="containerClass">
     <div
-      class="animate-spin rounded-full border-4 border-solid border-slate-200 border-t-amber-600"
+      class="animate-spin rounded-full border-4 border-solid border-slate-200 border-t-bleu-accent"
       :class="spinnerSizeClass"
     ></div>
     <p v-if="message" class="text-sm font-medium text-slate-600">{{ message }}</p>

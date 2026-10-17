@@ -11,7 +11,7 @@
         </button>
         <div>
           <div class="flex items-center gap-3 flex-wrap">
-            <h1 class="text-4xl font-bold text-bleu-nuit">
+            <h1 class="text-3xl font-bold text-bleu-nuit">
               Bénéficiaires — {{ zoneInfo?.nom || zoneName || "Zone" }}
             </h1>
             <span

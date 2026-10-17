@@ -7,7 +7,7 @@
         </span>
         <div>
           <p class="font-semibold text-bleu-nuit text-sm">{{ zone.name }}</p>
-          <p class="text-[11px] text-gray-500">{{ zone.region }} · {{ zone.departement }}</p>
+          <p class="text-[11px] text-gray-500">{{ regionName(zone) }} · {{ zone.departement_nom || zone.departement?.nom || zone.departement }}</p>
         </div>
       </div>
       <span
@@ -33,6 +33,7 @@
 
 <script setup>
 import { computed } from "vue"
+import { regionName } from "@/modules/chef-projet/utils/regionName.js"
 
 const props = defineProps({
   zone: {

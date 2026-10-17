@@ -1,9 +1,9 @@
 <template>
-  <div class="p-6 space-y-6 bg-white min-h-screen">
+  <div class="min-w-0 space-y-6 bg-white p-4 sm:p-6 min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-bleu-nuit">Finances</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit sm:text-4xl">Finances</h1>
         <p class="text-xs text-gray-500 mt-1">
           Consultation en lecture seule des indicateurs financiers.
         </p>
@@ -77,7 +77,7 @@
     </div>
 
     <!-- KPI Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <div
         class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between"
       >
@@ -86,7 +86,7 @@
             Budget total alloué
           </p>
           <h3 class="text-xl font-bold text-bleu-nuit mt-2">
-            {{ formatMontant(statistiques.budgetTotal) }} FCFA
+            {{ formatMontant(financeStore.dashboard?.budget_total ?? statistiques.budgetTotal) }} FCFA
           </h3>
         </div>
         <PiggyBank class="text-bleu-nuit" :size="28" />
@@ -100,7 +100,7 @@
             Dépenses réalisées
           </p>
           <h3 class="text-xl font-bold text-bleu-nuit mt-2">
-            {{ formatMontant(statistiques.budgetEngage) }} FCFA
+            {{ formatMontant(financeStore.dashboard?.depenses_validees ?? 0) }} FCFA
           </h3>
         </div>
         <Receipt class="text-bleu-nuit" :size="28" />
@@ -114,189 +114,45 @@
             Solde disponible
           </p>
           <h3 class="text-xl font-bold text-bleu-nuit mt-2">
-            {{ formatMontant(statistiques.soldeDisponible) }} FCFA
+            {{ formatMontant(financeStore.dashboard?.solde_tresorerie ?? 0) }} FCFA
           </h3>
         </div>
         <Banknote class="text-bleu-nuit" :size="28" />
       </div>
 
-      <div
-        class="bg-white border border-slate-200/60 shadow-xs rounded-xl p-4 flex justify-between"
-      >
-        <div>
-          <p class="text-xs font-bold uppercase text-slate-900">
-            Taux d'exécution
-          </p>
-          <h3 class="text-xl font-bold text-bleu-nuit mt-2">
-            {{ statistiques.tauxExecution }}%
-          </h3>
-        </div>
-        <Activity class="text-bleu-nuit" :size="28" />
-      </div>
     </div>
 
-    <!-- Trajectoire budgétaire - read-only chart -->
-    <div class="bg-white border border-slate-200/60 rounded-xl p-6">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h3 class="text-sm font-bold uppercase text-slate-900">
-            Trajectoire budgétaire et dépenses (2025)
-          </h3>
-          <p class="text-xs text-gray-500 mt-1">
-            Progression mensuelle cumulée (en FCFA)
-          </p>
-        </div>
-      </div>
+    <div v-if="financeStore.loading && !financeStore.dashboard" class="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">Chargement des données financières…</div>
+    <section v-if="financeStore.dashboard" class="grid min-w-0 gap-4 xl:grid-cols-2" aria-label="Analyses financières">
+      <article class="min-w-0 rounded-xl border border-slate-200/60 bg-white p-4 sm:p-6 xl:col-span-2">
+        <h2 class="text-sm font-bold uppercase text-slate-900">Évolution mensuelle des flux financiers</h2>
+        <p class="mt-1 text-xs text-gray-500">Comparez les financements et dons reçus aux dépenses validées. Survolez un point pour voir le montant exact.</p>
+        <DashboardChart v-if="evolutionChart.labels.length" class="mt-4" type="line" :data="evolutionChart" :height="300" value-format="currency" />
+        <p v-else class="py-10 text-center text-sm text-slate-500">Aucun mouvement financier sur cette période.</p>
+      </article>
 
-      <div class="h-80">
-        <svg
-          :width="chartWidth"
-          :height="chartHeight"
-          class="w-full h-full"
-          viewBox="0 0 800 320"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <!-- Grid lines -->
-          <g
-            v-for="i in 6"
-            :key="`grid-${i}`"
-            stroke="#e2e8f0"
-            stroke-width="1"
-          >
-            <line
-              :x1="marginLeft"
-              :y1="marginTop + (i - 1) * yAxisStep"
-              :x2="chartWidth - marginRight"
-              :y2="marginTop + (i - 1) * yAxisStep"
-            />
-          </g>
+      <article class="min-w-0 rounded-xl border border-slate-200/60 bg-white p-4 sm:p-6">
+        <h2 class="text-sm font-bold uppercase text-slate-900">Dépenses validées par catégorie</h2>
+        <p class="mt-1 text-xs text-gray-500">Répartition basée sur les dépenses approuvées enregistrées.</p>
+        <DashboardChart v-if="categoryChart.labels.length" class="mt-4" type="bar" :data="categoryChart" :height="280" horizontal value-format="currency" />
+        <p v-else class="py-10 text-center text-sm text-slate-500">Aucune dépense validée enregistrée.</p>
+      </article>
 
-          <!-- Budget curve -->
-          <polyline
-            :points="budgetPoints"
-            fill="none"
-            stroke="#0369A8"
-            stroke-width="3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+      <article class="min-w-0 rounded-xl border border-slate-200/60 bg-white p-4 sm:p-6">
+        <h2 class="text-sm font-bold uppercase text-slate-900">Financements reçus par bailleur</h2>
+        <p class="mt-1 text-xs text-gray-500">Montants confirmés comme reçus dans la base.</p>
+        <DashboardChart v-if="bailleurChart.labels.length" class="mt-4" type="bar" :data="bailleurChart" :height="280" horizontal value-format="currency" />
+        <p v-else class="py-10 text-center text-sm text-slate-500">Aucun financement reçu par bailleur.</p>
+      </article>
 
-          <!-- Dépenses curve -->
-          <polyline
-            :points="depensesPoints"
-            fill="none"
-            stroke="#744D03"
-            stroke-width="3"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+      <article class="min-w-0 rounded-xl border border-slate-200/60 bg-white p-4 sm:p-6 xl:col-span-2">
+        <h2 class="text-sm font-bold uppercase text-slate-900">Budget et dépenses par budget de projet</h2>
+        <p class="mt-1 text-xs text-gray-500">Comparaison des montants alloués, dépensés et encore disponibles.</p>
+        <DashboardChart v-if="budgetChart.labels.length" class="mt-4" type="bar" :data="budgetChart" :height="Math.max(260, Math.min(460, budgetChart.labels.length * 52))" horizontal value-format="currency" />
+        <p v-else class="py-10 text-center text-sm text-slate-500">Aucun budget enregistré.</p>
+      </article>
+    </section>
 
-          <!-- Budget data points -->
-          <g v-for="(item, i) in dataMensuelle" :key="`budget-${i}`">
-            <circle
-              :cx="pointX(i)"
-              :cy="pointY(item.budget)"
-              r="5"
-              fill="#0369A8"
-              stroke="white"
-              stroke-width="2"
-            />
-          </g>
-
-          <!-- Dépenses data points -->
-          <g v-for="(item, i) in dataMensuelle" :key="`depenses-${i}`">
-            <circle
-              :cx="pointX(i)"
-              :cy="pointY(item.depenses)"
-              r="5"
-              fill="#744D03"
-              stroke="white"
-              stroke-width="2"
-            />
-          </g>
-
-          <!-- Month labels -->
-          <g v-for="(item, i) in dataMensuelle" :key="`label-${i}`">
-            <text
-              :x="pointX(i)"
-              :y="chartHeight - 8"
-              class="text-xs font-semibold"
-              :class="
-                i === dataMensuelle.length - 1
-                  ? 'text-or'
-                  : 'text-gray-500'
-              "
-              text-anchor="middle"
-            >
-              {{ item.mois }}
-            </text>
-          </g>
-        </svg>
-      </div>
-
-      <div class="flex justify-start items-center gap-4 mt-4">
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 bg-bleu-nuit rounded-full"></div>
-          <span class="text-slate-600 text-xs">Budget</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 bg-bleu-nuit rounded-full"></div>
-          <span class="text-slate-600 text-xs">Dépenses</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Répartition des projets par région -->
-    <div class="bg-white border border-slate-200/60 rounded-xl overflow-hidden">
-      <div class="px-6 py-4">
-        <h3 class="text-sm font-bold uppercase text-slate-900">
-          Répartition des projets par région
-        </h3>
-        <p class="text-xs text-gray-500 mt-1">
-          {{ store.projets.length }} projet(s) géré(s)
-        </p>
-      </div>
-
-      <table class="w-full">
-        <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
-          <tr>
-            <th class="text-left px-4 py-3">Projet</th>
-            <th class="text-left px-4 py-3">Région</th>
-            <th class="text-right px-4 py-3">Budget</th>
-            <th class="text-left px-4 py-3">Chef de projet</th>
-            <th class="text-left px-4 py-3">Statut</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="projet in store.projets"
-            :key="projet.id"
-            class="border-t hover:bg-slate-50"
-          >
-            <td class="px-4 py-3">
-              <h3 class="font-semibold text-sm text-slate-800">
-                {{ projet.nom }}
-              </h3>
-              <p class="text-xs text-gray-500">{{ projet.code }}</p>
-            </td>
-            <td class="px-4 py-3 text-sm text-slate-700">
-              {{ projet.region }}
-            </td>
-            <td class="px-4 text-right text-sm font-semibold text-slate-900">
-              {{ formatMontant(projet.budget) }} FCFA
-            </td>
-            <td class="px-4 py-3 text-sm text-slate-700">
-              {{ projet.chefProjet }}
-            </td>
-            <td class="px-4 py-3">
-              <StatusBadge :statut="projet.statut">{{
-                projet.statut
-              }}</StatusBadge>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
 </template>
 
@@ -307,15 +163,17 @@ import {
   Receipt,
   Banknote,
   Activity,
+  HandCoins,
   RefreshCw,
   Check,
   X,
 } from "lucide-vue-next";
 import { useGerantStore } from "@/modules/gerant/stores/gerantStore.js";
-import { useZoneStore } from "@/stores/zone.js";
+import { useFinanceStore } from "@/modules/finance/stores/financeStore.js";
+import DashboardChart from "@/components/ui/DashboardChart.vue";
 
 const store = useGerantStore();
-const zoneStore = useZoneStore();
+const financeStore = useFinanceStore();
 const { formatMontant } = store;
 
 // Budgets en attente d'approbation
@@ -355,117 +213,61 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString("fr-FR");
 };
 
-onMounted(async () => {
-  await refreshBudgets();
-});
-
 const statistiques = computed(() => store.statistiques);
-
-const firstGerantCampaignId = computed(() => store.campaigns?.[0]?.id || null);
-const firstGerantProjetId = computed(() => {
-  const first = store.campaigns?.[0];
-  return (
-    first?.projet?.id || first?.projet_id || store.projets?.[0]?.id || null
-  );
+const evolutionChart = computed(() => {
+  const rows = financeStore.dashboard?.evolution || [];
+  return {
+    labels: rows.map((row) => {
+      const [year, month] = (row.key || '').split('-').map(Number);
+      if (!year || !month) return row.label;
+      const label = new Date(year, month - 1, 1).toLocaleDateString('fr-FR', { month: 'short' });
+      return month === 1 ? `${label} ${year}` : label;
+    }),
+    datasets: [
+      { label: "Financements reçus", data: rows.map((row) => Number(row.financements_recus || 0)), borderColor: "#0369A8", backgroundColor: "rgba(3,105,168,.08)", fill: false },
+      { label: "Dons reçus", data: rows.map((row) => Number(row.dons_recus || 0)), borderColor: "#16a34a", backgroundColor: "rgba(22,163,74,.08)", fill: false },
+      { label: "Dépenses validées", data: rows.map((row) => Number(row.depenses_validees || 0)), borderColor: "#D20C4F", backgroundColor: "rgba(210,12,79,.08)", fill: false },
+    ],
+  };
 });
-const zonesForGerantIA = computed(() =>
-  zoneStore.zones.map((z) => ({
-    nom: z.nom,
-    urgence: "Moyenne",
-    score_total: z.score_total || 0,
-    beneficiaires_prioritaires: z.nombre_beneficiaires || 0,
-    top5: z.top5 || [],
-  }))
-);
 
-const chartWidth = 800;
-const chartHeight = 320;
-const marginLeft = 60;
-const marginRight = 24;
-const marginTop = 24;
-const marginBottom = 32;
-const yAxisStep = (chartHeight - marginTop - marginBottom) / 5;
+const categoryChart = computed(() => {
+  const rows = (financeStore.dashboard?.depenses?.par_categorie || []).slice(0, 8);
+  return {
+    labels: rows.map((row) => row.categorie || "Sans catégorie"),
+    datasets: [{ label: "Dépenses validées", data: rows.map((row) => Number(row.montant || 0)), backgroundColor: "#D20C4F" }],
+  };
+});
 
-// Use finance store for real chart data
-import { useFinanceStore } from "@/modules/finance/stores/financeStore.js";
-const financeStore = useFinanceStore();
+const bailleurChart = computed(() => {
+  const rows = (financeStore.dashboard?.financements?.par_bailleur || []).slice(0, 8);
+  return {
+    labels: rows.map((row) => row.bailleur__nom || "Bailleur inconnu"),
+    datasets: [{ label: "Financements reçus", data: rows.map((row) => Number(row.montant || 0)), backgroundColor: "#0369A8" }],
+  };
+});
+
+const budgetChart = computed(() => {
+  const byProject = new Map();
+  for (const budget of financeStore.dashboard?.execution_budgetaire?.par_budget || []) {
+    const row = byProject.get(budget.projet) || { projet: budget.projet, budget_prevu: 0, depenses_validees: 0, disponible: 0 };
+    row.budget_prevu += Number(budget.budget_prevu || 0);
+    row.depenses_validees += Number(budget.depenses_validees || 0);
+    row.disponible += Number(budget.disponible || 0);
+    byProject.set(budget.projet, row);
+  }
+  const rows = [...byProject.values()].sort((a, b) => b.budget_prevu - a.budget_prevu).slice(0, 8);
+  return {
+    labels: rows.map((row) => row.projet),
+    datasets: [
+      { label: "Budget alloué", data: rows.map((row) => Number(row.budget_prevu || 0)), backgroundColor: "#0369A8" },
+      { label: "Dépenses validées", data: rows.map((row) => Number(row.depenses_validees || 0)), backgroundColor: "#D20C4F" },
+      { label: "Disponible après engagements", data: rows.map((row) => Number(row.disponible || 0)), backgroundColor: "#94a3b8" },
+    ],
+  };
+});
 
 onMounted(async () => {
-  await financeStore.fetchExpenses();
-  await financeStore.fetchBudgets();
-});
-
-const dataMensuelle = computed(() => {
-  const moisNoms = ["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"];
-  const anneeEnCours = new Date().getFullYear();
-  
-  // Initialiser les données pour chaque mois
-  let donnees = Array(12).fill(0).map((_, i) => ({
-    mois: moisNoms[i],
-    budget: 0,
-    depenses: 0
-  }));
-
-  // Agréger les budgets
-  const budgets = financeStore.budgets || [];
-  budgets.forEach(b => {
-    if (!b.date_creation) return;
-    const date = new Date(b.date_creation);
-    if (date.getFullYear() === anneeEnCours) {
-      donnees[date.getMonth()].budget += parseFloat(b.montant) || 0;
-    }
-  });
-
-  // Agréger les dépenses
-  const depenses = financeStore.depenses || [];
-  depenses.forEach(d => {
-    if (!d.date) return;
-    const date = new Date(d.date);
-    if (date.getFullYear() === anneeEnCours) {
-      donnees[date.getMonth()].depenses += parseFloat(d.montant) || 0;
-    }
-  });
-  
-  let maxVal = 0;
-  donnees.forEach(d => {
-    if (d.budget > maxVal) maxVal = d.budget;
-    if (d.depenses > maxVal) maxVal = d.depenses;
-  });
-  
-  if (maxVal > 0) {
-    donnees = donnees.map(d => ({
-      mois: d.mois,
-      budget: (d.budget / maxVal) * 100,
-      depenses: (d.depenses / maxVal) * 100,
-      valeurReelleBudget: d.budget,
-      valeurReelleDepenses: d.depenses
-    }));
-  }
-
-  const moisActuel = new Date().getMonth();
-  return donnees.slice(0, Math.min(moisActuel + 2, 12));
-});
-
-const chartAreaWidth = chartWidth - marginLeft - marginRight;
-const chartAreaHeight = chartHeight - marginTop - marginBottom;
-
-const pointX = (i) => {
-  return marginLeft + (i / (dataMensuelle.value.length - 1)) * chartAreaWidth;
-};
-
-const pointY = (value) => {
-  return marginTop + chartAreaHeight - (value / 100) * chartAreaHeight;
-};
-
-const budgetPoints = computed(() => {
-  return dataMensuelle.value
-    .map((item, i) => `${pointX(i)},${pointY(item.budget)}`)
-    .join(" ");
-});
-
-const depensesPoints = computed(() => {
-  return dataMensuelle.value
-    .map((item, i) => `${pointX(i)},${pointY(item.depenses)}`)
-    .join(" ");
+  await Promise.allSettled([refreshBudgets(), financeStore.fetchDashboard()]);
 });
 </script>

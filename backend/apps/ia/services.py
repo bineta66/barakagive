@@ -108,7 +108,7 @@ def compute_region_zones_data(campaign: Campaign, region_name: str) -> dict:
             "zone_id": str(zone.id),
             "nom": zone.nom,
             "name": zone.nom,
-            "region": zone.region,
+            "region": zone.region.nom if zone.region_id else "",
             "departement": zone.departement or zone.nom,
             "score": round(score, 1),
             "score_total": round(score, 1),
@@ -192,7 +192,7 @@ def get_zone_beneficiaries_detail(campaign: Campaign, zone_id: str) -> dict:
     return {
         "zone_id": str(zone.id),
         "zone_name": zone.nom,
-        "region": zone.region,
+        "region": zone.region.nom if zone.region_id else "",
         "departement": zone.departement,
         "beneficiaries_count": beneficiaries.count(),
         "top5_beneficiaries": top5,

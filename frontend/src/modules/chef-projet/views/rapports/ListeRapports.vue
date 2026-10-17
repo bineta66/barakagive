@@ -211,7 +211,7 @@
                   cy="50"
                   r="38"
                   fill="transparent"
-                  stroke="#744D03"
+                  stroke="#f97316"
                   stroke-width="18"
                   :stroke-dasharray="`${genreFDash} ${genreCirc}`"
                 />
@@ -221,7 +221,7 @@
                   cy="50"
                   r="38"
                   fill="transparent"
-                  stroke="#021427"
+                  stroke="#16a34a"
                   stroke-width="18"
                   :stroke-dasharray="`${genreMDash} ${genreCirc}`"
                   :stroke-dashoffset="`-${genreFDash}`"
@@ -239,7 +239,7 @@
             <!-- Légende -->
             <div class="space-y-3">
               <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-bleu-nuit"></div>
+                <div class="w-3 h-3 rounded-full bg-green-600"></div>
                 <div>
                   <p class="text-sm font-bold text-bleu-nuit">
                     {{ dashboard?.beneficiaires_par_genre?.M || 0 }}
@@ -248,7 +248,7 @@
                 </div>
               </div>
               <div class="flex items-center gap-2">
-                <div class="w-3 h-3 rounded-full bg-bleu-nuit"></div>
+                <div class="w-3 h-3 rounded-full bg-orange-500"></div>
                 <div>
                   <p class="text-sm font-bold text-bleu-nuit">
                     {{ dashboard?.beneficiaires_par_genre?.F || 0 }}
@@ -260,7 +260,7 @@
                 v-if="dashboard?.beneficiaires_par_genre?.AUTRE"
                 class="flex items-center gap-2"
               >
-                <div class="w-3 h-3 rounded-full bg-slate-300"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div>
                   <p class="text-sm font-bold text-slate-600">
                     {{ dashboard.beneficiaires_par_genre.AUTRE }}
@@ -337,7 +337,7 @@
                 >{{ item.count }}</span
               >
               <div
-                class="w-full bg-bleu-nuit rounded-t transition-all duration-700 hover:bg-bleu-nuit"
+                class="w-full bg-green-600 rounded-t transition-all duration-700 hover:bg-green-700"
                 :style="{
                   height: `${
                     benMaxCount
@@ -409,11 +409,13 @@
                   <div
                     class="h-2 rounded-full transition-all duration-700"
                     :class="
-                      p.taux_execution >= 80
-                        ? 'bg-green-500'
+                      p.taux_execution >= 100
+                        ? 'bg-red-600'
+                        : p.taux_execution >= 80
+                        ? 'bg-green-600'
                         : p.taux_execution >= 50
-                        ? 'bg-bleu-nuit'
-                        : 'bg-bleu-nuit'
+                        ? 'bg-yellow-500'
+                        : 'bg-orange-500'
                     "
                     :style="{ width: `${Math.min(100, p.taux_execution)}%` }"
                   ></div>
@@ -430,7 +432,7 @@
                 </div>
                 <div class="bg-slate-100 rounded-full h-2 overflow-hidden">
                   <div
-                    class="h-2 rounded-full bg-slate-400 transition-all duration-700"
+                    class="h-2 rounded-full bg-orange-500 transition-all duration-700"
                     :style="{ width: `${Math.min(100, p.avancement_temps)}%` }"
                   ></div>
                 </div>
@@ -573,7 +575,7 @@
               }}</span>
               <div class="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
                 <div
-                  class="h-2 rounded-full bg-bleu-nuit transition-all duration-700"
+                  class="h-2 rounded-full bg-[#00313C] transition-all duration-700"
                   :style="{
                     width: `${
                       rapportBenef?.resume?.total
@@ -769,7 +771,7 @@
             </p>
             <div class="bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
               <div
-                class="h-1.5 rounded-full bg-bleu-nuit transition-all duration-700"
+                class="h-1.5 rounded-full bg-yellow-500 transition-all duration-700"
                 :style="{
                   width: `${Math.min(
                     100,
@@ -807,7 +809,7 @@
                   {{ formatMontant(item.montant) }}
                 </span>
                 <div
-                  class="w-full bg-bleu-nuit rounded-t transition-all duration-700 hover:bg-bleu-nuit"
+                  class="w-full bg-red-600 rounded-t transition-all duration-700 hover:bg-red-700"
                   :style="{
                     height: `${
                       financeMaxMontant
@@ -853,7 +855,7 @@
                   </div>
                   <div class="bg-slate-100 rounded-full h-1.5 overflow-hidden">
                     <div
-                      class="h-1.5 rounded-full bg-bleu-nuit"
+                      class="h-1.5 rounded-full bg-red-600"
                       :style="{
                         width: `${
                           financeTopMax
@@ -1071,8 +1073,8 @@ function statutCampagneLabel(s) {
 function statutCampagneClass(s) {
   const map = {
     EN_COURS: "bg-green-100 text-green-700",
-    PLANIFIER: "bg-bleu-accent/10 text-or",
-    TERMINE: "bg-slate-100 text-slate-600",
+    PLANIFIER: "bg-yellow-100 text-yellow-700",
+    TERMINE: "bg-green-100 text-green-700",
     ANNULEE: "bg-red-100 text-red-700",
     BROUILLON: "bg-yellow-100 text-yellow-700",
   };
@@ -1081,8 +1083,8 @@ function statutCampagneClass(s) {
 function statutCampagneBarre(s) {
   const map = {
     EN_COURS: "bg-green-500",
-    PLANIFIER: "bg-bleu-accent",
-    TERMINE: "bg-slate-400",
+    PLANIFIER: "bg-yellow-500",
+    TERMINE: "bg-green-500",
     ANNULEE: "bg-red-400",
     BROUILLON: "bg-yellow-400",
   };
@@ -1097,7 +1099,7 @@ function scoreBarClass(label) {
   const map = {
     "0–25": "bg-green-500",
     "26–50": "bg-yellow-400",
-    "51–75": "bg-bleu-nuit",
+    "51–75": "bg-orange-500",
     "76–100": "bg-red-500",
   };
   return map[label] || "bg-slate-400";

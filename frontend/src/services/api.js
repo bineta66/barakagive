@@ -1,5 +1,6 @@
 import axios from "axios"
 import { showServerValidationErrors } from "./liveFormValidation"
+import { clearAssistantHistoryStorage } from "./assistantHistory.js"
 
 const baseURL = import.meta.env.VITE_API_URL || ""
 
@@ -91,6 +92,7 @@ api.interceptors.response.use(
         localStorage.removeItem("accessToken")
         localStorage.removeItem("refreshToken")
         localStorage.removeItem("user")
+        clearAssistantHistoryStorage()
         if (typeof window !== "undefined" && window.location.pathname !== "/connexion") {
           window.location.href = "/connexion"
         }
@@ -116,6 +118,7 @@ api.interceptors.response.use(
         localStorage.removeItem("accessToken")
         localStorage.removeItem("refreshToken")
         localStorage.removeItem("user")
+        clearAssistantHistoryStorage()
         if (typeof window !== "undefined" && window.location.pathname !== "/connexion") {
           window.location.href = "/connexion"
         }

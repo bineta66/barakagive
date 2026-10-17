@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div
@@ -52,7 +52,7 @@
           <p class="text-xs font-bold uppercase text-slate-500">
             Solde disponible
           </p>
-          <h3 class="text-2xl font-bold text-emerald-600 mt-1">
+          <h3 class="text-2xl font-bold text-bleu-accent mt-1">
             {{ formatMontant(totalSolde) }}
             <span class="text-sm font-normal text-slate-400">FCFA</span>
           </h3>
@@ -118,7 +118,7 @@
               </td>
               <td
                 class="px-6 py-4 font-bold"
-                :class="budget.solde >= 0 ? 'text-emerald-600' : 'text-red-500'"
+                :class="budget.solde >= 0 ? 'text-bleu-accent' : 'text-rose-baraka'"
               >
                 {{ formatMontant(budget.solde) }} FCFA
               </td>
@@ -131,10 +131,10 @@
                       class="h-1.5 rounded-full"
                       :class="
                         budget.taux_execution >= 90
-                          ? 'bg-red-500'
+                          ? 'bg-rose-baraka'
                           : budget.taux_execution >= 70
                           ? 'bg-bleu-nuit'
-                          : 'bg-emerald-500'
+                          : 'bg-bleu-accent'
                       "
                       :style="{
                         width: Math.min(budget.taux_execution, 100) + '%',

@@ -73,7 +73,7 @@
             <h2 class="text-base font-bold text-slate-900">Répartition géographique</h2>
             <p class="mt-1 text-xs text-slate-500">Bénéficiaires par zone et part dans le total suivi.</p>
           </div>
-          <DashboardChart v-if="geographyChart.labels.length" type="bar" horizontal :data="geographyChart" :height="260" />
+          <DashboardChart v-if="geographyChart.labels.length" type="bar" horizontal :data="geographyChart" :height="260" series-color="#00313C" />
           <p v-else class="py-12 text-center text-sm text-slate-500">Aucune répartition géographique disponible.</p>
           <div v-if="geographySummary.length" class="mt-3 flex flex-wrap gap-2">
             <span v-for="zone in geographySummary" :key="zone.nom" class="rounded-full border border-bleu-nuit/10 bg-white/60 px-2.5 py-1 text-xs text-slate-600">
@@ -91,10 +91,13 @@
           </div>
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1">
             <div v-for="item in progressIndicators" :key="item.label" class="flex min-w-0 items-center gap-3 rounded-xl border border-bleu-nuit/10 bg-white/45 p-3">
-              <div class="h-[92px] w-24 shrink-0"><DashboardChart type="doughnut" :data="progressData(item.value, item.color)" :height="92" :center-value="clampPercent(item.value)" center-label="réalisé" /></div>
+              <div class="h-[92px] w-24 shrink-0">
+                <DashboardChart v-if="item.available" type="doughnut" :data="progressData(item.value, item.color)" :height="92" :center-value="clampPercent(item.value)" center-label="réalisé" :series-color="item.color" />
+                <div v-else class="flex h-full w-full items-center justify-center rounded-full border-[12px]" :style="{ borderColor: `${item.color}35` }"><span class="text-sm font-bold text-slate-500">—</span></div>
+              </div>
               <div class="min-w-0">
                 <p class="text-sm font-semibold text-slate-800">{{ item.label }}</p>
-                <p class="mt-1 text-xs text-slate-500">{{ clampPercent(item.value) }} %</p>
+                <p class="mt-1 text-xs text-slate-500">{{ item.available ? `${clampPercent(item.value)} %` : item.unavailableLabel }}</p>
               </div>
             </div>
           </div>
@@ -171,7 +174,7 @@
                 <p class="truncate text-sm font-semibold text-slate-800">{{ person.first_name }} {{ person.last_name }}</p>
                 <p class="text-xs text-slate-500">{{ roleLabel(person.role) }}</p>
               </div>
-              <span class="rounded-full px-2 py-1 text-[10px] font-semibold" :class="person.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'">{{ statusLabel(person.status) }}</span>
+              <span class="rounded-full px-2 py-1 text-[10px] font-semibold" :class="person.status === 'ACTIVE' ? 'bg-bleu-accent/15 text-bleu-accent border border-bleu-accent/25' : 'bg-slate-100 text-slate-600'">{{ statusLabel(person.status) }}</span>
             </div>
           </div>
           <p v-else class="px-5 pb-5 text-sm text-slate-500">Aucun utilisateur enregistré.</p>
@@ -298,13 +301,31 @@ const geographySummary = computed(() => {
 })
 
 const progressIndicators = computed(() => [
-  { label: 'Prise en charge', value: operationnel.value.taux_prise_en_charge ?? 0, color: '#00313C' },
-  { label: 'Exécution budgétaire', value: finance.value.taux_execution ?? 0, color: '#D20C4F' },
-  { label: 'Progression des campagnes', value: operationnel.value.taux_realisation_campagnes ?? 0, color: '#1a6fad' },
+  {
+    label: 'Prise en charge',
+    value: operationnel.value.taux_prise_en_charge,
+    available: Number(operationnel.value.beneficiaires) > 0,
+    unavailableLabel: 'Aucun bénéficiaire',
+    color: '#16a34a',
+  },
+  {
+    label: 'Exécution budgétaire',
+    value: finance.value.taux_execution,
+    available: Number(finance.value.budget_total) > 0,
+    unavailableLabel: 'Aucun budget',
+    color: '#eab308',
+  },
+  {
+    label: 'Progression des campagnes',
+    value: operationnel.value.taux_realisation_campagnes,
+    available: Number(operationnel.value.campagnes) > 0,
+    unavailableLabel: 'Aucune campagne',
+    color: '#f97316',
+  },
 ])
 const progressData = (value, color) => {
   const percent = clampPercent(value)
-  return { labels: ['Réalisé', 'Restant'], datasets: [{ data: [percent, 100 - percent], backgroundColor: [color, '#e2e8f0'], borderWidth: 0, hoverOffset: 0 }] }
+  return { labels: ['Réalisé', 'Restant'], datasets: [{ data: [percent, 100 - percent], backgroundColor: [color, `${color}35`], borderWidth: 0, hoverOffset: 0 }] }
 }
 
 const teamRoles = [

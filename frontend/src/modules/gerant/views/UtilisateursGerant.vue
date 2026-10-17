@@ -193,19 +193,19 @@
                   <button
                     v-if="u.role !== 'GERANT'"
                     @click="ouvrirModification(u)"
-                    class="p-1.5 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition"
+                    class="p-1.5 text-sky-700 hover:bg-sky-50 rounded-lg transition"
                     title="Modifier"
                   >
-                    <Pencil :size="16" />
+                    <Pencil :size="18" />
                   </button>
 
                   <!-- Voir Détails -->
                   <button
                     @click="ouvrirDetails(u)"
-                    class="p-1.5 text-bleu-nuit hover:bg-slate-100 rounded-lg transition"
+                    class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                     title="Voir les détails"
                   >
-                    <Eye :size="16" />
+                    <Eye :size="18" />
                   </button>
 
                   <!-- Activer / Désactiver -->
@@ -215,8 +215,8 @@
                     class="p-1.5 rounded-lg transition"
                     :class="
                       u.status === 'ACTIVE'
-                        ? 'text-rose-600 hover:bg-rose-50'
-                        : 'text-emerald-600 hover:bg-emerald-50'
+                        ? 'text-rose-baraka hover:bg-rose-baraka/10'
+                        : 'text-bleu-accent hover:bg-bleu-accent/10'
                     "
                     :title="
                       u.status === 'ACTIVE'
@@ -332,7 +332,7 @@
                 class="font-semibold text-xs"
                 :class="
                   utilisateurSelectionne.is_active
-                    ? 'text-emerald-600'
+                    ? 'text-bleu-accent'
                     : 'text-slate-500'
                 "
               >
@@ -370,8 +370,8 @@
             class="p-2 rounded-lg transition"
             :class="
               utilisateurSelectionne.status === 'ACTIVE'
-                ? 'text-rose-600 hover:bg-rose-50'
-                : 'text-emerald-600 hover:bg-emerald-50'
+                ? 'text-rose-baraka hover:bg-rose-baraka/10'
+                : 'text-bleu-accent hover:bg-bleu-accent/10'
             "
             :title="
               utilisateurSelectionne.status === 'ACTIVE'
@@ -554,9 +554,9 @@ const getRoleBadgeClass = (role) => {
     case "CHEF_PROJET":
       return "bg-bleu-accent/10 text-or border border-bleu-accent/20";
     case "FINANCE":
-      return "bg-amber-50 text-amber-800 border border-amber-200";
+      return "bg-bleu-nuit/10 text-bleu-nuit border border-bleu-nuit/20";
     case "AGENT":
-      return "bg-emerald-50 text-emerald-800 border border-emerald-200";
+      return "bg-bleu-accent/10 text-bleu-accent border border-bleu-accent/20";
     default:
       return "bg-slate-100 text-slate-800";
   }

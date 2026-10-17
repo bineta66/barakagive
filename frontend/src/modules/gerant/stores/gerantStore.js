@@ -131,9 +131,21 @@ export const useGerantStore = defineStore("gerant", () => {
   }
 
   const fetchProjets = async () => {
+    error.value = null
     try {
-      const response = await api.get("/api/projects/")
-      projets.value = response.data?.results ?? response.data
+      const allProjects = []
+      let page = 1
+      let hasNext = true
+      while (hasNext) {
+        const response = await api.get("/api/projects/", {
+          params: { page, page_size: 100 },
+        })
+        const data = response.data
+        allProjects.push(...(data?.results ?? (Array.isArray(data) ? data : [])))
+        hasNext = Boolean(data?.next)
+        page += 1
+      }
+      projets.value = allProjects
       return projets.value
     } catch (e) {
       error.value = getErrorMessage(e)

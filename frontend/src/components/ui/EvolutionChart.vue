@@ -18,11 +18,11 @@
       <!-- Légende -->
       <div class="inline-flex justify-start items-center gap-6">
         <div class="flex items-center gap-2">
-          <div class="w-3 h-3 bg-bleu-nuit rounded"></div>
+          <div class="w-3 h-3 bg-green-600 rounded"></div>
           <span class="text-slate-600 text-xs">Projets</span>
         </div>
         <div class="flex items-center gap-2">
-          <div class="w-3 h-3 bg-bleu-nuit rounded"></div>
+          <div class="w-3 h-3 bg-orange-500 rounded"></div>
           <span class="text-slate-600 text-xs">Bénéficiaires</span>
         </div>
       </div>
@@ -49,13 +49,13 @@
         >
           <!-- Barre Projet -->
           <div
-            class="w-4 bg-bleu-nuit rounded-t transition-all"
+            class="w-4 bg-green-600 rounded-t transition-all"
             :style="{ height: `${item.projets}%` }"
             :title="`${item.mois} ${currentYear} - Projets: ${item.projetsValue}`"
           ></div>
           <!-- Barre Bénéficiaires -->
           <div
-            class="w-4 bg-bleu-nuit/50 opacity-90 rounded-t transition-all"
+            class="w-4 bg-orange-500/90 rounded-t transition-all"
             :style="{ height: `${item.beneficiaires}%` }"
             :title="`${item.mois} ${currentYear} - Bénéficiaires: ${item.beneficiairesValue}`"
           ></div>

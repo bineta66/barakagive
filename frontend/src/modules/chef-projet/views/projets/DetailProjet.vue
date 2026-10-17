@@ -52,7 +52,7 @@
           <p class="text-xs font-bold uppercase text-slate-500 mb-1">Statut</p>
           <span
             class="px-3 py-1 text-xs font-semibold rounded-full inline-block"
-            :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'"
+            :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-bleu-accent/10 text-bleu-accent'"
           >
             {{ projet.archived ? 'Archivé' : 'En cours' }}
           </span>
@@ -110,7 +110,7 @@
           <div class="rounded-lg bg-blue-50 p-4"><h3 class="text-sm font-bold text-bleu-nuit">Résumé IA</h3><p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ proposalReport.analyse }}</p></div>
           <div v-if="proposalReport.propositions.length === refusedProposals.length" class="rounded-lg bg-slate-50 p-4 text-sm text-slate-600">Toutes les propositions ont été refusées.</div>
           <article v-for="(proposal, index) in proposalReport.propositions" :key="`${proposal.nom}-${index}`" class="rounded-lg border border-slate-200 p-4" :class="refusedProposals.includes(index) ? 'hidden' : ''">
-            <div class="flex flex-wrap items-start justify-between gap-2"><div><h3 class="font-semibold text-slate-900">{{ proposal.nom }}</h3><p class="mt-1 text-xs font-medium text-bleu-nuit">{{ typeCampagneLabel(proposal.type) }}</p></div><span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">À valider</span></div>
+            <div class="flex flex-wrap items-start justify-between gap-2"><div><h3 class="font-semibold text-slate-900">{{ proposal.nom }}</h3><p class="mt-1 text-xs font-medium text-bleu-nuit">{{ typeCampagneLabel(proposal.type) }}</p></div><span class="rounded-full bg-bleu-nuit/10 px-2.5 py-1 text-xs font-semibold text-bleu-nuit">À valider</span></div>
             <p class="mt-3 text-sm text-slate-700">{{ proposal.description }}</p>
             <p class="mt-2 text-xs text-slate-500">{{ proposal.date_debut }} au {{ proposal.date_fin }} · {{ proposal.zones.map(zone => zone.nom).join(', ') }}</p>
             <p class="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-700"><strong>Justification liée aux critères :</strong> {{ proposal.justification }}</p>

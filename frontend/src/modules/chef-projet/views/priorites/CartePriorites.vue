@@ -220,6 +220,7 @@ import api from "@/services/api.js";
 import CarteSenegalPriorites from "@/modules/chef-projet/components/priorites/CarteSenegalPriorites.vue";
 import CardZone from "@/modules/chef-projet/components/priorites/CardZone.vue";
 import BeneficiaireDetail from "@/modules/chef-projet/components/priorites/BeneficiaireDetail.vue";
+import { regionName } from "@/modules/chef-projet/utils/regionName.js";
 
 const activeCampaign = ref(null);
 const campaignsList = ref([]);
@@ -247,7 +248,10 @@ const totalBeneficiaires = computed(() => {
   return allRegionsData.value.reduce((total, region) => total + (region.total_beneficiaires || 0), 0);
 });
 const projectZones = computed(() => allRegionsData.value.flatMap((region) =>
-  (region.zones || []).map((zone) => ({ ...zone, region: zone.region || region.region }))
+  (region.zones || []).map((zone) => ({
+    ...zone,
+    region: regionName(zone, region.region),
+  }))
 ));
 
 function projectIdFromCampaign(campaign) {

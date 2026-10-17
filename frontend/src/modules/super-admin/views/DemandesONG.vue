@@ -28,19 +28,19 @@
         titre="Total organisations"
         :valeur="ongs.length"
         :icone="FileText"
-        couleur="sky"
+        couleur="bleu-nuit"
       />
       <StatCard
         titre="En attente"
         :valeur="demandesONG.length"
         :icone="Clock"
-        couleur="orange"
+        couleur="rose-baraka"
       />
       <StatCard
         titre="Organisations actives"
         :valeur="ongsActives.length"
         :icone="CheckCircle"
-        couleur="emerald"
+        couleur="bleu-accent"
       />
     </div>
 
@@ -59,7 +59,7 @@
       />
 
       <div v-else class="overflow-x-auto">
-        <table class="w-full">
+        <table class="w-full min-w-[640px]">
           <thead class="bg-slate-50 border-b border-slate-100">
             <tr>
               <th
@@ -142,13 +142,13 @@
                   </router-link>
                   <button
                     @click="approve(demande.id)"
-                    class="px-3 py-1.5 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700"
+                    class="px-3 py-1.5 rounded-md bg-bleu-accent text-white text-xs font-semibold hover:bg-bleu-accent/90"
                   >
                     Approuver
                   </button>
                   <button
                     @click="reject(demande.id)"
-                    class="px-3 py-1.5 rounded-md bg-red-600 text-white text-xs font-semibold hover:bg-red-700"
+                    class="px-3 py-1.5 rounded-md bg-rose-baraka text-white text-xs font-semibold hover:bg-rose-baraka/90"
                   >
                     Rejeter
                   </button>

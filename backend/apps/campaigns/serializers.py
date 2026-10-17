@@ -186,11 +186,13 @@ class AgentZonesAssignmentSerializer(serializers.Serializer):
     objectif = serializers.IntegerField(min_value=0, default=0)
 
 class ZoneSummarySerializer(serializers.ModelSerializer):
+    region_nom = serializers.CharField(source="region.nom", read_only=True)
+
     """Sérialiseur minimal pour les zones dans les listes."""
 
     class Meta:
         model = Zone
-        fields = ["id", "nom", "region", "departement"]
+        fields = ["id", "nom", "region", "region_nom", "departement"]
 
 
 class ProjectSummarySerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <div
-    class="w-full min-w-0 max-w-[1152px] border-slate-200/60 flex flex-col justify-start items-start p-4 sm:p-8 min-h-screen"
+    class="w-full min-w-0 max-w-[1152px] self-stretch border-slate-200/60 flex flex-col justify-start items-start p-3 sm:p-8 min-h-screen"
   >
     <div class="self-stretch mb-6">
       <div
@@ -16,8 +16,8 @@
               ← Retour à la campagne
             </router-link>
           </div>
-          <div class="flex items-center gap-3">
-            <h2 class="text-3xl font-bold text-bleu-nuit">
+          <div class="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <h2 class="text-2xl font-bold text-bleu-nuit sm:text-3xl">
               Formulaire de collecte
             </h2>
             <span
@@ -25,8 +25,8 @@
               class="px-2.5 py-1 text-xs font-semibold rounded-full"
               :class="
                 currentForm.statut === 'PUBLIE'
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : 'bg-amber-100 text-amber-800'
+                  ? 'bg-bleu-accent/10 text-bleu-accent'
+                  : 'bg-bleu-nuit/10 text-bleu-nuit'
               "
             >
               {{ currentForm.statut === "PUBLIE" ? "Publié" : "Brouillon" }}
@@ -34,12 +34,12 @@
           </div>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex w-full flex-wrap gap-3 sm:w-auto">
           <button
             v-if="currentForm && currentForm.statut !== 'PUBLIE'"
             @click="publier"
             :disabled="publishing || !questions.length"
-            class="bg-bleu-nuit hover:bg-[#0a2540] text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition disabled:opacity-50"
+            class="w-full justify-center bg-bleu-nuit hover:bg-[#0a2540] text-white px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition disabled:opacity-50 sm:w-auto"
           >
             <svg
               class="w-4 h-4"
@@ -87,9 +87,9 @@
     <div v-if="!loadingInit" class="self-stretch flex flex-col gap-6">
       <div
         v-if="formsList.length > 1 || showNewFormButton"
-        class="bg-white border border-slate-200/60 rounded-xl p-4 shadow-xs-sm"
+        class="w-full min-w-0 bg-white border border-slate-200/60 rounded-xl p-3 sm:p-4 shadow-xs-sm"
       >
-        <div class="flex items-center justify-between mb-3">
+        <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 class="text-sm font-bold uppercase text-slate-900">
               Formulaires de cette campagne
@@ -102,7 +102,7 @@
             type="button"
             @click="createNewForm"
             :disabled="creatingForm"
-            class="px-3 py-2 bg-bleu-nuit text-white text-xs font-semibold rounded-lg hover:bg-[#01111eff] disabled:opacity-50 transition"
+            class="w-full px-3 py-2 bg-bleu-nuit text-white text-xs font-semibold rounded-lg hover:bg-[#01111eff] disabled:opacity-50 transition sm:w-auto"
           >
             {{ creatingForm ? "Création..." : "Nouveau formulaire" }}
           </button>
@@ -134,7 +134,7 @@
 
       <div
         v-if="currentForm"
-        class="self-stretch flex flex-col xl:flex-row justify-start items-start gap-6"
+        class="w-full min-w-0 self-stretch flex flex-col xl:flex-row justify-start items-start gap-6"
       >
         <FormBuilder
           :questions="questions"
@@ -150,11 +150,11 @@
 
         <ApercuFormulaire :questions="questions" :title="titreFormulaire" />
       </div>
-      <div v-if="currentForm" class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
-        <button @click="genererQuestions" :disabled="generating || !criteres.length" class="rounded-xl bg-bleu-nuit px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a2540] disabled:opacity-50">{{ generating ? 'Analyse des critères…' : '✦ Générer avec l’IA' }}</button>
-        <div class="flex flex-wrap justify-end gap-3">
-        <button @click="enregistrerBrouillon" :disabled="saving" class="rounded-xl border border-[#00313C] px-5 py-2.5 text-sm font-semibold text-[#00313C] hover:bg-slate-50 disabled:opacity-50">{{ saving ? 'Enregistrement…' : 'Enregistrer comme brouillon' }}</button>
-        <button v-if="currentForm.statut !== 'PUBLIE'" @click="publier" :disabled="publishing || !questions.length" class="rounded-xl bg-bleu-nuit px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a2540] disabled:opacity-50">{{ publishing ? 'Publication…' : 'Enregistrer et publier' }}</button>
+      <div v-if="currentForm" class="flex w-full flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <button @click="genererQuestions" :disabled="generating || !criteres.length" class="w-full rounded-xl bg-bleu-nuit px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a2540] disabled:opacity-50 sm:w-auto">{{ generating ? 'Analyse des critères…' : '✦ Générer avec l’IA' }}</button>
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+        <button @click="enregistrerBrouillon" :disabled="saving" class="w-full rounded-xl border border-[#00313C] px-5 py-2.5 text-sm font-semibold text-[#00313C] hover:bg-slate-50 disabled:opacity-50 sm:w-auto">{{ saving ? 'Enregistrement…' : 'Enregistrer comme brouillon' }}</button>
+        <button v-if="currentForm.statut !== 'PUBLIE'" @click="publier" :disabled="publishing || !questions.length" class="w-full rounded-xl bg-bleu-nuit px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0a2540] disabled:opacity-50 sm:w-auto">{{ publishing ? 'Publication…' : 'Enregistrer et publier' }}</button>
         </div>
       </div>
     </div>
@@ -298,6 +298,12 @@ const accepterProposition = async (proposal, index) => {
 };
 
 const enregistrerQuestion = async (question) => {
+  // Guard: cannot add questions to a published form
+  if (currentForm.value?.statut === 'PUBLIE') {
+    feedback.type = 'error';
+    feedback.message = 'Ce formulaire est déjà publié. Créez un nouveau brouillon pour ajouter des questions.';
+    return;
+  }
   const payload = prepareForBackend(question, questions.value.length);
   payload.critere = question.critere || null;
   payload.source = question.source || "MANUEL";

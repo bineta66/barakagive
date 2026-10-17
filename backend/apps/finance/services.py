@@ -60,6 +60,24 @@ def _committed_expenses(project, budget=None, line=None, exclude_expense=None):
     return _money(expenses.aggregate(total=Sum("montant"))["total"])
 
 
+def _approved_expenses(project, budget=None, line=None, exclude_expense=None):
+    expenses = _organization_expenses(project.organization).filter(
+        statut=Depense.Status.APPROUVE,
+    ).filter(
+        Q(projet=project)
+        | Q(budget__projet=project)
+        | Q(ligne_budgetaire__budget__projet=project)
+        | Q(campagne__projet=project)
+    )
+    if budget is not None:
+        expenses = expenses.filter(Q(budget=budget) | Q(ligne_budgetaire__budget=budget))
+    if line is not None:
+        expenses = expenses.filter(ligne_budgetaire=line)
+    if exclude_expense is not None:
+        expenses = expenses.exclude(pk=exclude_expense)
+    return _money(expenses.aggregate(total=Sum("montant"))["total"])
+
+
 def _received_for_project(project, exclude_financement=None, exclude_don=None):
     financings = _organization_financings(project.organization).filter(projet=project, statut=Financement.Status.RECU)
     donations = _organization_donations(project.organization).filter(campagne__projet=project)
@@ -90,12 +108,14 @@ def calculate_financial_kpis(organization, project=None):
     donations_total = _money(donations.aggregate(total=Sum("montant"))["total"])
     approved_total = _money(expenses.aggregate(total=Sum("montant"))["total"])
     committed_total = _money(committed.aggregate(total=Sum("montant"))["total"])
+    cash_balance = funding_total + donations_total - approved_total
+    budget_remaining = budget_total - committed_total
     return {
         "budget_total": float(budget_total), "financement_total": float(funding_total),
         "financements_recus": float(funding_total), "dons_recus": float(donations_total),
         "depenses_totales": float(approved_total), "depenses_engagees": float(committed_total),
-        "depenses_validees": float(approved_total), "solde": float(budget_total - committed_total),
-        "solde_tresorerie": None,
+        "depenses_validees": float(approved_total), "solde": float(cash_balance),
+        "solde_tresorerie": float(cash_balance), "reste_a_depenser": float(budget_remaining),
         "taux_financement": round(float((funding_total + donations_total) / budget_total * 100), 2) if budget_total else 0.0,
         "taux_engagement": round(float(committed_total / budget_total * 100), 2) if budget_total else 0.0,
         "taux_execution": round(float(approved_total / budget_total * 100), 2) if budget_total else 0.0,
@@ -104,6 +124,7 @@ def calculate_financial_kpis(organization, project=None):
 
 def build_finance_dashboard(organization):
     kpis = calculate_financial_kpis(organization)
+    reste_a_financer = max(0, kpis["budget_total"] - kpis["financements_recus"] - kpis["dons_recus"])
     budgets = Budget.objects.filter(organization=organization, projet__organization=organization).select_related("projet").order_by("projet__name", "created_at")
     budget_rows = []
     for budget in budgets:
@@ -130,7 +151,64 @@ def build_finance_dashboard(organization):
                 point = month_index.get(row["month"].strftime("%Y-%m"))
                 if point: point[key] = float(_money(row["total"]))
     funding_pending = _money(_organization_financings(organization).filter(statut__in=[Financement.Status.PREVU, Financement.Status.CONFIRME]).aggregate(total=Sum("montant"))["total"])
-    return {**kpis, "kpis": {"budget_total": kpis["budget_total"], "financements_recus": kpis["financements_recus"], "dons_recus": kpis["dons_recus"], "depenses_validees": kpis["depenses_validees"], "solde_disponible": kpis["solde"]}, "reste_a_financer": max(0, kpis["budget_total"] - kpis["financements_recus"] - kpis["dons_recus"]), "reste_a_depenser": kpis["solde"], "execution_budgetaire": {"budget_prevu": kpis["budget_total"], "budget_revise": None, "depenses_engagees": kpis["depenses_engagees"], "depenses_validees": kpis["depenses_validees"], "disponible": kpis["solde"], "taux_execution": kpis["taux_execution"], "par_budget": budget_rows}, "financements": {"par_statut": funding_by_status, "reste_a_financer": max(0, kpis["budget_total"] - kpis["financements_recus"] - kpis["dons_recus"]), "par_bailleur": list(_organization_financings(organization).filter(statut=Financement.Status.RECU, bailleur__isnull=False).values("bailleur__nom").annotate(montant=Sum("montant")).order_by("-montant"))}, "dons": {"nombre_donateurs": _organization_donations(organization).filter(donateur__isnull=False).values("donateur_id").distinct().count(), "dernier_don": ({"montant": float(last_donation.montant), "date": last_donation.date.isoformat(), "reference": last_donation.reference} if last_donation else None)}, "depenses": {"par_statut": expense_counts, "par_categorie": [{"categorie": x["categorie"], "montant": float(_money(x["montant"]))} for x in category_rows]}, "evolution": months, "alerts": [], "ai_analysis": None}
+    return {
+        **kpis,
+        "kpis": {
+            "budget_total": kpis["budget_total"],
+            "financements_recus": kpis["financements_recus"],
+            "dons_recus": kpis["dons_recus"],
+            "depenses_validees": kpis["depenses_validees"],
+            "solde_disponible": kpis["solde_tresorerie"],
+        },
+        "reste_a_financer": reste_a_financer,
+        "reste_a_depenser": kpis["reste_a_depenser"],
+        "execution_budgetaire": {
+            "budget_prevu": kpis["budget_total"],
+            "budget_revise": None,
+            "depenses_engagees": kpis["depenses_engagees"],
+            "depenses_validees": kpis["depenses_validees"],
+            "disponible": kpis["reste_a_depenser"],
+            "taux_execution": kpis["taux_execution"],
+            "par_budget": budget_rows,
+        },
+        "financements": {
+            "par_statut": funding_by_status,
+            "reste_a_financer": reste_a_financer,
+            "par_bailleur": list(
+                _organization_financings(organization)
+                .filter(statut=Financement.Status.RECU, bailleur__isnull=False)
+                .values("bailleur__nom")
+                .annotate(montant=Sum("montant"))
+                .order_by("-montant")
+            ),
+        },
+        "dons": {
+            "nombre_donateurs": _organization_donations(organization)
+            .filter(donateur__isnull=False)
+            .values("donateur_id")
+            .distinct()
+            .count(),
+            "dernier_don": (
+                {
+                    "montant": float(last_donation.montant),
+                    "date": last_donation.date.isoformat(),
+                    "reference": last_donation.reference,
+                }
+                if last_donation
+                else None
+            ),
+        },
+        "depenses": {
+            "par_statut": expense_counts,
+            "par_categorie": [
+                {"categorie": row["categorie"], "montant": float(_money(row["montant"]))}
+                for row in category_rows
+            ],
+        },
+        "evolution": months,
+        "alerts": [],
+        "ai_analysis": None,
+    }
 
 
 def _format_fcfa(value):

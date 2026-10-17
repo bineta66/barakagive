@@ -34,9 +34,9 @@
           <label
             class="block text-xs font-semibold uppercase text-slate-600 mb-1"
           >
-            Projet
+            Projet <span class="text-red-500">*</span>
             <span class="text-slate-400 font-normal normal-case ml-1"
-              >(optionnel)</span
+              ></span
             >
           </label>
           <AsyncSearchSelect
@@ -48,6 +48,7 @@
             placeholder="Rechercher un projet (optionnel)…"
             @update:model-value="onProjetChange"
           />
+          <p v-if="errors.projetId" class="mt-1 text-xs text-red-500">{{ errors.projetId }}</p>
           <button v-if="form.projetId" type="button" class="mt-1 text-xs text-slate-500 underline" @click="onProjetChange('')">Effacer le projet</button>
         </div>
 
@@ -161,14 +162,15 @@
           >
             Catégorie <span class="text-red-500">*</span>
           </label>
-          <input
+          <select
             v-model="form.categorie"
-            type="text"
-            placeholder="Ex: Transport, Matériel, Formation, Alimentation..."
-            maxlength="100"
             class="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30"
             :class="errors.categorie ? 'border-red-400' : 'border-slate-200'"
-          />
+          >
+            <option value="">Sélectionner une catégorie</option>
+            <option v-for="category in financeCategories" :key="category" :value="category">{{ category }}</option>
+            <option v-if="form.categorie && !financeCategories.includes(form.categorie)" :value="form.categorie">{{ form.categorie }} (valeur existante)</option>
+          </select>
           <p v-if="errors.categorie" class="text-xs text-red-500 mt-1">
             {{ errors.categorie }}
           </p>
@@ -299,9 +301,12 @@
 <script setup>
 import { ref, computed, onMounted, watch, reactive } from "vue";
 import api from "@/services/api.js";
+import { FINANCE_CATEGORIES } from "@/modules/finance/constants/categories.js";
 import { useFinanceStore } from "@/modules/finance/stores/financeStore.js";
 import AsyncSearchSelect from "@/components/ui/AsyncSearchSelect.vue";
 import AsyncSearchMultiSelect from "@/components/ui/AsyncSearchMultiSelect.vue";
+
+const financeCategories = FINANCE_CATEGORIES;
 
 const props = defineProps({
   ouvert: Boolean,
@@ -456,6 +461,11 @@ const validate = () => {
   resetErrors();
   let valid = true;
 
+  if (!form.value.projetId) {
+    errors.projetId = "Veuillez sélectionner un projet.";
+    valid = false;
+  }
+
   if (zonesAvailable.value) {
     if (!form.value.selectedZones || form.value.selectedZones.length === 0) {
       errors.region = "Veuillez cocher au moins une zone d'intervention.";
@@ -590,6 +600,7 @@ const submit = () => {
     }
 
     const payload = {
+      projet: Number(form.value.projetId),
       region: finalRegionId,
       categorie: form.value.categorie.trim(),
       montant: Number(form.value.montant),

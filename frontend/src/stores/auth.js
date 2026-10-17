@@ -1,6 +1,7 @@
 import { ref, computed } from "vue"
 import { defineStore } from "pinia"
 import api, { getErrorMessage } from "@/services/api.js"
+import { assistantIdentityKey, clearAssistantHistoryStorage } from "@/services/assistantHistory.js"
 
 export const ROLES = {
   SUPER_ADMIN: "SUPER_ADMIN",
@@ -41,7 +42,24 @@ export const useAuthStore = defineStore("auth", () => {
   const email = computed(() => user.value?.email || "")
   const organizationId = computed(() => user.value?.organization || null)
 
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", (event) => {
+      if (![null, "user", "accessToken"].includes(event.key)) return
+      const previousIdentity = assistantIdentityKey(user.value)
+      const storedUser = getStoredUser()
+      const nextToken = localStorage.getItem("accessToken") || null
+      if (event.key === null || !nextToken || previousIdentity !== assistantIdentityKey(storedUser)) {
+        clearAssistantHistoryStorage()
+      }
+      user.value = storedUser
+      accessToken.value = nextToken
+      refreshToken.value = localStorage.getItem("refreshToken") || null
+    })
+  }
+
   const setAuthData = (data) => {
+    // Login starts a fresh assistant session; old account histories/audio are discarded.
+    clearAssistantHistoryStorage()
     accessToken.value = data.access
     refreshToken.value = data.refresh
     user.value = data.user
@@ -52,6 +70,7 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   const clearAuthData = () => {
+    clearAssistantHistoryStorage()
     accessToken.value = null
     refreshToken.value = null
     user.value = null

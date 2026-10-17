@@ -40,7 +40,7 @@
           <td class="px-4">
             <span
               class="px-2.5 py-1 text-xs font-semibold rounded-full"
-              :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'"
+              :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-bleu-accent/10 text-bleu-accent'"
             >
               {{ projet.archived ? 'Archivé' : (projet.statut || 'En cours') }}
             </span>

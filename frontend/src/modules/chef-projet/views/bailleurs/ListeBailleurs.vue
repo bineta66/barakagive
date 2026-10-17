@@ -3,7 +3,7 @@
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-bleu-nuit">Bailleurs de fonds</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Bailleurs de fonds</h1>
         <p class="text-xs text-gray-500 mt-1">
           Partenaires institutionnels, agences multilatérales et mécènes finançant les interventions humanitaires.
         </p>

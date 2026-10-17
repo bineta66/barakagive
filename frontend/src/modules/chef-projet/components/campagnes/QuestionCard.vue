@@ -1,22 +1,22 @@
 ﻿<template>
   <div class="self-stretch border-b border-slate-100 last:border-b-0">
-    <div class="self-stretch p-6 flex justify-between items-start gap-4">
+    <div class="self-stretch min-w-0 p-3 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-start sm:gap-4 sm:p-6">
       <!-- Corps de la question -->
-      <div class="flex-1 inline-flex flex-col justify-start items-start gap-3">
+      <div class="min-w-0 w-full flex-1 inline-flex flex-col justify-start items-start gap-3 sm:w-auto">
         <!-- Numéro + libellé -->
-        <div class="self-stretch inline-flex justify-start items-center gap-3">
+        <div class="self-stretch min-w-0 inline-flex justify-start items-center gap-2 sm:gap-3">
           <span class="text-sm font-bold text-bleu-nuit">{{ index + 1 }}.</span>
           <input
             v-model="question.libelle"
             @input="mettreAJour"
             type="text"
             placeholder="Question sans titre"
-            class="flex-1 text-base font-medium text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 placeholder-slate-400"
+            class="min-w-0 w-full flex-1 text-sm font-medium text-slate-900 bg-transparent border-none focus:outline-none focus:ring-0 placeholder-slate-400 sm:text-base"
           />
         </div>
 
         <!-- Badge type -->
-        <div class="self-stretch flex items-center gap-2">
+        <div class="self-stretch flex flex-wrap items-center gap-2">
           <span
             class="text-xs font-semibold px-2.5 py-1 rounded-full bg-bleu-nuit/10 text-bleu-nuit"
           >
@@ -55,7 +55,7 @@
             <div
               v-for="(option, idx) in question.options"
               :key="idx"
-              class="flex items-center gap-2"
+              class="flex min-w-0 items-center gap-2"
             >
               <component
                 :is="question.type === 'liste' ? 'div' : 'input'"
@@ -72,11 +72,11 @@
                 v-model="question.options[idx]"
                 @input="mettreAJourOption(question, idx)"
                 type="text"
-                class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30 bg-white"
+                class="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30 bg-white"
               />
             </div>
             <!-- Ajouter option -->
-            <div class="flex items-center gap-2 mt-1">
+            <div class="mt-1 flex flex-wrap items-center gap-2">
               <div
                 class="w-4 h-4 rounded border border-slate-300 flex-shrink-0"
               ></div>
@@ -85,7 +85,7 @@
                 @keyup.enter="ajouterOptionLocale"
                 type="text"
                 placeholder="Ajouter une option..."
-                class="flex-1 text-sm text-slate-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder-slate-400"
+                class="min-w-0 flex-1 text-sm text-slate-700 bg-transparent border-none focus:outline-none focus:ring-0 placeholder-slate-400"
                 autocomplete="off"
               />
               <button
@@ -178,7 +178,7 @@
       </div>
 
       <!-- Actions droite -->
-      <div class="flex flex-col items-center gap-3 flex-shrink-0">
+      <div class="flex w-full flex-row flex-wrap items-center justify-between gap-2 sm:w-auto sm:flex-shrink-0 sm:flex-col sm:items-center sm:gap-3">
         <!-- Toggle obligatoire -->
         <button
           @click="toggleObligatoire"

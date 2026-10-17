@@ -74,7 +74,7 @@
             </td>
             <td class="px-4 text-center">
               <button class="p-1 text-slate-500 hover:text-bleu-nuit rounded-lg transition-colors">
-                <Eye class="w-4 h-4" />
+                <Eye class="w-[18px] h-[18px] text-sky-700" />
               </button>
             </td>
           </tr>

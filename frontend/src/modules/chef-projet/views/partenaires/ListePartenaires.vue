@@ -3,7 +3,7 @@
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
       <div>
-        <h1 class="text-4xl font-bold text-bleu-nuit">Partenaires</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Partenaires</h1>
         <p class="text-xs text-gray-500 mt-1">
           Suivez les organisations partenaires opérationnelles et locales des missions humanitaires.
         </p>

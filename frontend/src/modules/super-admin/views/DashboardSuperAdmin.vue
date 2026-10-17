@@ -13,10 +13,10 @@
 
     <template v-if="dashboard">
       <section aria-label="Indicateurs globaux" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard titre="Total ONG" :valeur="dashboard.ongs.total" :icone="Building2" couleur="sky" />
-        <KpiCard titre="ONG actives" :valeur="dashboard.ongs.actives" :icone="Building2" couleur="emerald" />
-        <KpiCard titre="Demandes en attente" :valeur="dashboard.ongs.pending" :icone="FileText" couleur="amber" />
-        <KpiCard titre="Gérants actifs" :valeur="dashboard.gerants.actifs" :icone="Users" couleur="purple" />
+        <KpiCard titre="Total ONG" :valeur="dashboard.ongs.total" :icone="Building2" couleur="bleu-nuit" />
+        <KpiCard titre="ONG actives" :valeur="dashboard.ongs.actives" :icone="Building2" couleur="bleu-accent" />
+        <KpiCard titre="Demandes en attente" :valeur="dashboard.ongs.pending" :icone="FileText" couleur="rose-baraka" />
+        <KpiCard titre="Gérants actifs" :valeur="dashboard.gerants.actifs" :icone="Users" couleur="bleu-nuit" />
       </section>
 
       <section aria-label="Évolution et activité récente" class="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,1fr)]">
@@ -57,8 +57,9 @@
             :data="regionChartData"
             :height="regionChartHeight"
             :horizontal="true"
-            :axis-color="chartPalette.primary"
-            :legend-color="chartPalette.primary"
+            axis-color="#00313C"
+            legend-color="#00313C"
+            series-color="#00313C"
             grid-color="#E7EEF0"
           />
           <EmptyState v-else titre="Aucune région renseignée" description="Les régions apparaîtront ici lorsqu’elles seront présentes dans les fiches ONG." container-class="mt-3 min-h-[180px]" />

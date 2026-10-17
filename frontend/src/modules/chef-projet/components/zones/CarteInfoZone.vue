@@ -13,7 +13,7 @@
     <div class="grid grid-cols-2 gap-4 text-sm">
       <div>
         <p class="text-xs font-semibold uppercase text-slate-900 mb-1">Région</p>
-        <p class="text-gray-700">{{ zone.region }}</p>
+        <p class="text-gray-700">{{ regionName(zone) }}</p>
       </div>
 
       <div>
@@ -46,6 +46,7 @@
 
 <script setup>
 import { computed } from "vue"
+import { regionName } from "@/modules/chef-projet/utils/regionName.js"
 
 const props = defineProps({
   zone: {

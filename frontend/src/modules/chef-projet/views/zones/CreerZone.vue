@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
@@ -39,10 +39,19 @@
           Remplissez les informations de la zone après avoir cliqué sur la carte.
         </p>
 
+        <!-- Geocoding indicator -->
+        <div v-if="geocoding" class="flex items-center gap-2 mb-4 text-xs text-bleu-accent font-medium">
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          Détection de la région en cours...
+        </div>
+
         <FormulaireZone
           mode="creation"
           :initial-data="form"
-          :saving="saving"
+          :saving="saving || geocoding"
           @submit="onSubmit"
         />
       </div>
@@ -67,6 +76,7 @@ const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
 
 const feedback = reactive({ type: "success", message: "" })
 const saving = ref(false)
+const geocoding = ref(false)
 
 const form = reactive({
   region: "",
@@ -91,9 +101,22 @@ const onRegionSelected = ({ region, departement }) => {
   form.departement = departement
 }
 
-const onMapClick = ({ latitude, longitude }) => {
+const onMapClick = async ({ latitude, longitude }) => {
   form.latitude = latitude
   form.longitude = longitude
+  // Auto-fill region & département via reverse geocode
+  geocoding.value = true
+  try {
+    const geo = await zoneStore.reverseGeocode(latitude, longitude)
+    if (geo) {
+      form.region = geo.region || form.region
+      form.departement = geo.departement || form.departement
+    }
+  } catch (_) {
+    // silent: region may still be set from GeoJSON layer click
+  } finally {
+    geocoding.value = false
+  }
 }
 
 const onSubmit = async (data) => {

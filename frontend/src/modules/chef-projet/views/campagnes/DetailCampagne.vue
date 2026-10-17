@@ -99,7 +99,7 @@
               :key="z.id"
               class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs rounded-md border"
             >
-              {{ z.nom }} ({{ z.region }})
+              {{ z.nom }} ({{ regionName(z) }})
             </span>
           </div>
           <p v-else class="text-gray-500 text-sm">Aucune zone assignée.</p>
@@ -266,6 +266,7 @@ import AlertMessage from "@/components/ui/AlertMessage.vue";
 import AsyncSearchSelect from "@/components/ui/AsyncSearchSelect.vue";
 import { useCampaignStore } from "@/stores/campaign.js";
 import { useAutoRefresh } from "@/composables/useAutoRefresh.js";
+import { regionName } from "@/modules/chef-projet/utils/regionName.js";
 
 const route = useRoute();
 const campaignStore = useCampaignStore();

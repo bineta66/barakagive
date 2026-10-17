@@ -23,6 +23,9 @@ from apps.accounts.models import InAppNotification
 from apps.accounts.permissions import IsAccountActive
 from apps.ia.services import compute_region_zones_data, get_zone_beneficiaries_detail
 from apps.common.interservice import post_to_ai_service, ai_tenant_identity
+from apps.ia.guardrails import input_guardrail_message, out_of_scope_message, safe_audit_text
+from apps.ia.project_creation import handle_project_creation
+from apps.ia.assistant_intents import classify_assistant_intent
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +320,7 @@ def compute_executive_payload(campaign, user):
         zones_data.append({
             "id": str(zone.id),
             "nom": zone.nom,
-            "region": zone.region,
+            "region": zone.region.nom if zone.region_id else "",
             "departement": zone.departement,
             "beneficiaires": zone_beneficiaries.count(),
             "score_moyen": float(avg_score),
@@ -670,12 +673,14 @@ def build_chat_context(user):
     eleves = vuln_data.filter(score_vulnerabilite__gte=60, score_vulnerabilite__lt=80).count()
 
     # --- Finances ---
-    sum_budgets = budgets_qs.aggregate(total=models.Sum("montant"))["total"] or 0
-    sum_depenses = depenses_qs.aggregate(total=models.Sum("montant"))["total"] or 0
-    from apps.finance.models import Don
-    sum_dons = Don.objects.filter(organization=org).aggregate(total=models.Sum("montant"))["total"] or 0
-    solde = float(sum_dons) - float(sum_depenses)
-    taux = round((float(sum_depenses) / float(sum_budgets) * 100), 2) if sum_budgets > 0 else 0
+    from apps.finance.services import calculate_financial_kpis
+    finance_kpis = calculate_financial_kpis(org)
+    sum_budgets = finance_kpis["budget_total"]
+    sum_depenses = finance_kpis["depenses_totales"]
+    sum_financements = finance_kpis["financements_recus"]
+    sum_dons = finance_kpis["dons_recus"]
+    solde = finance_kpis["solde_tresorerie"]
+    taux = finance_kpis["taux_execution"]
 
     # Dépenses par catégorie
     dep_categories = {
@@ -723,6 +728,7 @@ def build_chat_context(user):
         },
         "finances": {
             "budget_total": float(sum_budgets),
+            "financements_recus": float(sum_financements),
             "dons_recus": float(sum_dons),
             "depenses_totales": float(sum_depenses),
             "solde": solde,
@@ -743,6 +749,13 @@ def _assistant_intents(question, history):
     """Small deterministic router: data selection stays in Django, never in the LLM."""
     normalized = unicodedata.normalize("NFD", question.lower())
     normalized = "".join(char for char in normalized if unicodedata.category(char) != "Mn")
+    intent = classify_assistant_intent(question)
+    if intent == "OUT_OF_SCOPE":
+        return []
+    if intent == "ONG_SUMMARY":
+        return ["get_ong_summary"]
+    if intent == "PROJECT_LIST":
+        return ["get_projects"]
     tools = []
     def add(name):
         if name not in tools:
@@ -789,12 +802,7 @@ def _assistant_intents(question, history):
     if notify_requested and ("retard" in normalized or prior_delay_context):
         add("get_delayed_projects")
         add("send_delayed_project_notifications")
-    if not tools and history and any(
-        term in (history[-1].get("content", "").lower())
-        for term in ("projet", "campagne", "financier", "bénéficiaire", "activit")
-    ):
-        add("get_projects")
-    return tools or ["get_ong_summary"]
+    return tools
 
 
 def _build_agent_tool_results(user, context, tool_names):
@@ -1087,6 +1095,26 @@ class AssistantChatView(APIView):
 
     IA_CHAT_URL = "http://ia_service:8001/api/ia/chat"
 
+    def get(self, request):
+        if request.user.role not in ("GERANT", "SUPER_ADMIN"):
+            return Response({"detail": "Accès réservé au Gérant."}, status=403)
+        try:
+            conversation_id = uuid.UUID(str(request.query_params.get("session_id")))
+        except (TypeError, ValueError, AttributeError):
+            return Response({"messages": []})
+        rows = AssistantInteraction.objects.filter(
+            conversation_id=conversation_id,
+            user=request.user,
+            organization_id=request.user.organization_id,
+        ).order_by("-created_at")[:12]
+        messages = []
+        for row in reversed(list(rows)):
+            messages.extend([
+                {"role": "user", "content": safe_audit_text(row.request_text, limit=4000)},
+                {"role": "assistant", "content": safe_audit_text(row.response_text, limit=12000)},
+            ])
+        return Response({"messages": messages[-24:]})
+
     def post(self, request):
         if request.user.role not in ("GERANT", "SUPER_ADMIN"):
             return Response(
@@ -1103,15 +1131,53 @@ class AssistantChatView(APIView):
             conversation_id = uuid.UUID(str(request.data.get("session_id") or uuid.uuid4()))
         except (TypeError, ValueError, AttributeError):
             return Response({"detail": "Identifiant de conversation invalide."}, status=400)
-        raw_history = request.data.get("history", [])
-        if not isinstance(raw_history, list):
-            return Response({"detail": "Historique de conversation invalide."}, status=400)
-        history = [
-            {"role": item.get("role"), "content": str(item.get("content", ""))[:2000]}
-            for item in raw_history[-12:]
-            if isinstance(item, dict) and item.get("role") in {"user", "assistant"}
-            and str(item.get("content", "")).strip()
-        ]
+        # Rebuild context from server rows owned by this user and organization.
+        prior_rows = list(
+            AssistantInteraction.objects.filter(
+                conversation_id=conversation_id,
+                user=request.user,
+                organization_id=request.user.organization_id,
+            ).order_by("-created_at")[:6]
+        )
+        history = []
+        for interaction in reversed(prior_rows):
+            history.extend([
+                {"role": "user", "content": safe_audit_text(interaction.request_text)},
+                {"role": "assistant", "content": safe_audit_text(interaction.response_text)},
+            ])
+        history = history[-12:]
+        safe_question = safe_audit_text(question, limit=4000)
+        blocked_message = input_guardrail_message(
+            safe_question + "\n" + "\n".join(item["content"] for item in history)
+        )
+        if blocked_message:
+            return Response({
+                "answer": blocked_message,
+                "generated_at": timezone.now().isoformat(),
+                "session_id": str(conversation_id),
+                "tool_results": [],
+                "tools_used": [],
+            })
+        project_answer = handle_project_creation(
+            request.user, conversation_id, question, request,
+        )
+        if project_answer is not None:
+            return Response({
+                "answer": project_answer,
+                "generated_at": timezone.now().isoformat(),
+                "session_id": str(conversation_id),
+                "tool_results": [],
+                "tools_used": ["project_creation_conversation"],
+            })
+        out_of_scope = out_of_scope_message(safe_question)
+        if out_of_scope:
+            return Response({
+                "answer": out_of_scope,
+                "generated_at": timezone.now().isoformat(),
+                "session_id": str(conversation_id),
+                "tool_results": [],
+                "tools_used": [],
+            })
 
         # Collect real data from PostgreSQL
         try:
@@ -1144,7 +1210,7 @@ class AssistantChatView(APIView):
         # Forward to FastAPI/Gemini
         payload = {
             "tenant": ai_tenant_identity(request.user),
-            "question": question,
+            "question": safe_question,
             "context": context,
             "history": history,
         }
@@ -1159,6 +1225,7 @@ class AssistantChatView(APIView):
             )
             response.raise_for_status()
             result = response.json()
+            result["answer"] = safe_audit_text(result.get("answer", ""), limit=12000)
             result.update({
                 "session_id": str(conversation_id),
                 "tool_results": tool_results,
@@ -1168,8 +1235,8 @@ class AssistantChatView(APIView):
                 conversation_id=conversation_id,
                 user=request.user,
                 organization_id=request.user.organization_id,
-                request_text=question,
-                response_text=str(result.get("answer", "")),
+                request_text=safe_question,
+                response_text=safe_audit_text(result.get("answer", "")),
                 tools_used=tool_names,
             )
             return Response(result)
@@ -1183,7 +1250,7 @@ class AssistantChatView(APIView):
                 conversation_id=conversation_id,
                 user=request.user,
                 organization_id=request.user.organization_id,
-                request_text=question,
+                request_text=safe_question,
                 response_text="Le service IA a dépassé le délai. Les résultats Django restent disponibles.",
                 tools_used=tool_names,
             )
@@ -1206,8 +1273,8 @@ class AssistantChatView(APIView):
                 conversation_id=conversation_id,
                 user=request.user,
                 organization_id=request.user.organization_id,
-                request_text=question,
-                response_text=ans,
+                request_text=safe_question,
+                response_text=safe_audit_text(ans),
                 tools_used=tool_names,
             )
 

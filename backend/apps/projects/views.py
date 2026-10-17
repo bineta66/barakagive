@@ -7,6 +7,8 @@ from django.conf import settings
 import requests
 import json
 import re
+import logging
+import unicodedata
 from django.db.models import Avg, Count, Q, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
@@ -33,6 +35,8 @@ from apps.campaigns.models import Campaign
 from apps.beneficiaries.models import Beneficiary, FormResponse, HumanitarianAction
 from apps.finance.models import Budget, Depense, Don, Financement
 from apps.zones.models import Zone
+
+logger = logging.getLogger(__name__)
 from apps.common.interservice import post_to_ai_service, ai_tenant_identity
 from apps.common.pagination import StandardPagination
 
@@ -182,9 +186,13 @@ class ProjectDecisionDashboardView(APIView):
         campaigns_late = late_campaigns.count()
         priority = beneficiaries.filter(score_vulnerabilite__gte=60)
         priority_count = priority.count()
+        waiting_status_count = beneficiaries.filter(
+            statut__in=[Beneficiary.Statut.IDENTIFIE, Beneficiary.Statut.EVALUE]
+        ).count()
         evaluated_status_count = beneficiaries.filter(statut=Beneficiary.Statut.EVALUE).count()
         priority_status_count = beneficiaries.filter(statut=Beneficiary.Statut.PRIORITAIRE).count()
         taken_care_status_count = beneficiaries.filter(statut=Beneficiary.Statut.PRIS_EN_CHARGE).count()
+        exited_status_count = beneficiaries.filter(statut=Beneficiary.Statut.SORTI).count()
         aided_ids = HumanitarianAction.objects.filter(
             beneficiary__in=beneficiaries, statut=HumanitarianAction.Statut.REALISEE
         ).values("beneficiary_id").distinct()
@@ -195,8 +203,10 @@ class ProjectDecisionDashboardView(APIView):
         beneficiary_levels = {
             "total": beneficiaries_count,
             "evalues": evaluated_status_count,
+            "en_attente": waiting_status_count,
             "prioritaires": priority_status_count,
             "pris_en_charge": taken_care_status_count,
+            "sortis": exited_status_count,
             "taux_evalues": round(evaluated_status_count / beneficiaries_count * 100, 1) if beneficiaries_count else 0,
             "taux_prioritaires": round(priority_status_count / beneficiaries_count * 100, 1) if beneficiaries_count else 0,
             "taux_pris_en_charge": round(taken_care_status_count / beneficiaries_count * 100, 1) if beneficiaries_count else 0,
@@ -640,10 +650,27 @@ class ProjectCampaignProposalView(APIView):
             Zone.objects.filter(
                 organization=user.organization,
                 statut=True,
-                campaigns__projet=project,
+            ).filter(
+                Q(region__nom__iexact=project.region)
+                | Q(campaigns__projet=project, campaigns__organization=user.organization)
             ).values("id", "nom", "region__nom").distinct().order_by("nom")
         )
+        # Fallback: if no zones match the project region/campaigns, expose all active
+        # org zones so the AI can still generate meaningful proposals.
+        if not zone_rows:
+            zone_rows = list(
+                Zone.objects.filter(
+                    organization=user.organization,
+                    statut=True,
+                ).values("id", "nom", "region__nom").distinct().order_by("nom")
+            )
         allowed_zone_ids = {str(row["id"]) for row in zone_rows}
+        def normalize_choice(value):
+            value = unicodedata.normalize("NFD", str(value or "").strip().lower())
+            value = "".join(char for char in value if unicodedata.category(char) != "Mn")
+            return re.sub(r"[^a-z0-9]+", "_", value).strip("_")
+
+        allowed_zone_names = {normalize_choice(row["nom"]): str(row["id"]) for row in zone_rows}
         campaign_rows = list(project_campaigns.order_by("-created_at").values("nom", "type", "statut", "date_debut", "date_fin")[:20])
         project_budget = Budget.objects.filter(
             projet=project,
@@ -691,6 +718,10 @@ class ProjectCampaignProposalView(APIView):
             "et la date de fin doit suivre la date de début. N'invente aucun chiffre ni zone. "
             "Les propositions sont soumises à décision humaine; ne prétends pas les créer."
         )
+        question += (
+            " Return only valid JSON. For each proposal, copy an exact allowed campaign type code and the exact zone UUIDs "
+            "from the context in zone_ids as an array of strings; do not return zone names instead of IDs."
+        )
         try:
             ai_response = post_to_ai_service(
                 f"{settings.IA_SERVICE_URL.rstrip('/')}/api/ia/chat",
@@ -703,17 +734,35 @@ class ProjectCampaignProposalView(APIView):
             if not json_match:
                 raise ValueError("La réponse IA ne contient pas de proposition structurée.")
             generated = json.loads(json_match.group(0))
-            analysis = str(generated.get("analyse", "")).strip()
+            analysis = str(generated.get("analyse") or generated.get("analysis") or "").strip()
             proposals = []
             valid_types = {value for value, _label in Campaign.Type.choices if value != Campaign.Type.COLLECTE}
-            for proposal in generated.get("propositions", [])[:3]:
+            type_aliases = {normalize_choice(label): value for value, label in Campaign.Type.choices if value != Campaign.Type.COLLECTE}
+            type_aliases.update({normalize_choice(value): value for value in valid_types})
+            raw_proposals = generated.get("propositions", generated.get("proposals", []))
+            if not isinstance(raw_proposals, list):
+                raw_proposals = []
+            for proposal in raw_proposals[:3]:
                 if not isinstance(proposal, dict):
                     continue
-                kind = proposal.get("type")
-                selected_zones = [str(value) for value in proposal.get("zone_ids", []) if str(value) in allowed_zone_ids]
+                kind_raw = proposal.get("type")
+                kind = type_aliases.get(normalize_choice(kind_raw), kind_raw)
+                raw_zones = proposal.get("zone_ids", proposal.get("zones", []))
+                if not isinstance(raw_zones, list):
+                    raw_zones = [raw_zones]
+                selected_zones = []
+                for value in raw_zones:
+                    zone_id = str(value.get("id", "")) if isinstance(value, dict) else str(value)
+                    if zone_id not in allowed_zone_ids:
+                        zone_name = value.get("nom", value.get("name", "")) if isinstance(value, dict) else value
+                        zone_id = allowed_zone_names.get(normalize_choice(zone_name), "")
+                    if zone_id and zone_id not in selected_zones:
+                        selected_zones.append(zone_id)
                 try:
-                    starts = date.fromisoformat(proposal.get("date_debut", ""))
-                    ends = date.fromisoformat(proposal.get("date_fin", ""))
+                    starts_raw = proposal.get("date_debut") or proposal.get("date_start") or ""
+                    ends_raw = proposal.get("date_fin") or proposal.get("date_end") or ""
+                    starts = date.fromisoformat(str(starts_raw)[:10])
+                    ends = date.fromisoformat(str(ends_raw)[:10])
                 except (TypeError, ValueError):
                     continue
                 if (
@@ -734,8 +783,25 @@ class ProjectCampaignProposalView(APIView):
                     "zones": [row for row in project_context["zones_autorisees"] if row["id"] in selected_zones],
                     "justification": str(proposal.get("justification", ""))[:2000],
                 })
-            if not analysis or not proposals:
-                return Response({"detail": "L'IA n'a pas fourni de proposition complète et compatible avec les zones et dates du projet."}, status=status.HTTP_502_BAD_GATEWAY)
+            if not proposals:
+                logger.warning(
+                    "Campaign proposal response had no valid proposals (project_id=%s, returned=%s, allowed_zones=%s)",
+                    project.pk,
+                    len(raw_proposals) if isinstance(raw_proposals, list) else 0,
+                    len(allowed_zone_ids),
+                )
+                return Response(
+                    {
+                        "detail": (
+                            "L'IA n'a pas pu produire de proposition valide. "
+                            "Vérifiez que le projet a des zones actives, des dates futures et des critères configurés, "
+                            "puis réessayez."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not analysis:
+                analysis = f"Propositions établies à partir des critères et de la période du projet « {project.name} »."
             return Response({"analyse": analysis, "propositions": proposals})
         except (requests.RequestException, ValueError, json.JSONDecodeError):
             return Response({"detail": "Impossible d'obtenir une proposition IA structurée pour le moment."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)

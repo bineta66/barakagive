@@ -36,6 +36,7 @@ from .services import (
 from apps.campaigns.models import Campaign
 from apps.common.scoping import scope_by_organization, user_organization
 from apps.common.interservice import post_to_ai_service, ai_tenant_identity
+from apps.ia.guardrails import input_guardrail_message, out_of_scope_message, safe_audit_text
 from rest_framework.exceptions import NotFound
 from apps.accounts.permissions import IsAccountActive, IsGerant
 
@@ -788,6 +789,12 @@ class FinanceAssistantChatView(APIView):
         question = (request.data.get("question") or "").strip()
         if not question:
             return Response({"detail": "La question ne peut pas être vide."}, status=400)
+        blocked_message = input_guardrail_message(question)
+        if blocked_message:
+            return Response({"answer": blocked_message, "alert": "GREEN", "generated_at": str(dt.datetime.utcnow().isoformat()) + "Z"})
+        out_of_scope = out_of_scope_message(question)
+        if out_of_scope:
+            return Response({"answer": out_of_scope, "alert": "GREEN", "generated_at": str(dt.datetime.utcnow().isoformat()) + "Z"})
 
         try:
             context = build_finance_chat_context(request.user)
@@ -881,6 +888,7 @@ class FinanceAssistantChatView(APIView):
             return "\n".join(lines)
 
         final_answer = build_answer_string(raw_answer, bt, solde, taux, alert_level)
+        final_answer = safe_audit_text(final_answer, limit=4000)
 
         return Response({
             "alert": alert_level,

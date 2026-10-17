@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div class="flex justify-between items-center pb-4">
@@ -111,9 +111,23 @@ const onRegionSelected = ({ region, departement }) => {
   form.departement = departement
 }
 
-const onMapClick = ({ latitude, longitude }) => {
+const geocoding = ref(false)
+
+const onMapClick = async ({ latitude, longitude }) => {
   form.latitude = latitude
   form.longitude = longitude
+  geocoding.value = true
+  try {
+    const geo = await zoneStore.reverseGeocode(latitude, longitude)
+    if (geo) {
+      form.region = geo.region || form.region
+      form.departement = geo.departement || form.departement
+    }
+  } catch (_) {
+    // silent fallback
+  } finally {
+    geocoding.value = false
+  }
 }
 
 const onSubmit = async (data) => {

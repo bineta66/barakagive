@@ -30,7 +30,7 @@
         <LTooltip v-if="mode === 'readonly'" permanent class="zone-tooltip">
           <div class="text-center">
             <strong>{{ zone.nom }}</strong><br />
-            <span class="text-xs">{{ zone.region }} • {{ zone.rayon }} m</span>
+            <span class="text-xs">{{ regionName(zone) }} • {{ zone.rayon }} m</span>
           </div>
         </LTooltip>
         <LPopup v-if="mode === 'readonly'">
@@ -42,7 +42,7 @@
             <div class="space-y-1 text-sm">
               <div class="flex justify-between">
                 <span class="text-gray-500">Région</span>
-                <span class="font-semibold text-gray-900">{{ zone.region }}</span>
+                <span class="font-semibold text-gray-900">{{ regionName(zone) }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="text-gray-500">Département</span>
@@ -93,6 +93,7 @@ import { ref, watch, onUnmounted } from "vue"
 import { LMap, LTileLayer, LMarker, LCircle, LTooltip, LPopup } from "@vue-leaflet/vue-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+import { regionName } from "@/modules/chef-projet/utils/regionName.js"
 
 const props = defineProps({
   geojson: {

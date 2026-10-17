@@ -25,7 +25,7 @@
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="text-2xl font-bold text-bleu-nuit">{{ zone.nom }}</h2>
-            <p class="text-sm text-gray-500 mt-1">{{ zone.region }} · {{ zone.departement }}</p>
+            <p class="text-sm text-gray-500 mt-1">{{ regionName(zone) }} · {{ zone.departement_nom || zone.departement?.nom || zone.departement }}</p>
           </div>
           <span
             class="px-4 py-2 rounded-lg text-sm font-semibold"
@@ -46,7 +46,7 @@
           </div>
           <div class="bg-slate-50 p-4 rounded-lg text-center">
             <p class="text-[10px] text-gray-500 uppercase">Région</p>
-            <p class="font-bold text-bleu-nuit mt-1">{{ zone.region }}</p>
+            <p class="font-bold text-bleu-nuit mt-1">{{ regionName(zone) }}</p>
           </div>
           <div class="bg-slate-50 p-4 rounded-lg text-center">
             <p class="text-[10px] text-gray-500 uppercase">Département</p>
@@ -130,6 +130,7 @@ import { ArrowLeft, MessageSquare, Lightbulb, Users } from "lucide-vue-next"
 import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
 import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import api from "@/services/api.js"
+import { regionName } from "@/modules/chef-projet/utils/regionName.js"
 
 const route = useRoute()
 const router = useRouter()

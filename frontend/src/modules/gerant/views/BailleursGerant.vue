@@ -110,17 +110,17 @@
               <div class="flex justify-center gap-1">
                 <button
                   @click="openBailleur(bailleur)"
-                  class="p-1 text-bleu-nuit hover:bg-bleu-nuit/10 rounded-lg transition-colors"
+                  class="p-1.5 text-sky-700 hover:bg-sky-50 rounded-lg transition-colors"
                   title="Modifier"
                 >
-                  <Pencil class="w-4 h-4" />
+                  <Pencil class="w-[18px] h-[18px]" />
                 </button>
                 <button
                   @click="supprimerBailleur(bailleur)"
-                  class="p-1 text-slate-400 hover:text-red-600 rounded-lg transition-colors"
+                  class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                   title="Supprimer"
                 >
-                  <Trash2 class="w-4 h-4" />
+                  <Trash2 class="w-[18px] h-[18px]" />
                 </button>
               </div>
             </td>

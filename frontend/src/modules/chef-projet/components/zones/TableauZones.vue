@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="bg-white rounded-xl border border-slate-200/60 overflow-x-auto">
     <table class="w-full">
       <thead class="bg-slate-50 text-xs uppercase text-bleu-nuit">
@@ -18,8 +18,8 @@
             <span class="font-semibold text-sm text-slate-800">{{ zone.nom }}</span>
           </td>
 
-          <td class="px-4 text-xs text-slate-600">{{ zone.region }}</td>
-<td class="px-4 text-xs text-slate-600">{{ zone.departement || "-" }}</td>
+          <td class="px-4 text-xs text-slate-600">{{ regionName(zone, "—") }}</td>
+          <td class="px-4 text-xs text-slate-600">{{ zone.departement_nom || zone.departement || "-" }}</td>
 
           <td class="px-4 text-right text-xs text-slate-600">
             {{ zone.rayon ? zone.rayon + ' m' : '-' }}
@@ -28,7 +28,7 @@
           <td class="px-4">
             <span
               class="px-2 py-1 rounded text-xs font-semibold"
-              :class="isActive(zone.statut) ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'"
+              :class="isActive(zone.statut) ? 'bg-bleu-accent/10 text-bleu-accent' : 'bg-gray-100 text-gray-600'"
             >
               {{ isActive(zone.statut) ? 'Actif' : 'Inactif' }}
             </span>
@@ -76,6 +76,7 @@
 <script setup>
 import { Eye, Pencil, Trash2 } from "lucide-vue-next"
 import { RouterLink } from "vue-router"
+import { regionName } from "@/modules/chef-projet/utils/regionName.js"
 
 defineProps({
   zones: {

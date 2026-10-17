@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div
@@ -34,7 +34,7 @@
           <p class="text-xs font-bold uppercase text-slate-500">
             Avec justificatif
           </p>
-          <h3 class="text-2xl font-bold text-emerald-600 mt-1">
+          <h3 class="text-2xl font-bold text-bleu-accent mt-1">
             {{ avecJustificatif }}
           </h3>
         </div>

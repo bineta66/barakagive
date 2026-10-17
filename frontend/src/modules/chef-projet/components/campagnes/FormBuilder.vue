@@ -1,9 +1,9 @@
 ﻿<template>
-  <div class="flex-1 inline-flex flex-col justify-start items-start gap-4">
+  <div class="w-full min-w-0 flex-1 inline-flex flex-col justify-start items-start gap-4">
     <!-- En-tête -->
-    <div class="self-stretch flex justify-between items-center">
-      <h3 class="text-xl font-bold text-[#00313C]">Questions du formulaire</h3>
-      <BoutonPrimary @click="$emit('ajouter-question')">
+    <div class="self-stretch flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <h3 class="text-lg font-bold text-[#00313C] sm:text-xl">Questions du formulaire</h3>
+      <BoutonPrimary class="w-full justify-center sm:w-auto" @click="$emit('ajouter-question')">
         <Plus :size="18" />
         Ajouter une question
       </BoutonPrimary>
@@ -12,7 +12,7 @@
     <!-- État vide -->
     <div
       v-if="questions.length === 0"
-      class="self-stretch p-12 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col justify-center items-center text-center"
+      class="self-stretch p-6 sm:p-12 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col justify-center items-center text-center"
     >
       <div
         class="w-16 h-16 rounded-2xl bg-bleu-nuit/5 flex items-center justify-center mb-4"
@@ -42,7 +42,7 @@
     <!-- Liste des questions -->
     <div
       v-else
-      class="self-stretch bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden"
+      class="w-full min-w-0 self-stretch bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden"
     >
       <QuestionCard
         v-for="(question, index) in questions"

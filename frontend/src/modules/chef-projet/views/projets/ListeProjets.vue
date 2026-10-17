@@ -3,7 +3,7 @@
     <!-- Titre et Action -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
       <div>
-        <h1 class="text-4xl font-bold text-bleu-nuit">Mes projets</h1>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Mes projets</h1>
         <p class="text-xs text-gray-500 mt-1">
           Gérez, suivez et mettez à jour les projets humanitaires sur le terrain.
         </p>
@@ -86,7 +86,7 @@
             <td class="px-4 py-4 text-slate-600">{{ projet.region || 'Non renseignée' }}</td>
             <td class="px-4 py-4 font-medium text-slate-700">{{ formatBudget(projet.budget) }}</td>
             <td class="px-4 py-4 text-slate-600">{{ projet.start_date || '-' }} – {{ projet.end_date || '-' }}</td>
-            <td class="px-4 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'">{{ projet.archived ? 'Archivé' : 'Actif' }}</span></td>
+            <td class="px-4 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold" :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-bleu-accent/10 text-bleu-accent'">{{ projet.archived ? 'Archivé' : 'Actif' }}</span></td>
             <td class="px-4 py-4"><div class="flex justify-end gap-2">
               <RouterLink :to="{ name: 'projets-detail', params: { id: projet.id || projet.code } }" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-bleu-nuit" title="Détails" aria-label="Détails"><Eye :size="16" /></RouterLink>
               <button v-if="peutGererProjets && !projet.archived" class="rounded-lg px-3 py-2 text-xs font-semibold text-bleu-nuit hover:bg-slate-100" @click="openEditProject(projet)">Modifier</button>
@@ -103,7 +103,7 @@
         <div class="border-b border-slate-200/70 p-5">
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0"><h2 class="truncate text-lg font-bold text-slate-900">{{ projet.name || projet.nom }}</h2><p class="mt-1 text-xs text-slate-500">{{ projet.code || 'Sans code' }}</p></div>
-            <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'">{{ projet.archived ? 'Archive' : 'Actif' }}</span>
+            <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold" :class="projet.archived ? 'bg-slate-100 text-slate-600' : 'bg-bleu-accent/10 text-bleu-accent'">{{ projet.archived ? 'Archive' : 'Actif' }}</span>
           </div>
           <p class="mt-3 line-clamp-2 min-h-10 text-sm text-slate-600">{{ projet.description || projet.objectif || 'Aucune description disponible.' }}</p>
           <div class="mt-4 grid grid-cols-2 gap-3 text-xs">

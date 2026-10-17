@@ -2,7 +2,7 @@
   <div v-if="isGerant">
     <!-- Floating Orb (Visible uniquement pour le Gérant) -->
     <div
-      class="fixed bottom-6 right-6 z-50 cursor-pointer transition-transform duration-300 hover:scale-110 select-none group"
+      class="fixed bottom-24 lg:bottom-6 right-4 sm:right-6 z-40 cursor-pointer transition-transform duration-300 hover:scale-110 select-none group"
       @click="toggleDrawer"
       title="Ouvrir l'Assistant IA du Gérant"
     >
@@ -19,7 +19,7 @@
         <!-- Ping Rings for Attention -->
         <span
           v-if="hasAlerts"
-          class="absolute inset-0 rounded-full border-2 border-red-500 animate-ping opacity-60 pointer-events-none"
+          class="absolute inset-0 rounded-full border-2 border-rose-baraka animate-ping opacity-60 pointer-events-none"
         ></span>
         <span
           v-else
@@ -29,7 +29,7 @@
         <!-- Alert Counter Badge -->
         <span
           v-if="hasAlerts"
-          class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white shadow-md border-2 border-[#021B30]"
+          class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-baraka text-[10px] font-bold text-white shadow-md border-2 border-[#021B30]"
         >
           !
         </span>
@@ -380,7 +380,13 @@ const messages = ref([])
 const chatScroll = ref(null)
 const voiceListening = ref(false)
 const voiceError = ref('')
-const sessionId = ref(globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`)
+const sessionStorageKey = `barakagive_assistant_project_session_${authStore.user?.id || 'user'}_${authStore.organizationId || 'org'}`
+const createSessionId = () => globalThis.crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, character => {
+  const random = Math.random() * 16 | 0
+  return (character === 'x' ? random : (random & 0x3 | 0x8)).toString(16)
+})
+const sessionId = ref(localStorage.getItem(sessionStorageKey) || createSessionId())
+if (!localStorage.getItem(sessionStorageKey)) localStorage.setItem(sessionStorageKey, sessionId.value)
 let speechRecognition = null
 
 const suggestions = [
@@ -457,7 +463,10 @@ const sendChat = async (suggestion = '') => {
       history,
       session_id: sessionId.value,
     })
-    if (response.data?.session_id) sessionId.value = response.data.session_id
+    if (response.data?.session_id) {
+      sessionId.value = response.data.session_id
+      localStorage.setItem(sessionStorageKey, sessionId.value)
+    }
     messages.value.push({
       role: 'assistant',
       content: response.data?.answer || 'Je n’ai pas obtenu de réponse exploitable.',
@@ -475,6 +484,18 @@ const sendChat = async (suggestion = '') => {
     chatLoading.value = false
     await nextTick()
     chatScroll.value?.scrollTo({ top: chatScroll.value.scrollHeight, behavior: 'smooth' })
+  }
+}
+
+const restoreChat = async () => {
+  if (messages.value.length || !sessionId.value) return
+  try {
+    const response = await api.get('/api/assistant/chat/', { params: { session_id: sessionId.value } })
+    messages.value = Array.isArray(response.data?.messages) ? response.data.messages : []
+    await nextTick()
+    chatScroll.value?.scrollTo({ top: chatScroll.value.scrollHeight })
+  } catch {
+    // The next message can still resume the server-side draft by session ID.
   }
 }
 
@@ -538,6 +559,7 @@ const fetchAssistantData = async () => {
 onMounted(() => {
   if (isGerant.value) {
     fetchAssistantData()
+    restoreChat()
   }
 })
 </script>

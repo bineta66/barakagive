@@ -13,7 +13,7 @@
         <KpiCard titre="Projets actifs" :valeur="op.projets_actifs" :icone="FolderKanban" />
         <KpiCard titre="Campagnes" :valeur="op.campagnes" :icone="ClipboardList" />
         <KpiCard titre="Beneficiaires" :valeur="op.beneficiaires" :icone="Users" />
-        <KpiCard titre="Beneficiaires prioritaires" :valeur="op.beneficiaires_prioritaires" :icone="ShieldAlert" couleur="red" />
+        <KpiCard titre="Beneficiaires prioritaires" :valeur="op.beneficiaires_prioritaires" :icone="ShieldAlert" couleur="rose-baraka" />
       </section>
 
       <section class="grid grid-cols-1 gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -58,15 +58,15 @@
         </article>
         <article class="panel">
           <h2 class="panel-title">Beneficiaires par zone</h2>
-          <DashboardChart v-if="zoneChartData.labels.length" type="bar" :data="zoneChartData" :height="280" />
+          <DashboardChart v-if="zoneChartData.labels.length" type="bar" :data="zoneChartData" :height="280" series-color="#00313C" />
           <EmptyState v-else titre="Aucune donnee disponible" description="Aucun beneficiaire par zone dans ce filtre." container-class="min-h-[180px]" />
         </article>
       </section>
 
       <section class="panel">
         <h2 class="panel-title">Projets et campagnes</h2>
-        <p class="mt-1 text-xs text-slate-500">Nombre de projets et de campagnes par projet affect?.</p>
-        <DashboardChart v-if="projectCampaignChartData.labels.length" class="mt-4" type="bar" :data="projectCampaignChartData" :height="300" />
+        <p class="mt-1 text-xs text-slate-500">Projets et campagnes associés à chaque projet.</p>
+        <DashboardChart v-if="projectCampaignChartData.labels.length" class="mt-4" type="bar" :data="projectCampaignChartData" :height="projectCampaignChartHeight" horizontal />
         <EmptyState v-else titre="Aucune donn?e disponible" description="Aucun projet ou campagne ne correspond aux filtres." container-class="mt-4 min-h-[180px]" />
       </section>
 
@@ -108,13 +108,20 @@ const filters = reactive({ project_id: '', campaign_id: '', region_id: '', zone_
 const period = ref('year')
 const loading = ref(false)
 const error = ref('')
+const chartColors = {
+  green: '#16A34A',
+  yellow: '#EAB308',
+  red: '#DC2626',
+  blue: '#2563EB',
+  orange: '#F97316',
+}
 const filteredCampaigns = computed(() => options.value.campagnes.filter(c => !filters.project_id || String(c.projet_id) === String(filters.project_id)))
 const filteredZones = computed(() => options.value.zones.filter(z => !filters.region_id || String(z.region_id) === String(filters.region_id)))
 const financeChartData = computed(() => ({
   labels: ['Budget total', 'Financements recus', 'Dons recus', 'Depenses validees', 'Solde disponible'],
   datasets: [{
     data: [finance.value.budget_total, finance.value.financements_recus, finance.value.dons_recus, finance.value.depenses_validees, finance.value.solde].map(Number),
-    backgroundColor: ['#94a3b8', '#021427', '#16a34a', '#f59e0b', Number(finance.value.solde) < 0 ? '#dc2626' : '#0ea5e9'],
+    backgroundColor: [chartColors.blue, chartColors.green, chartColors.yellow, chartColors.orange, Number(finance.value.solde) < 0 ? chartColors.red : chartColors.green],
     borderRadius: 5,
   }],
 }))
@@ -123,9 +130,9 @@ const zoneChartData = computed(() => {
   return {
     labels: rows.map(row => row.nom),
     datasets: [
-      { label: 'Total', data: rows.map(row => row.total), backgroundColor: '#021427', borderRadius: 4 },
-      { label: 'Prioritaires', data: rows.map(row => row.priority), backgroundColor: '#dc2626', borderRadius: 4 },
-      { label: 'Pris en charge', data: rows.map(row => row.aided), backgroundColor: '#16a34a', borderRadius: 4 },
+      { label: 'Total', data: rows.map(row => row.total), backgroundColor: chartColors.blue, borderRadius: 4 },
+      { label: 'Prioritaires', data: rows.map(row => row.priority), backgroundColor: chartColors.red, borderRadius: 4 },
+      { label: 'Pris en charge', data: rows.map(row => row.aided), backgroundColor: chartColors.green, borderRadius: 4 },
     ],
   }
 })
@@ -133,19 +140,20 @@ const projectCampaignChartData = computed(() => {
   const projects = options.value.projets.filter(project => !filters.project_id || String(project.id) === String(filters.project_id))
   const campaigns = options.value.campagnes.filter(campaign => !filters.campaign_id || String(campaign.id) === String(filters.campaign_id))
   return {
-    labels: projects.map(project => project.name),
+    labels: projects.map((project, index) => project.name || project.nom || `Projet ${index + 1}`),
     datasets: [
-      { label: 'Projets', data: projects.map(() => 1), backgroundColor: '#021427', borderRadius: 4 },
-      { label: 'Campagnes', data: projects.map(project => campaigns.filter(campaign => String(campaign.projet_id) === String(project.id)).length), backgroundColor: '#1A6FAD', borderRadius: 4 },
+      { label: 'Projets', data: projects.map(() => 1), backgroundColor: chartColors.blue, borderRadius: 6, maxBarThickness: 18, categoryPercentage: 0.62, barPercentage: 0.78 },
+      { label: 'Campagnes', data: projects.map(project => campaigns.filter(campaign => String(campaign.projet_id) === String(project.id)).length), backgroundColor: chartColors.orange, borderRadius: 6, maxBarThickness: 18, categoryPercentage: 0.62, barPercentage: 0.78 },
     ],
   }
 })
+const projectCampaignChartHeight = computed(() => Math.min(320, Math.max(180, projectCampaignChartData.value.labels.length * 54 + 64)))
 const beneficiaryLevelItems = computed(() => {
   const levels = decision.value?.beneficiaires_par_niveau || {}
   return [
-    { label: 'Évalués', value: Number(levels.taux_evalues) || 0, count: Number(levels.evalues) || 0, color: '#2563EB' },
-    { label: 'Prioritaires', value: Number(levels.taux_prioritaires) || 0, count: Number(levels.prioritaires) || 0, color: '#F97316' },
-    { label: 'Pris en charge', value: Number(levels.taux_pris_en_charge) || 0, count: Number(levels.pris_en_charge) || 0, color: '#16A36A' },
+    { label: 'Évalués', value: Number(levels.taux_evalues) || 0, count: Number(levels.evalues) || 0, color: chartColors.blue },
+    { label: 'Prioritaires', value: Number(levels.taux_prioritaires) || 0, count: Number(levels.prioritaires) || 0, color: chartColors.red },
+    { label: 'Pris en charge', value: Number(levels.taux_pris_en_charge) || 0, count: Number(levels.pris_en_charge) || 0, color: chartColors.green },
   ]
 })
 const progressChartData = (value, color = '#00313C') => {

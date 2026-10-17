@@ -25,31 +25,26 @@ const props = defineProps({
   couleur: { type: String, default: "sky" },
 });
 
+// Respecte strictement le design system BarakaGive : bleu-nuit, bleu-accent, rose-baraka
 const bgColor = computed(() => {
-  const colors = {
-    sky: "bg-bleu-accent/10",
-    blue: "bg-bleu-nuit/8",
-    amber: "bg-bleu-nuit/8",
-    emerald: "bg-emerald-50",
-    purple: "bg-purple-50",
-    red: "bg-red-50",
-    orange: "bg-bleu-nuit/8",
-    slate: "bg-slate-100",
-  };
-  return colors[props.couleur] || "bg-slate-50";
+  const c = props.couleur?.toLowerCase() || "";
+  if (c.includes("rose") || c.includes("red") || c.includes("danger") || c.includes("alert")) {
+    return "bg-rose-baraka/10";
+  }
+  if (c.includes("accent") || c.includes("sky") || c.includes("blue") || c.includes("second")) {
+    return "bg-bleu-accent/10";
+  }
+  return "bg-bleu-nuit/10";
 });
 
 const textColor = computed(() => {
-  const colors = {
-    sky: "text-bleu-nuit",
-    blue: "text-bleu-nuit",
-    amber: "text-bleu-nuit",
-    emerald: "text-emerald-600",
-    purple: "text-purple-600",
-    red: "text-red-600",
-    orange: "text-bleu-nuit",
-    slate: "text-slate-600",
-  };
-  return colors[props.couleur] || "text-bleu-nuit";
+  const c = props.couleur?.toLowerCase() || "";
+  if (c.includes("rose") || c.includes("red") || c.includes("danger") || c.includes("alert")) {
+    return "text-rose-baraka";
+  }
+  if (c.includes("accent") || c.includes("sky") || c.includes("blue") || c.includes("second")) {
+    return "text-bleu-accent";
+  }
+  return "text-bleu-nuit";
 });
 </script>

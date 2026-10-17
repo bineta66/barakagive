@@ -1,42 +1,16 @@
 ﻿<template>
-  <div class="flex-1 min-w-0">
-    <div class="self-stretch h-[626px] min-h-[580px] relative bg-white">
-      <div class="w-[608.66px] pb-3 left-[16px] top-[16px] absolute bg-white rounded-xl shadow-xs-[0px_4px_20px_0px_rgba(0,0,0,0.05)] inline-flex justify-between items-center">
-        <div class="size- flex justify-start items-center gap-2">
-          <div class="size-3 bg-bleu-nuit"></div>
-          <div class="size- inline-flex flex-col justify-start items-start">
-            <div class="justify-center text-slate-900 text-base font-semibold font-['Poppins'] leading-6">Cartographie Opérationnelle // Sénégal</div>
-          </div>
-        </div>
-        <div class="size- inline-flex flex-col justify-start items-start">
-          <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4">COORDS : WGS84 EPSG:4326</div>
-        </div>
-      </div>
-      <div class="w-[608.66px] pt-3 left-[16px] top-[512px] absolute inline-flex flex-col justify-start items-start">
-        <div class="self-stretch h-11 pt-3 bg-white flex flex-col justify-center items-start gap-3">
-          <div class="w-[646.66px] h-11 relative">
-            <div class="size-3 left-[167.08px] top-[1px] absolute"></div>
-            <div class="size- left-0 top-[30px] absolute inline-flex justify-start items-center gap-1">
-              <div class="size-3 bg-neutral-300"></div>
-              <div class="size- inline-flex flex-col justify-start items-start">
-                <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4 tracking-wide">Zone sans bénéficiaire</div>
-              </div>
-            </div>
-          </div>
-          <div class="size- flex flex-col justify-start items-start">
-            <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4">Dernière synchro GPS : 10:42:19 UTC</div>
-          </div>
-        </div>
-      </div>
-      <div class="w-[608.66px] h-[460px] p-2 left-[16px] top-[52px] absolute bg-neutral-200 inline-flex justify-center items-center overflow-hidden">
-        <img class="w-[607px] h-96" src="https://placehold.co/607x436" />
-        <div class="size- px-3 py-1 left-[12px] top-[12px] absolute bg-white/90 flex justify-start items-center gap-1">
-          <div class="size-2 bg-bleu-nuit"></div>
-          <div class="size- inline-flex flex-col justify-start items-start">
-            <div class="justify-center text-gray-800 text-xs font-normal font-['Poppins'] leading-4 tracking-wide">FLUX EN DIRECT // SENEGAL OPERATIONS</div>
-          </div>
-        </div>
-      </div>
+  <div class="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
+    <div class="mb-3 flex min-w-0 flex-wrap items-start justify-between gap-2">
+      <h2 class="min-w-0 text-sm font-semibold leading-6 text-slate-900 sm:text-base">Cartographie opérationnelle // Sénégal</h2>
+      <span class="text-xs text-slate-500">COORDS : WGS84 EPSG:4326</span>
+    </div>
+    <div class="relative aspect-[4/3] min-h-[220px] w-full overflow-hidden rounded-lg bg-neutral-200 sm:aspect-[16/9]">
+      <img class="h-full w-full object-cover" src="https://placehold.co/960x540" alt="Aperçu de la carte du Sénégal" />
+      <div class="absolute left-2 top-2 max-w-[calc(100%-1rem)] rounded bg-white/90 px-3 py-1 text-xs text-gray-800 sm:left-3 sm:top-3">FLUX EN DIRECT // SENEGAL OPERATIONS</div>
+    </div>
+    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+      <span class="inline-flex items-center gap-2"><span class="size-3 rounded-sm bg-neutral-300"></span>Zone sans bénéficiaire</span>
+      <span>Dernière synchro GPS : 10:42:19 UTC</span>
     </div>
   </div>
 </template>

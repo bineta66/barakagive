@@ -32,7 +32,7 @@
         <div class="w-full sm:w-64">
           <select v-model="regionFiltre" class="w-full h-10 px-3 border border-gray-300 rounded-md text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-bleu-nuit/30 bg-white">
             <option value="">Toutes les régions</option>
-            <option v-for="region in regions" :key="region" :value="region">{{ region }}</option>
+            <option v-for="region in regions" :key="region.id || region.nom" :value="region.id">{{ region.nom }}</option>
           </select>
         </div>
         <div class="w-full sm:w-56">
@@ -57,6 +57,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner.vue"
 import AlertMessage from "@/components/ui/AlertMessage.vue"
 import TableauZones from "@/modules/chef-projet/components/zones/TableauZones.vue"
 import { useZoneStore } from "@/stores/zone.js"
+import { regionId, regionName } from "@/modules/chef-projet/utils/regionName.js"
 
 const zoneStore = useZoneStore()
 const recherche = ref("")
@@ -74,7 +75,10 @@ onMounted(async () => {
 })
 
 const regions = computed(() => {
-  return [...new Set(zoneStore.zones.map((z) => z.region).filter(Boolean))]
+  const entries = zoneStore.zones
+    .map((zone) => ({ id: regionId(zone), nom: regionName(zone, "") }))
+    .filter((region) => region.nom)
+  return [...new Map(entries.map((region) => [region.id || region.nom, region])).values()]
 })
 
 const isActive = (statut) => {
@@ -84,7 +88,7 @@ const isActive = (statut) => {
 const zonesFiltrees = computed(() => {
   return zoneStore.zones.filter((zone) => {
     const matchRecherche = !recherche.value || (zone.nom || "").toLowerCase().includes(recherche.value.toLowerCase())
-    const matchRegion = !regionFiltre.value || zone.region === regionFiltre.value
+    const matchRegion = !regionFiltre.value || regionId(zone) === regionFiltre.value
     const matchStatut = !statutFiltre.value || isActive(zone.statut) === (statutFiltre.value === "true")
     return matchRecherche && matchRegion && matchStatut
   })

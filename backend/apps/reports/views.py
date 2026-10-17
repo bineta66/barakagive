@@ -14,7 +14,7 @@ from apps.accounts.permissions import IsAccountActive
 from apps.projects.models import Project
 from apps.campaigns.models import Campaign
 from apps.beneficiaries.models import Beneficiary
-from apps.finance.models import Budget, Depense, Don
+from apps.finance.models import Budget, Depense, Don, Financement, LigneBudgetaire
 
 
 ALLOWED_ROLES = {"GERANT", "CHEF_PROJET", "FINANCE"}
@@ -330,6 +330,7 @@ class ReportCampagnesView(APIView):
         # Filtres
         project_id = params.get("project_id")
         campaign_id = params.get("campaign_id")
+        project_search = (params.get("search") or "").strip()
         region = params.get("region")
         date_debut = _parse_date(params.get("date_debut"))
         date_fin = _parse_date(params.get("date_fin"))
@@ -497,11 +498,40 @@ class ReportFinanceView(APIView):
         user = request.user
         params = request.query_params
         org = user.organization
+        project_search = (params.get("search") or "").strip()
 
-        p_ids = list(_filter_projects(user).values_list("id", flat=True))
+        projects = _filter_projects(user)
+        projects_all = projects
+        if project_search:
+            projects = projects.filter(Q(name__icontains=project_search) | Q(code__icontains=project_search))
+        p_ids = list(projects.values_list("id", flat=True))
+        project_id = params.get("project_id")
+        campaign_id = params.get("campaign_id")
+        date_debut = _parse_date(params.get("date_debut"))
+        date_fin = _parse_date(params.get("date_fin"))
+        budget_status = params.get("budget_status")
 
-        depenses = _depense_qs(user, params)
-        budgets = Budget.objects.filter(projet_id__in=p_ids, organization=org)
+        all_depenses = _depense_qs(user, params)
+        if project_search:
+            all_depenses = all_depenses.filter(
+                Q(projet_id__in=p_ids) | Q(budget__projet_id__in=p_ids)
+            )
+        if campaign_id:
+            all_depenses = all_depenses.filter(campagne_id=campaign_id)
+        depenses = all_depenses.filter(statut=Depense.Status.APPROUVE)
+        budgets = Budget.objects.filter(
+            projet_id__in=p_ids, organization=org,
+        ).exclude(statut=Budget.Status.BROUILLON)
+        if budget_status:
+            budgets = budgets.filter(statut=budget_status)
+        if campaign_id:
+            budgets = budgets.filter(projet__campaigns__id=campaign_id)
+        if date_debut:
+            budgets = budgets.filter(date__gte=date_debut)
+        if date_fin:
+            budgets = budgets.filter(date__lte=date_fin)
+        if budget_status:
+            depenses = depenses.filter(budget_id__in=budgets.values("id"))
         dons = Don.objects.filter(organization=org).filter(
             Q(donateur__isnull=True) | Q(donateur__organization=org),
         ).filter(
@@ -509,19 +539,85 @@ class ReportFinanceView(APIView):
             | Q(campagne__organization=org, campagne__projet__organization=org)
         )
 
-        project_id = params.get("project_id")
         if project_id:
             dons = dons.filter(campagne__projet_id=project_id)
             budgets = budgets.filter(projet_id=project_id)
+        if campaign_id:
+            dons = dons.filter(campagne_id=campaign_id)
+        if date_debut:
+            dons = dons.filter(date__gte=date_debut)
+        if date_fin:
+            dons = dons.filter(date__lte=date_fin)
+
+        financements = Financement.objects.filter(
+            organization=org, projet_id__in=p_ids, statut=Financement.Status.RECU,
+        )
+        if project_id:
+            financements = financements.filter(projet_id=project_id)
+        if campaign_id:
+            financements = financements.filter(campagne_id=campaign_id)
+        if date_debut:
+            financements = financements.filter(date__gte=date_debut)
+        if date_fin:
+            financements = financements.filter(date__lte=date_fin)
 
         total_budget = budgets.aggregate(s=Sum("montant"))["s"] or 0
         total_depenses = depenses.aggregate(s=Sum("montant"))["s"] or 0
+        total_engage = all_depenses.filter(
+            budget_id__in=budgets.values("id"),
+            statut__in=(Depense.Status.EN_ATTENTE, Depense.Status.VERIFIE, Depense.Status.APPROUVE),
+        ).aggregate(s=Sum("montant"))["s"] or 0
         total_dons = dons.aggregate(s=Sum("montant"))["s"] or 0
+        total_financements = financements.aggregate(s=Sum("montant"))["s"] or 0
         taux_exec = round(float(total_depenses) / float(total_budget) * 100, 1) if total_budget else 0
+
+        campaigns = Campaign.objects.filter(projet_id__in=p_ids, organization=org)
+        if project_id:
+            campaigns = campaigns.filter(projet_id=project_id)
+        rows_projects = projects
+        if project_id:
+            rows_projects = rows_projects.filter(id=project_id)
+        if campaign_id:
+            rows_projects = rows_projects.filter(campaigns__id=campaign_id)
+        project_rows = []
+        for project in rows_projects.order_by("name"):
+            pb = budgets.filter(projet=project)
+            pe = depenses.filter(Q(projet=project) | Q(budget__projet=project))
+            budget_amount = pb.aggregate(s=Sum("montant"))["s"] or 0
+            expense_amount = pe.aggregate(s=Sum("montant"))["s"] or 0
+            committed_amount = all_depenses.filter(
+                budget_id__in=pb.values("id"),
+                statut__in=(Depense.Status.EN_ATTENTE, Depense.Status.VERIFIE, Depense.Status.APPROUVE),
+            ).aggregate(s=Sum("montant"))["s"] or 0
+            received_amount = financements.filter(projet=project).aggregate(s=Sum("montant"))["s"] or 0
+            project_rows.append({
+                "id": str(project.id), "nom": project.name, "code": project.code,
+                "budget": float(budget_amount), "depenses": float(expense_amount),
+                "financements_recus": float(received_amount),
+                "engage": float(committed_amount),
+                "disponible": float(budget_amount - committed_amount),
+                "taux_execution": round(float(expense_amount / budget_amount * 100), 1) if budget_amount else None,
+                "statut": "ARCHIVE" if project.archived else "ACTIF",
+            })
+
+        lines = LigneBudgetaire.objects.filter(
+            organization=org, budget_id__in=budgets.values("id"),
+        ).select_related("budget__projet")
+        line_rows = []
+        for line in lines.distinct().order_by("libelle"):
+            spent = depenses.filter(ligne_budgetaire=line).aggregate(s=Sum("montant"))["s"] or 0
+            amount = line.montant_revise if line.montant_revise is not None else line.montant_prevu
+            line_rows.append({
+                "id": str(line.id), "libelle": line.libelle, "categorie": line.categorie,
+                "projet": line.budget.projet.name, "projet_id": str(line.budget.projet_id),
+                "budget": float(amount), "depenses": float(spent),
+                "disponible": float(amount - spent),
+                "taux_execution": round(float(spent / amount * 100), 1) if amount else None,
+            })
 
         # Dépenses par statut
         dep_statuts = (
-            depenses.values("statut").annotate(
+            all_depenses.values("statut").annotate(
                 count=Count("id"), montant_total=Sum("montant")
             )
         )
@@ -530,7 +626,10 @@ class ReportFinanceView(APIView):
         from django.utils import timezone as tz
         twelve_months_ago = tz.now() - tz.timedelta(days=365)
         dep_par_mois = (
-            depenses.filter(date__gte=twelve_months_ago.date())
+            depenses.filter(
+                date__gte=date_debut or twelve_months_ago.date(),
+                **({"date__lte": date_fin} if date_fin else {}),
+            )
             .annotate(mois=TruncMonth("date"))
             .values("mois")
             .annotate(montant=Sum("montant"))
@@ -556,6 +655,7 @@ class ReportFinanceView(APIView):
                 "budget_total": float(total_budget),
                 "total_depenses": float(total_depenses),
                 "montant_restant": float(total_budget) - float(total_depenses),
+                "montant_restant_engage": float(total_budget - total_engage),
                 "total_dons": float(total_dons),
                 "taux_execution": taux_exec,
             },
@@ -589,6 +689,17 @@ class ReportFinanceView(APIView):
                 }
                 for p in dep_par_projet
             ],
+            "financements_recus": float(total_financements),
+            "projets": project_rows,
+            "projets_accessibles": [
+                {"id": str(p.id), "nom": p.name, "code": p.code}
+                for p in projects_all.order_by("name")
+            ],
+            "campagnes": [
+                {"id": str(c.id), "nom": c.nom, "projet_id": str(c.projet_id)}
+                for c in campaigns.select_related("projet").order_by("nom")
+            ],
+            "lignes_budgetaires": line_rows,
         })
 
 

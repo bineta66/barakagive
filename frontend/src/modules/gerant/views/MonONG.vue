@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-6 space-y-6 bg-white min-h-screen">
     <!-- En-tête -->
     <div
@@ -60,8 +60,8 @@
               class="inline-block px-3 py-1.5 text-xs font-bold rounded-full"
               :class="
                 ong.status === 'ACTIVE'
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
+                  ? 'bg-bleu-accent/15 text-bleu-accent border border-bleu-accent/30'
+                  : 'bg-bleu-nuit/10 text-bleu-nuit border border-slate-200'
               "
             >
               {{

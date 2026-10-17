@@ -227,10 +227,13 @@ const validate = () => {
     errors.montant = "Saisissez un montant valide supérieur à 0, dans la limite autorisée.";
     valid = false;
   }
-  if (!form.value.source_financement?.trim() || form.value.source_financement.trim().length > 255) {
-    errors.source_financement = !form.value.source_financement?.trim()
+  const source = form.value.source_financement?.trim() || "";
+  if (!source || source.length > 255 || !/^[\p{L} ]+$/u.test(source)) {
+    errors.source_financement = !source
       ? "La source de financement est obligatoire."
-      : "La source ne peut pas dépasser 255 caractères.";
+      : source.length > 255
+        ? "La source ne peut pas dépasser 255 caractères."
+        : "Utilisez uniquement des lettres et des espaces.";
     valid = false;
   }
   if (!form.value.date || form.value.date > dateAujourdhui) {

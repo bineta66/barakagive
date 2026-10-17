@@ -66,13 +66,13 @@
         >
           <div class="flex items-center gap-3 mb-3">
             <div
-              class="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center"
+              class="w-9 h-9 rounded-lg bg-bleu-accent/10 flex items-center justify-center"
             >
-              <HandCoins class="w-5 h-5 text-emerald-600" />
+              <HandCoins class="w-5 h-5 text-bleu-accent" />
             </div>
             <p class="text-xs font-bold uppercase text-slate-500">Dons reçus</p>
           </div>
-          <p class="text-2xl font-extrabold text-emerald-600">
+          <p class="text-2xl font-extrabold text-bleu-accent">
             {{ formatMontant(store.dashboard?.dons_recus) }}
           </p>
           <p class="text-xs text-slate-400 mt-1">FCFA</p>
@@ -186,7 +186,7 @@
                 <td
                   class="px-6 py-4 font-bold"
                   :class="
-                    budget.solde >= 0 ? 'text-emerald-600' : 'text-red-500'
+                    budget.solde >= 0 ? 'text-bleu-accent' : 'text-rose-baraka'
                   "
                 >
                   {{ formatMontant(budget.solde) }} FCFA
@@ -200,10 +200,10 @@
                         class="h-1.5 rounded-full"
                         :class="
                           budget.taux_execution >= 90
-                            ? 'bg-red-500'
+                            ? 'bg-rose-baraka'
                             : budget.taux_execution >= 70
                             ? 'bg-bleu-nuit'
-                            : 'bg-emerald-500'
+                            : 'bg-bleu-accent'
                         "
                         :style="{
                           width: Math.min(budget.taux_execution, 100) + '%',
@@ -259,9 +259,9 @@ const formatMontant = (v) => Number(v || 0).toLocaleString("fr-FR");
 
 const tauxColor = computed(() => {
   const t = store.dashboard?.taux_execution ?? 0;
-  if (t >= 90) return "bg-red-500";
+  if (t >= 90) return "bg-rose-baraka";
   if (t >= 70) return "bg-bleu-nuit";
-  return "bg-emerald-500";
+  return "bg-bleu-accent";
 });
 
 const downloadReport = (blob, filename) => {

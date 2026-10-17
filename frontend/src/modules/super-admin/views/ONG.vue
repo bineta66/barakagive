@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <!-- Header -->
     <div
@@ -82,25 +82,25 @@
         titre="ONG totales"
         :valeur="ongs.length"
         :icone="Building2"
-        couleur="sky"
+        couleur="bleu-nuit"
       />
       <KpiCard
         titre="ONG actives"
         :valeur="ongsActives.length"
         :icone="Activity"
-        couleur="emerald"
+        couleur="bleu-accent"
       />
       <KpiCard
         titre="En attente"
         :valeur="demandesONG.length"
         :icone="Users"
-        couleur="amber"
+        couleur="rose-baraka"
       />
       <KpiCard
         titre="Régions"
         :valeur="statistiques.regionsCount"
         :icone="FolderKanban"
-        couleur="purple"
+        couleur="bleu-nuit"
       />
     </div>
 
@@ -224,9 +224,9 @@
                   class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full"
                   :class="
                     ong.status === 'ACTIVE'
-                      ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                      ? 'text-bleu-accent bg-bleu-accent/15 border border-bleu-accent/30'
                       : ong.status === 'PENDING'
-                      ? 'text-amber-700 bg-amber-50 border border-amber-200'
+                      ? 'text-bleu-nuit bg-bleu-nuit/10 border border-slate-200'
                       : 'text-slate-700 bg-slate-100'
                   "
                 >
@@ -333,8 +333,8 @@
               class="font-bold"
               :class="
                 ongSelectionnee.status === 'ACTIVE'
-                  ? 'text-emerald-600'
-                  : 'text-amber-600'
+                  ? 'text-bleu-accent'
+                  : 'text-bleu-nuit'
               "
             >
               {{

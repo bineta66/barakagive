@@ -56,7 +56,7 @@ def compute_executive_payload(campaign):
         zones_data.append({
             "id": str(zone.id),
             "nom": zone.nom,
-            "region": zone.region,
+            "region": zone.region.nom if zone.region_id else "",
             "departement": zone.departement,
             "beneficiaires": zone_beneficiaries.count(),
             "score_moyen": float(avg_score),
@@ -303,6 +303,9 @@ def index_data_for_rag():
             response.raise_for_status()
             results[str(organization_id)] = response.json()
         except Exception as e:
-            logger.error("Failed to index RAG data for organization %s: %s", organization_id, e)
-            results[str(organization_id)] = str(e)
+            logger.error(
+                "Failed to index RAG data for organization %s (error_type=%s)",
+                organization_id, type(e).__name__,
+            )
+            results[str(organization_id)] = "Indexation indisponible"
     return results

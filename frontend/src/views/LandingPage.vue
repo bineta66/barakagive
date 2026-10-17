@@ -1,24 +1,24 @@
 <template>
-  <div class="font-sans text-slate-900 overflow-x-hidden">
+  <div class="landing-page font-sans text-slate-900 overflow-x-hidden">
     <!-- ═══════════════════════════════════════════
          NAVBAR
     ═══════════════════════════════════════════ -->
     <header
-      class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100 shadow-sm"
+      class="landing-nav fixed inset-x-0 top-0 z-50 w-full border-b border-white/75"
     >
       <div
-        class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between"
+        class="relative mx-auto flex h-16 w-full min-w-0 items-center gap-4 px-5 sm:px-6 lg:px-8 xl:px-12"
       >
         <!-- Logo -->
-        <RouterLink to="/" class="flex items-center gap-3">
+        <RouterLink to="/" class="flex shrink-0 items-center gap-3 whitespace-nowrap">
           <img
             src="@/assets/images/logologin.png"
             alt="BarakaGive"
             class="w-10 h-10 object-contain"
           />
           <div>
-            <span class="text-lg font-bold text-[#061B2D]"
-              >Baraka<span class="text-[#061B2D]">Give</span></span
+            <span class="text-lg font-bold text-[#00343D]"
+              >Baraka<span class="text-[#00343D]">Give</span></span
             >
             <p class="text-[10px] text-slate-400 leading-none -mt-0.5">
               Ensemble pour un impact durable
@@ -26,94 +26,97 @@
           </div>
         </RouterLink>
 
-        <!-- Nav links -->
-        <nav class="hidden lg:flex items-center gap-8">
+        <!-- Nav links (Desktop uniquement, la version mobile est gérée par la barre iPhone flottante en bas) -->
+        <nav
+          id="landing-navigation"
+          class="hidden xl:flex xl:flex-1 xl:flex-row xl:items-center xl:justify-center xl:gap-8 xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none"
+        >
           <a
             href="#hero"
             @click="setActive('accueil')"
-            class="text-sm font-medium transition relative pb-1"
+            class="relative whitespace-nowrap pb-1 text-sm font-medium transition"
             :class="
               activeLink === 'accueil'
-                ? 'text-[#061B2D]'
-                : 'text-slate-600 hover:text-[#061B2D]'
+                ? 'text-[#00343D]'
+                : 'text-slate-600 hover:text-[#00343D]'
             "
           >
             Accueil
             <span
-              class="absolute bottom-0 left-0 h-0.5 bg-[#061B2D] transition-all duration-300"
+              class="absolute bottom-0 left-0 h-0.5 bg-[#00343D] transition-all duration-300"
               :class="activeLink === 'accueil' ? 'w-full' : 'w-0'"
             ></span>
           </a>
           <a
             href="#fonctionnalites"
             @click="setActive('fonctionnalites')"
-            class="text-sm font-medium transition relative pb-1"
+            class="relative whitespace-nowrap pb-1 text-sm font-medium transition"
             :class="
               activeLink === 'fonctionnalites'
-                ? 'text-[#061B2D]'
-                : 'text-slate-600 hover:text-[#061B2D]'
+                ? 'text-[#00343D]'
+                : 'text-slate-600 hover:text-[#00343D]'
             "
           >
             Fonctionnalités
             <span
-              class="absolute bottom-0 left-0 h-0.5 bg-[#061B2D] transition-all duration-300"
+              class="absolute bottom-0 left-0 h-0.5 bg-[#00343D] transition-all duration-300"
               :class="activeLink === 'fonctionnalites' ? 'w-full' : 'w-0'"
             ></span>
           </a>
           <a
             href="#avantages"
             @click="setActive('avantages')"
-            class="text-sm font-medium transition relative pb-1"
+            class="relative whitespace-nowrap pb-1 text-sm font-medium transition"
             :class="
               activeLink === 'avantages'
-                ? 'text-[#061B2D]'
-                : 'text-slate-600 hover:text-[#061B2D]'
+                ? 'text-[#00343D]'
+                : 'text-slate-600 hover:text-[#00343D]'
             "
           >
             Avantages
             <span
-              class="absolute bottom-0 left-0 h-0.5 bg-[#061B2D] transition-all duration-300"
+              class="absolute bottom-0 left-0 h-0.5 bg-[#00343D] transition-all duration-300"
               :class="activeLink === 'avantages' ? 'w-full' : 'w-0'"
             ></span>
           </a>
           <a
             href="#impact"
             @click="setActive('apropos')"
-            class="text-sm font-medium transition relative pb-1"
+            class="relative whitespace-nowrap pb-1 text-sm font-medium transition"
             :class="
               activeLink === 'apropos'
-                ? 'text-[#061B2D]'
-                : 'text-slate-600 hover:text-[#061B2D]'
+                ? 'text-[#00343D]'
+                : 'text-slate-600 hover:text-[#00343D]'
             "
           >
             À propos
             <span
-              class="absolute bottom-0 left-0 h-0.5 bg-[#061B2D] transition-all duration-300"
+              class="absolute bottom-0 left-0 h-0.5 bg-[#00343D] transition-all duration-300"
               :class="activeLink === 'apropos' ? 'w-full' : 'w-0'"
             ></span>
           </a>
           <RouterLink
             to="/contact"
-            class="text-sm font-medium transition relative pb-1 text-slate-600 hover:text-[#061B2D]"
+            class="relative whitespace-nowrap pb-1 text-sm font-medium text-slate-600 transition hover:text-[#00343D]"
           >
             Contact
             <span
-              class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#061B2D] transition-all duration-300 hover:w-full"
+              class="absolute bottom-0 left-0 w-0 h-0.5 bg-[#00343D] transition-all duration-300 hover:w-full"
             ></span>
           </RouterLink>
         </nav>
 
-        <!-- CTA -->
-        <div class="flex items-center gap-3">
+        <!-- CTA (Boutons Connexion / Inscription) -->
+        <div class="ml-auto flex shrink-0 items-center gap-2 sm:gap-3 xl:ml-0">
           <RouterLink
             to="/connexion"
-            class="hidden sm:block text-sm font-semibold text-[#061B2D] border border-[#061B2D] px-4 py-2 rounded-lg hover:bg-[#061B2D] hover:text-white transition"
+            class="hidden h-10 w-36 items-center justify-center whitespace-nowrap text-sm font-semibold text-[#00343D] border border-[#00343D]/25 rounded-full hover:border-[#00343D] hover:bg-[#00343D] hover:text-white transition xl:inline-flex"
           >
             Se connecter
           </RouterLink>
           <RouterLink
             to="/inscription"
-            class="text-sm font-semibold text-white bg-[#061B2D] px-4 py-2 rounded-lg hover:bg-[#0a2540] transition shadow-sm"
+            class="hidden h-10 w-36 items-center justify-center whitespace-nowrap text-sm font-semibold text-white bg-[#00343D] rounded-full hover:bg-[#002A31] transition shadow-sm xl:inline-flex"
           >
             Créer un compte
           </RouterLink>
@@ -124,624 +127,243 @@
     <!-- ═══════════════════════════════════════════
          HERO
     ═══════════════════════════════════════════ -->
-    <section id="hero" class="pt-16 min-h-screen flex">
-      <!-- Gauche : fond bleu nuit -->
-      <div
-        class="flex-1 bg-gradient-to-br from-[#061B2D] via-[#0a2540] to-[#061B2D] flex items-center px-8 lg:px-16 xl:px-24 py-20"
-      >
-        <div class="max-w-xl">
-          <!-- Titre -->
-          <h1
-            class="hero-title text-4xl xl:text-5xl font-extrabold text-white leading-tight mb-6"
-          >
-            Simplifiez la gestion<br />
-            de votre ONG et maximisez<br />
-            <span class="text-white">votre impact</span>
-          </h1>
-
-          <!-- Sous-titre -->
-          <p
-            class="hero-sub text-slate-300 text-base leading-relaxed mb-10 max-w-md"
-          >
-            BarakaGive est une plateforme tout-en-un qui permet aux ONG de gérer
-            leurs projets, leurs dons, leurs bénéficiaires et de suivre leur
-            impact, le tout en toute simplicité et en toute sécurité.
-          </p>
-
-          <!-- Boutons -->
-          <div class="hero-cta flex flex-col sm:flex-row gap-4">
-            <RouterLink
-              to="/inscription"
-              class="inline-flex items-center justify-center gap-2 bg-[#061B2D] hover:bg-[#0a2540] text-white font-bold px-7 py-3.5 rounded-xl transition shadow-lg text-sm"
-            >
-              Créer un compte gratuitement
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2.5"
+    <section id="hero" class="px-0 pt-20">
+      <div class="hero-shell mx-auto w-full px-3 pb-3 sm:px-4 sm:pb-4 lg:px-5 lg:pb-5">
+        <div class="hero-layout grid grid-cols-1 items-stretch gap-3 lg:h-[460px] lg:grid-cols-2">
+          <div class="hero-copy relative isolate flex w-full min-w-0 flex-col justify-center p-5 sm:p-8 lg:p-8 xl:p-10">
+            <span class="mb-5 inline-flex items-center gap-2 rounded-full border border-[#00343D]/10 bg-white/80 px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#00343D] backdrop-blur">
+              BarakaGive &middot; au service des ONG
+            </span>
+            <h1 class="hero-title text-3xl font-extrabold leading-[1.08] tracking-tight text-[#00343D] sm:text-5xl xl:text-5xl">
+              Mieux <br class="sm:hidden" />accompagner.<br class="hidden sm:block" /><br class="sm:hidden" />
+              <span class="text-[#00343D]">Mieux agir.</span>
+            </h1>
+            <p class="hero-sub mt-6 max-w-lg text-base leading-7 text-slate-700 sm:text-lg">
+              La plateforme pour organiser vos projets humanitaires, suivre les b&eacute;n&eacute;ficiaires et renforcer la transparence de vos actions.
+            </p>
+            <div class="hero-cta mt-8 flex w-full max-w-full flex-col gap-3 sm:w-auto sm:flex-row lg:flex-col xl:flex-row">
+              <a
+                href="#solutions"
+                class="inline-flex items-center justify-center gap-2 rounded-full bg-[#00343D] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#00343D]/20 transition hover:-translate-y-0.5 hover:bg-[#002A31]"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M17 8l4 4m0 0l-4 4m4-4H3"
-                />
-              </svg>
-            </RouterLink>
-            <a
-              href="#avantages"
-              class="inline-flex items-center justify-center gap-2 border border-white/30 text-white hover:bg-white/10 font-semibold px-7 py-3.5 rounded-xl transition text-sm"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
+                D&eacute;couvrir la plateforme
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>
+              </a>
+              <RouterLink
+                to="/contact"
+                class="inline-flex items-center justify-center gap-2 rounded-full border border-[#00343D]/30 bg-white/85 px-6 py-3.5 text-sm font-semibold text-[#00343D] transition hover:border-[#00343D] hover:bg-white"
               >
-                <circle cx="12" cy="12" r="10" />
-                <polygon fill="white" stroke="none" points="10,8 16,12 10,16" />
-              </svg>
-              Voir la démo
-            </a>
+                Demander une d&eacute;mo
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg>
+              </RouterLink>
+            </div>
           </div>
+          <img
+            src="@/assets/images/imagelogo.png"
+            alt="Une &eacute;quipe d&rsquo;ONG d&eacute;couvre le tableau de bord BarakaGive"
+            class="hero-photo h-64 w-full rounded-none object-cover object-center sm:h-80 lg:h-full"
+            fetchpriority="high"
+          />
+        </div>
+        <div class="relative z-10 mt-3 mb-4 grid gap-2 rounded-2xl border border-white/75 bg-white/82 p-3 shadow-sm backdrop-blur-xl sm:grid-cols-3 sm:p-2">
+          <a href="#solutions" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#00343D] transition hover:bg-[#00343D]/5 sm:justify-center">
+            <svg class="h-6 w-6 shrink-0 text-[#00343D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m16 0v-2a4 4 0 00-3-3.87M14 3.13a4 4 0 010 7.75M14 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            Suivi des b&eacute;n&eacute;ficiaires
+          </a>
+          <a href="#solutions" class="flex items-center gap-3 rounded-xl border-[#00343D]/10 px-3 py-3 text-sm font-semibold text-[#00343D] transition hover:bg-[#00343D]/5 sm:justify-center sm:border-x">
+            <svg class="h-6 w-6 shrink-0 text-[#00343D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5A1.5 1.5 0 014.5 6H10l2 2h7.5A1.5 1.5 0 0121 9.5v9a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5v-11z" /></svg>
+            Gestion des projets
+          </a>
+          <a href="#solutions" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-[#00343D] transition hover:bg-[#00343D]/5 sm:justify-center">
+            <svg class="h-6 w-6 shrink-0 text-[#00343D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l8 3v5c0 5-3.4 8.5-8 10-4.6-1.5-8-5-8-10V6l8-3zm-3 9 2 2 4-4" /></svg>
+            Transparence des actions
+          </a>
         </div>
       </div>
-
-      <!-- Droite : photo -->
-      <div
-        class="hero-img hidden lg:block w-[45%] xl:w-[42%] relative overflow-hidden"
-      >
-        <img
-          src="@/assets/images/imagelogo.png"
-          alt="ONG BarakaGive"
-          class="absolute inset-0 w-full h-full object-cover object-center"
-        />
-        <!-- Overlay léger -->
-        <div
-          class="absolute inset-0 bg-gradient-to-r from-[#061B2D]/60 via-transparent to-transparent"
-        ></div>
-      </div>
     </section>
-
-    <!-- ═══════════════════════════════════════════
-         COMMENT ÇA MARCHE
-    ═══════════════════════════════════════════ -->
-    <section class="bg-white py-24">
-      <div class="max-w-4xl mx-auto px-6 text-center">
-        <div class="reveal w-12 h-0.5 bg-[#061B2D] mx-auto mb-6"></div>
-        <h2
-          class="reveal text-3xl xl:text-4xl font-extrabold text-[#061B2D] mb-4"
-        >
-          Comment ça marche ?
-        </h2>
-        <p class="reveal text-slate-500 mb-14 max-w-lg mx-auto">
-          En 3 étapes simples, votre ONG est opérationnelle sur BarakaGive.
-        </p>
-
-        <div class="grid md:grid-cols-3 gap-8">
-          <div
-            v-for="(step, i) in steps"
-            :key="step.num"
-            :class="`reveal reveal-delay-${i + 1}`"
-            class="bg-white rounded-2xl p-8 border border-slate-100 shadow-sm hover:-translate-y-1 transition-transform duration-300"
-          >
-            <div
-              class="w-10 h-10 rounded-xl bg-[#061B2D] text-white font-extrabold text-lg flex items-center justify-center mx-auto mb-5"
-            >
-              {{ step.num }}
+    <section id="solutions" class="bg-white px-4 py-12 sm:px-6 lg:py-16">
+      <div id="fonctionnalites" class="mx-auto max-w-7xl">
+        <div class="mx-auto mb-10 max-w-2xl text-center">
+          <span class="rounded-full bg-[#00343D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#00343D]">Nos solutions</span>
+          <h2 class="mt-4 text-3xl font-extrabold text-[#00343D] sm:text-4xl">Les outils pour organiser et suivre vos actions</h2>
+          <p class="mt-3 text-slate-600">BarakaGive rassemble les informations utiles au suivi de vos projets et de vos actions.</p>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <article class="editorial-card group overflow-hidden rounded-3xl border border-slate-100 bg-white p-3 transition hover:-translate-y-1">
+            <img src="@/assets/images/beneficiaire.png" alt="Des bénéficiaires réunis autour d’un point d’eau" class="h-48 w-full rounded-2xl object-cover object-center" loading="lazy" />
+            <div class="px-3 pb-3 pt-5">
+              <span class="rounded-full bg-[#00343D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#00343D]">Bénéficiaires</span>
+              <h3 class="mt-4 text-xl font-bold leading-snug text-[#00343D]">Suivre les personnes accompagnées</h3>
+              <p class="mt-2 text-sm leading-6 text-slate-600">Consignez les besoins et les actions de suivi pour mieux organiser l’accompagnement.</p>
             </div>
-            <h3 class="font-bold text-[#061B2D] mb-3">{{ step.titre }}</h3>
-            <p class="text-sm text-slate-500 leading-relaxed">
-              {{ step.texte }}
-            </p>
-          </div>
+          </article>
+          <article class="editorial-card group overflow-hidden rounded-3xl border border-slate-100 bg-white p-3 transition hover:-translate-y-1">
+            <img src="@/assets/images/imagelogo.png" alt="Équipe de projet consultant un tableau de suivi" class="h-48 w-full rounded-2xl object-cover object-center" loading="lazy" />
+            <div class="px-3 pb-3 pt-5">
+              <span class="rounded-full bg-[#00343D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#00343D]">Projets et campagnes</span>
+              <h3 class="mt-4 text-xl font-bold leading-snug text-[#00343D]">Organiser les activités de terrain</h3>
+              <p class="mt-2 text-sm leading-6 text-slate-600">Structurez les projets, les campagnes et les informations utiles à leur suivi.</p>
+            </div>
+          </article>
+          <article class="editorial-card group overflow-hidden rounded-3xl border border-slate-100 bg-white p-3 transition hover:-translate-y-1">
+            <img src="@/assets/images/ordi.png" alt="Tableau de bord de suivi financier et de rapports" class="h-48 w-full rounded-2xl object-cover object-center" loading="lazy" />
+            <div class="px-3 pb-3 pt-5">
+              <span class="rounded-full bg-[#00343D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#00343D]">Financements et rapports</span>
+              <h3 class="mt-4 text-xl font-bold leading-snug text-[#00343D]">Suivre les ressources et rendre compte</h3>
+              <p class="mt-2 text-sm leading-6 text-slate-600">Centralisez les informations financières et préparez le suivi destiné à vos équipes et partenaires.</p>
+            </div>
+          </article>
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════
-         FEATURES RAPIDES
-    ═══════════════════════════════════════════ -->
-    <section
-      id="fonctionnalites"
-      class="bg-[#061B2D] py-16 border-b border-white/10"
-    >
-      <div class="max-w-7xl mx-auto px-6">
-        <div
-          class="grid grid-cols-2 lg:grid-cols-4 gap-0 divide-x divide-white/10"
-        >
-          <div class="px-8 py-6 group reveal reveal-delay-1">
-            <div
-              class="icon-pop w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:bg-white/20 transition"
-            >
-              <svg
-                class="w-6 h-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h3 class="font-bold text-white mb-2">Dons & Finances</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Centralisez vos dons, suivez vos financements en temps réel.
-            </p>
-          </div>
-
-          <div class="px-8 py-6 group reveal reveal-delay-2">
-            <div
-              class="icon-pop w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:bg-white/20 transition"
-            >
-              <svg
-                class="w-6 h-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-            <h3 class="font-bold text-white mb-2">Bénéficiaires</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Identifiez, suivez et accompagnez vos bénéficiaires.
-            </p>
-          </div>
-
-          <div class="px-8 py-6 group reveal reveal-delay-2">
-            <div
-              class="icon-pop w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:bg-white/20 transition"
-            >
-              <svg
-                class="w-6 h-6 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-            </div>
-            <h3 class="font-bold text-white mb-2">Impact</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Mesurez vos résultats et montrez votre impact.
-            </p>
-          </div>
-          <div class="px-8 py-6 group reveal reveal-delay-3">
-            <div class="icon-pop w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mb-4 group-hover:bg-white/20 transition">
-              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.5A1.5 1.5 0 014.5 7H10l2 2h7.5A1.5 1.5 0 0121 10.5v7a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 17.5v-9zM3 11h18" />
-              </svg>
-            </div>
-            <h3 class="font-bold text-white mb-2">Projets</h3>
-            <p class="text-sm text-slate-300 leading-relaxed">
-              Planifiez, gérez et suivez vos projets humanitaires au même endroit.
-            </p>
-          </div>        </div>
+    <section id="fonctionnement" class="bg-white py-20">
+      <div class="mx-auto max-w-4xl px-6 text-center">
+        <div class="reveal mx-auto mb-6 h-0.5 w-12 bg-[#00343D]"></div>
+        <h2 class="reveal mb-4 text-3xl font-extrabold text-[#00343D] xl:text-4xl">Comment ça fonctionne ?</h2>
+        <p class="reveal mx-auto mb-12 max-w-lg text-slate-500">Une organisation claire, du suivi des besoins à l’analyse des résultats.</p>
+        <div class="grid gap-6 md:grid-cols-3">
+          <article v-for="(step, i) in steps" :key="step.num" :class="`reveal reveal-delay-${i + 1}`" class="rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition-transform duration-300 hover:-translate-y-1">
+            <div class="mx-auto mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#00343D] text-lg font-extrabold text-white">{{ step.num }}</div>
+            <h3 class="mb-3 font-bold text-[#00343D]">{{ step.titre }}</h3>
+            <p class="text-sm leading-relaxed text-slate-500">{{ step.texte }}</p>
+          </article>
+        </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════
-         SECTION PLATEFORME
-    ═══════════════════════════════════════════ -->
-    <section id="avantages" class="bg-slate-50 py-24">
-      <div
-        class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center"
-      >
-        <!-- Gauche : texte -->
+    <section id="avantages" class="bg-slate-50 py-20">
+      <div class="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16">
         <div class="reveal-left">
-          <div class="w-12 h-0.5 bg-[#061B2D] mb-6"></div>
-          <h2
-            class="text-3xl xl:text-4xl font-extrabold text-[#061B2D] leading-tight mb-5"
-          >
-            Une solution complète<br />pour les ONG
-          </h2>
-          <p class="text-slate-500 text-base leading-relaxed mb-8">
-            BarakaGive offre un espace unique pour piloter votre organisation,
-            de la gestion des projets à la collecte de dons, en passant par le
-            suivi des bénéficiaires et la mesure de l'impact.
-          </p>
-
-          <ul class="space-y-4 mb-10">
-            <li
-              v-for="item in avantages"
-              :key="item"
-              class="flex items-start gap-3"
-            >
-              <div
-                class="w-5 h-5 rounded-full bg-[#061B2D]/15 flex items-center justify-center flex-shrink-0 mt-0.5"
-              >
-                <svg
-                  class="w-3 h-3 text-[#061B2D]"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="3"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <span class="text-slate-700 text-sm font-medium">{{ item }}</span>
+          <div class="mb-6 h-0.5 w-12 bg-[#00343D]"></div>
+          <h2 class="mb-5 text-3xl font-extrabold leading-tight text-[#00343D] xl:text-4xl">Les avantages de BarakaGive</h2>
+          <p class="mb-8 text-base leading-relaxed text-slate-600">Retrouvez les informations de vos actions dans un même espace pour mieux organiser le travail de vos équipes et gagner du temps au quotidien.</p>
+          <ul class="mb-8 space-y-4">
+            <li v-for="item in avantages" :key="item" class="flex items-start gap-3">
+              <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00343D]/15">
+                <svg class="h-3 w-3 text-[#00343D]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </span>
+              <span class="text-sm font-medium text-slate-700">{{ item }}</span>
             </li>
           </ul>
-
-          <RouterLink
-            to="/inscription"
-            class="inline-flex items-center gap-2 bg-[#061B2D] hover:bg-[#0a2540] text-white font-bold px-6 py-3 rounded-xl transition shadow-sm text-sm"
-          >
-            Découvrir toutes les fonctionnalités
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
-          </RouterLink>
+          <RouterLink to="/contact" class="inline-flex items-center gap-2 rounded-xl bg-[#00343D] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#002A31]">Parler à l’équipe</RouterLink>
         </div>
-
-        <!-- Droite : mockup dashboard -->
-        <div class="relative reveal-right">
-          <!-- Laptop -->
-          <div class="relative z-10">
-            <img
-              src="@/assets/images/ordi.png"
-              alt="Dashboard BarakaGive"
-              class="w-full rounded-2xl"
-            />
-          </div>
-          <!-- Décoration -->
-          <div
-            class="absolute -bottom-6 -right-6 w-32 h-32 bg-white/10 rounded-3xl -z-10"
-          ></div>
-          <div
-            class="absolute -top-6 -left-6 w-20 h-20 bg-[#061B2D]/10 rounded-2xl -z-10"
-          ></div>
-
-          <!-- Badge flottant -->
-          <div
-            class="absolute -left-8 top-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-xl p-4 border border-slate-100"
-          >
-            <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center"
-              >
-                <svg
-                  class="w-5 h-5 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p class="text-xs font-bold text-slate-900">Impact mesuré</p>
-                <p class="text-lg font-extrabold text-emerald-600">+34%</p>
-              </div>
-            </div>
-          </div>
+        <div class="reveal-right">
+          <img src="@/assets/images/ordi.png" alt="Tableau de bord BarakaGive pour suivre les projets et les ressources" class="w-full rounded-2xl" loading="lazy" />
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════
-         SECTION IMPACT / TEMOIGNAGE
-    ═══════════════════════════════════════════ -->
-    <section id="impact" class="bg-[#061B2D] py-24 relative overflow-hidden">
-      <!-- Drapeau Sénégal discret en bg -->
-      <div
-        class="absolute inset-0 flex items-center justify-end pr-16 opacity-5 pointer-events-none"
-      >
-        <img src="@/assets/images/sn.svg" alt="" class="w-64 h-auto" />
-      </div>
-
-      <div
-        class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center relative z-10"
-      >
-        <!-- Gauche : stats + témoignage -->
-        <div>
-          <div class="w-12 h-0.5 bg-[#061B2D] mb-6"></div>
-          <h2
-            class="text-3xl xl:text-4xl font-extrabold text-white leading-tight mb-10"
-          >
-            Des ONG déjà engagées<br />pour un meilleur avenir
-          </h2>
-
-          <!-- Stats -->
-          <div class="grid grid-cols-3 gap-6 mb-12">
-            <div
-              class="reveal reveal-scale bg-white/5 border border-white/10 rounded-2xl p-5 text-center"
-            >
-              <p class="text-3xl font-extrabold text-white" data-counter="120">
-                +0
-              </p>
-              <p class="text-xs text-slate-400 mt-1">ONG partenaires</p>
-            </div>
-            <div
-              class="reveal reveal-scale reveal-delay-1 bg-white/5 border border-white/10 rounded-2xl p-5 text-center"
-            >
-              <p class="text-3xl font-extrabold text-white" data-counter="500">
-                +0
-              </p>
-              <p class="text-xs text-slate-400 mt-1">Projets soutenus</p>
-            </div>
-            <div
-              class="reveal reveal-scale reveal-delay-2 bg-white/5 border border-white/10 rounded-2xl p-5 text-center"
-            >
-              <p class="text-3xl font-extrabold text-white" data-counter="250K">
-                0+
-              </p>
-              <p class="text-xs text-slate-400 mt-1">Bénéficiaires</p>
-            </div>
-          </div>
-
-          <!-- Témoignage -->
-          <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <svg
-              class="w-8 h-8 text-white mb-4 opacity-60"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"
-              />
-            </svg>
-            <p class="text-white/80 text-sm leading-relaxed mb-5 italic">
-              « BarakaGive a transformé la façon dont nous gérons nos projets.
-              La plateforme est intuitive, les données sont sécurisées et notre
-              équipe a gagné un temps précieux. C'est exactement ce dont les ONG
-              africaines ont besoin. »
-            </p>
-            <div class="flex items-center gap-3">
-              <div
-                class="w-10 h-10 rounded-full bg-[#061B2D]/30 flex items-center justify-center text-white font-bold text-sm"
-              >
-                AF
-              </div>
-              <div>
-                <p class="text-white font-semibold text-sm">Aminata Faye</p>
-                <p class="text-slate-400 text-xs">
-                  Directrice, ONG Espoir Sénégal
-                </p>
-              </div>
-              <div class="ml-auto flex gap-0.5">
-                <span v-for="i in 5" :key="i" class="text-white text-sm"
-                  >★</span
-                >
-              </div>
-            </div>
-          </div>
+    <section id="intelligence" class="bg-white py-20">
+      <div class="mx-auto grid max-w-7xl items-center gap-10 px-6 lg:grid-cols-2 lg:gap-16">
+        <div class="reveal-left order-2 lg:order-1">
+          <span class="rounded-full bg-[#00343D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#00343D]">Assistant IA</span>
+          <h2 class="mb-5 mt-4 text-3xl font-extrabold leading-tight text-[#00343D] xl:text-4xl">L’intelligence artificielle au service des ONG</h2>
+          <p class="mb-6 text-base leading-relaxed text-slate-600">L’assistant peut s’appuyer sur les informations disponibles dans BarakaGive pour aider à analyser une situation, prioriser les besoins et préparer des rapports.</p>
+          <p class="mb-8 text-sm leading-relaxed text-slate-500">Les réponses dépendent des informations accessibles à l’assistant et restent à vérifier par votre équipe.</p>
+          <RouterLink to="/gerant/assistant" class="inline-flex items-center gap-2 rounded-xl bg-[#00343D] px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#002A31]">Découvrir l’assistant IA</RouterLink>
         </div>
-
-        <!-- Droite : photo + texte -->
-        <div
-          class="relative overflow-hidden rounded-3xl"
-          style="max-height: 540px"
-        >
-          <img
-            src="@/assets/images/femme.png"
-            alt="Impact BarakaGive en Afrique"
-            class="w-full h-full object-cover object-top shadow-2xl"
-          />
-          <!-- Overlay gradient bas -->
-          <div
-            class="absolute bottom-0 left-0 right-0 h-32 rounded-b-3xl bg-gradient-to-t from-[#061B2D] to-transparent"
-          ></div>
-          <!-- Texte élégant -->
-          <p
-            class="absolute bottom-6 left-0 right-0 text-center text-white font-semibold text-base tracking-wide"
-          >
-            Ensemble pour un impact durable
-            <span class="text-white">♡</span>
-          </p>
+        <div class="reveal-right order-1 lg:order-2">
+          <img src="@/assets/images/ai.png" alt="Illustration de l’assistant IA BarakaGive" class="w-full rounded-2xl" loading="lazy" />
         </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════
-         CTA — PRÊT À FAIRE GRANDIR VOTRE IMPACT
-    ═══════════════════════════════════════════ -->
-    <section id="contact" class="bg-white py-24">
-      <div class="max-w-2xl mx-auto px-6 text-center">
-        <h2
-          class="text-3xl xl:text-4xl font-extrabold text-[#061B2D] leading-tight mb-5"
-        >
-          Prêt à faire grandir<br />votre impact ?
-        </h2>
-
-        <p class="text-or text-base leading-relaxed mb-10 max-w-md mx-auto">
-          Rejoignez des centaines d'ONG qui nous font déjà confiance et donnez
-          plus de force à vos actions humanitaires.
-        </p>
-
-        <!-- Boutons -->
-        <div
-          class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-5"
-        >
-          <RouterLink
-            to="/inscription"
-            class="inline-flex items-center gap-2 bg-[#061B2D] text-white font-extrabold px-8 py-3.5 rounded-xl hover:bg-[#0a2540] transition shadow-md text-sm"
-          >
-            Créer un compte gratuitement
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2.5"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M17 8l4 4m0 0l-4 4m4-4H3"
-              />
-            </svg>
-          </RouterLink>
-          <RouterLink
-            to="/connexion"
-            class="inline-flex items-center gap-2 text-[#061B2D] font-semibold border border-[#061B2D]/30 px-7 py-3.5 rounded-xl hover:bg-slate-50 transition text-sm"
-          >
-            Se connecter
-          </RouterLink>
+    <section id="impact" class="relative overflow-hidden bg-[#00343D] py-20">
+      <div class="pointer-events-none absolute inset-0 flex items-center justify-end pr-16 opacity-5"><img src="@/assets/images/sn.svg" alt="" class="h-auto w-64" /></div>
+      <div class="relative z-10 mx-auto max-w-7xl px-6">
+        <div class="mx-auto mb-10 max-w-3xl text-center">
+          <div class="mx-auto mb-6 h-0.5 w-12 bg-white/70"></div>
+          <h2 class="mb-4 text-3xl font-extrabold leading-tight text-white xl:text-4xl">Nos engagements et notre impact</h2>
+          <p class="text-base leading-7 text-white/75">BarakaGive aide les organisations à suivre leurs actions avec attention, à partager des informations utiles et à éclairer leurs décisions.</p>
         </div>
-
-        <p class="text-or text-xs">
-          Essai gratuit 30 jours · Aucune carte bancaire requise
-        </p>
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <article class="rounded-2xl border border-white/15 bg-white/5 p-6 text-white"><h3 class="mb-2 font-bold">Protection</h3><p class="text-sm leading-6 text-white/75">Organisez les informations de suivi dans le cadre défini par votre organisation.</p></article>
+          <article class="rounded-2xl border border-white/15 bg-white/5 p-6 text-white"><h3 class="mb-2 font-bold">Accompagnement</h3><p class="text-sm leading-6 text-white/75">Suivez les besoins et les actions auprès des personnes accompagnées.</p></article>
+          <article class="rounded-2xl border border-white/15 bg-white/5 p-6 text-white"><h3 class="mb-2 font-bold">Transparence</h3><p class="text-sm leading-6 text-white/75">Rassemblez les éléments de suivi et facilitez la préparation des rapports.</p></article>
+          <article class="rounded-2xl border border-white/15 bg-white/5 p-6 text-white"><h3 class="mb-2 font-bold">Aide à la décision</h3><p class="text-sm leading-6 text-white/75">Consultez les informations disponibles pour mieux orienter les actions.</p></article>
+        </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════
-         FOOTER
-    ═══════════════════════════════════════════ -->
-    <footer class="bg-[#061B2D] py-14">
-      <div class="max-w-7xl mx-auto px-6">
-        <div
-          class="flex flex-col md:flex-row items-center justify-between gap-8 pb-10 border-b border-white/10"
-        >
-          <!-- Logo + baseline -->
+    <section id="faq" class="bg-white py-20">
+      <div class="mx-auto max-w-4xl px-6">
+        <div class="mx-auto mb-10 max-w-2xl text-center">
+          <span class="rounded-full bg-[#00343D]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-[#00343D]">FAQ</span>
+          <h2 class="mb-4 mt-4 text-3xl font-extrabold text-[#00343D] xl:text-4xl">Questions fréquentes</h2>
+        </div>
+        <div class="space-y-3">
+          <details class="rounded-2xl border border-slate-100 bg-white p-5"><summary class="cursor-pointer font-semibold text-[#00343D]">À quoi sert BarakaGive ?</summary><p class="mt-3 text-sm leading-6 text-slate-600">BarakaGive aide les organisations à organiser leurs projets, campagnes, bénéficiaires et ressources, puis à préparer leur suivi.</p></details>
+          <details class="rounded-2xl border border-slate-100 bg-white p-5"><summary class="cursor-pointer font-semibold text-[#00343D]">À qui s’adresse la plateforme ?</summary><p class="mt-3 text-sm leading-6 text-slate-600">Aux ONG, associations, équipes de projet et partenaires institutionnels qui collaborent au suivi des actions.</p></details>
+          <details class="rounded-2xl border border-slate-100 bg-white p-5"><summary class="cursor-pointer font-semibold text-[#00343D]">Comment l’assistant IA peut-il aider ?</summary><p class="mt-3 text-sm leading-6 text-slate-600">Il peut analyser les informations disponibles, aider à prioriser les besoins et contribuer à la préparation de rapports. Votre équipe vérifie les réponses.</p></details>
+          <details class="rounded-2xl border border-slate-100 bg-white p-5"><summary class="cursor-pointer font-semibold text-[#00343D]">Comment demander une démonstration ?</summary><p class="mt-3 text-sm leading-6 text-slate-600">Écrivez à l’équipe via la page Contact pour présenter votre organisation et demander une démonstration.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="bg-slate-50 py-20">
+      <div class="mx-auto max-w-2xl px-6 text-center">
+        <h2 class="mb-5 text-3xl font-extrabold leading-tight text-[#00343D] xl:text-4xl">Parlons de vos projets</h2>
+        <p class="mx-auto mb-8 max-w-lg text-base leading-relaxed text-slate-600">Contactez l’équipe BarakaGive pour demander une démonstration ou poser vos questions.</p>
+        <div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <RouterLink to="/contact" class="inline-flex items-center gap-2 rounded-xl bg-[#00343D] px-8 py-3.5 text-sm font-extrabold text-white shadow-md transition hover:bg-[#002A31]">Demander une démonstration</RouterLink>
+          <a href="mailto:contact@barakagive.org" class="inline-flex items-center gap-2 rounded-xl border border-[#00343D]/30 px-7 py-3.5 text-sm font-semibold text-[#00343D] transition hover:bg-white">Contacter l’équipe</a>
+        </div>
+      </div>
+    </section>
+<footer class="landing-footer relative isolate py-14 pb-28 lg:pb-14">
+      <div class="mx-auto max-w-7xl px-6">
+        <div class="flex flex-col items-center justify-between gap-8 border-b border-white/10 pb-10 md:flex-row">
           <div class="flex items-center gap-3">
-            <img
-              src="@/assets/images/logologin.png"
-              alt="BarakaGive"
-              class="w-10 h-10 object-contain"
-            />
+            <img src="@/assets/images/logologin.png" alt="BarakaGive" class="h-10 w-10 object-contain" />
             <div>
-              <span class="text-lg font-bold text-white"
-                >Baraka<span class="text-white">Give</span></span
-              >
-              <p class="text-[10px] text-slate-500 -mt-0.5">
-                Ensemble pour un impact durable
-              </p>
+              <span class="text-lg font-bold text-white">BarakaGive</span>
+              <p class="-mt-0.5 text-[10px] text-slate-500">Ensemble pour un impact durable</p>
             </div>
           </div>
-
-          <!-- Liens -->
-          <nav class="flex flex-wrap items-center gap-6">
-            <a
-              href="#hero"
-              class="text-sm text-slate-400 hover:text-white transition"
-              >Accueil</a
-            >
-            <a
-              href="#fonctionnalites"
-              class="text-sm text-slate-400 hover:text-white transition"
-              >Fonctionnalités</a
-            >
-            <a
-              href="#avantages"
-              class="text-sm text-slate-400 hover:text-white transition"
-              >À propos</a
-            >
-            <a
-              href="#contact"
-              class="text-sm text-slate-400 hover:text-white transition"
-              >Contact</a
-            >
+          <nav aria-label="Navigation de pied de page" class="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
+            <a href="#solutions" class="text-sm text-slate-400 transition hover:text-white">Nos solutions</a>
+            <a href="#fonctionnement" class="text-sm text-slate-400 transition hover:text-white">Fonctionnement</a>
+            <a href="#avantages" class="text-sm text-slate-400 transition hover:text-white">Avantages</a>
+            <a href="#intelligence" class="text-sm text-slate-400 transition hover:text-white">Assistant IA</a>
+            <a href="#public" class="text-sm text-slate-400 transition hover:text-white">Publics</a>
+            <a href="#faq" class="text-sm text-slate-400 transition hover:text-white">FAQ</a>
           </nav>
-
-          <!-- Socials -->
-          <div class="flex items-center gap-4">
-            <a
-              href="#"
-              class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition"
-            >
-              <svg
-                class="w-4 h-4 text-slate-300"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-                />
-              </svg>
-            </a>
-            <a
-              href="#"
-              class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition"
-            >
-              <svg
-                class="w-4 h-4 text-slate-300"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
-                />
-              </svg>
-            </a>
-            <a
-              href="#"
-              class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition"
-            >
-              <svg
-                class="w-4 h-4 text-slate-300"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
-                />
-              </svg>
-            </a>
-          </div>
+          <address class="flex flex-col items-center gap-2 text-center text-sm not-italic text-slate-300 md:items-end md:text-right">
+            <a href="mailto:contact@barakagive.org" class="transition hover:text-white">contact@barakagive.org</a>
+            <a href="tel:+221770000000" class="transition hover:text-white">+221 77 000 00 00</a>
+          </address>
         </div>
-
-        <div
-          class="pt-6 flex flex-col md:flex-row items-center justify-between gap-4"
-        >
-          <p class="text-xs text-slate-500">
-            © 2026 BarakaGive. Tous droits réservés.
-          </p>
-          <p class="text-xs text-slate-600">
-            Fait avec <span class="text-white">♡</span> pour les ONG d'Afrique
-            de l'Ouest
-          </p>
+        <div class="flex flex-col items-center justify-between gap-3 pt-6 text-center md:flex-row md:text-left">
+          <p class="text-xs text-slate-500">&copy; 2026 BarakaGive. Tous droits réservés.</p>
+          <a href="#contact" class="text-xs text-slate-400 transition hover:text-white">Contacter l’équipe BarakaGive</a>
         </div>
       </div>
     </footer>
+
+    <!-- Menu moderne iPhone flottant en bas pour la Landing Page -->
+    <LandingIPhoneBottomBar
+      ref="landingBottomBarRef"
+      :active-section="currentSectionId"
+      @navigate="onMobileNavigate"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import { RouterLink } from "vue-router";
+import LandingIPhoneBottomBar from "@/components/layout/LandingIPhoneBottomBar.vue";
+
+const landingBottomBarRef = ref(null);
+
+const toggleMobileSheet = () => {
+  if (landingBottomBarRef.value?.toggleSheet) {
+    landingBottomBarRef.value.toggleSheet();
+  } else {
+    menuOpen.value = !menuOpen.value;
+  }
+};
 
 // ── Compteur animé ──────────────────────────────────────────
 const animateCounter = (el, target, duration = 1400) => {
@@ -766,9 +388,25 @@ const animateCounter = (el, target, duration = 1400) => {
 let revealObserver = null;
 
 const activeLink = ref("accueil");
+const menuOpen = ref(false);
 
 const setActive = (link) => {
   activeLink.value = link;
+};
+
+const currentSectionId = computed(() => {
+  if (activeLink.value === "accueil") return "hero";
+  if (activeLink.value === "fonctionnalites" || activeLink.value === "solutions") return "solutions";
+  if (activeLink.value === "avantages") return "avantages";
+  if (activeLink.value === "apropos" || activeLink.value === "impact") return "impact";
+  return activeLink.value;
+});
+
+const onMobileNavigate = (sectionId) => {
+  if (sectionId === "hero") activeLink.value = "accueil";
+  else if (sectionId === "solutions" || sectionId === "fonctionnalites") activeLink.value = "fonctionnalites";
+  else if (sectionId === "avantages") activeLink.value = "avantages";
+  else if (sectionId === "impact") activeLink.value = "apropos";
 };
 
 // Détection automatique de la section visible via IntersectionObserver
@@ -777,6 +415,7 @@ let observer = null;
 onMounted(() => {
   const sections = [
     { id: "hero", key: "accueil" },
+    { id: "solutions", key: "fonctionnalites" },
     { id: "fonctionnalites", key: "fonctionnalites" },
     { id: "avantages", key: "avantages" },
     { id: "impact", key: "apropos" },
@@ -830,30 +469,26 @@ onUnmounted(() => {
 });
 
 const avantages = [
-  "Interface simple et intuitive",
-  "Sécurité et confidentialité des données",
-  "Accessible sur ordinateur, tablette et mobile",
-  "Support dédié et accompagnement personnalisé",
+  "Projets, campagnes et b\u00e9n\u00e9ficiaires r\u00e9unis dans un m\u00eame espace.",
+  "Informations plus faciles \u00e0 retrouver et \u00e0 partager avec l'\u00e9quipe.",
+  "Suivi des besoins et des r\u00e9sultats pour gagner du temps au quotidien.",
 ];
 
 const steps = [
   {
     num: "1",
-    titre: "Inscrivez votre ONG",
-    texte:
-      "Remplissez le formulaire d'inscription avec les informations de votre ONG. Aucune carte bancaire requise pour commencer.",
+    titre: "Enregistrez votre organisation",
+    texte: "Renseignez les informations de votre ONG pour ouvrir son espace BarakaGive.",
   },
   {
     num: "2",
-    titre: "Configurez votre espace",
-    texte:
-      "Ajoutez vos projets, votre équipe et vos bénéficiaires. Notre interface guidée vous accompagne pas à pas.",
+    titre: "Organisez vos actions",
+    texte: "Ajoutez vos projets, vos campagnes, vos \u00e9quipes et les besoins \u00e0 suivre.",
   },
   {
     num: "3",
-    titre: "Pilotez et mesurez",
-    texte:
-      "Suivez vos indicateurs en temps réel, générez des rapports et partagez votre impact avec vos partenaires.",
+    titre: "Suivez les r\u00e9sultats",
+    texte: "Consultez les informations disponibles et pr\u00e9parez le suivi de vos actions et ressources.",
   },
 ];
 </script>
@@ -956,6 +591,46 @@ html {
 .hero-title {
   animation: heroFadeUp 0.7s 0.05s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+.landing-nav {
+  background: rgb(255 255 255 / 84%);
+  -webkit-backdrop-filter: blur(18px) saturate(125%);
+  backdrop-filter: blur(18px) saturate(125%);
+  box-shadow: 0 8px 28px rgb(0 52 61 / 7%), inset 0 1px 0 rgb(255 255 255 / 88%);
+}
+.hero-copy {
+  width: 100%;
+  max-width: none;
+}
+.hero-copy::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border: 1px solid rgb(255 255 255 / 72%);
+  border-radius: 0;
+  background: linear-gradient(145deg, rgb(255 255 255 / 76%), rgb(255 255 255 / 66%));
+  box-shadow: 0 12px 32px rgb(0 52 61 / 10%), inset 0 1px 0 rgb(255 255 255 / 84%);
+  backdrop-filter: blur(10px) saturate(112%);
+  -webkit-backdrop-filter: blur(10px) saturate(112%);
+  content: "";
+}
+.landing-page .landing-footer {
+  border-top: 1px solid rgb(255 255 255 / 24%);
+  background: linear-gradient(125deg, rgb(0 52 61 / 96%), rgb(0 52 61 / 88%));
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  backdrop-filter: blur(18px) saturate(120%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 12%);
+}
+.landing-footer > div {
+  position: relative;
+  z-index: 1;
+}
+.editorial-card,
+.solution-card {
+  box-shadow: 0 12px 36px rgb(0 52 61 / 7%);
+}
+.editorial-card-featured {
+  box-shadow: 0 18px 42px rgb(0 52 61 / 18%);
+}
 .hero-sub {
   animation: heroFadeUp 0.7s 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -981,9 +656,9 @@ html {
 .btn-shimmer:hover {
   background-image: linear-gradient(
     110deg,
-    #061b2d 30%,
-    #1a5080 50%,
-    #061b2d 70%
+    #00343d 30%,
+    #002A31 50%,
+    #00343d 70%
   );
   background-size: 200% auto;
   animation: shimmer 1s linear;
@@ -1003,6 +678,187 @@ html {
 }
 .icon-pop:hover {
   animation: iconPop 0.35s ease;
+}
+
+.landing-page :is(a, button):focus-visible {
+  outline: 3px solid rgb(0 52 61 / 52%);
+  outline-offset: 3px;
+}
+
+.landing-page :is(a, button):active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.landing-page #solutions,
+.landing-page #fonctionnement,
+.landing-page #faq,
+.landing-page #contact {
+  background-image:
+    radial-gradient(ellipse at 12% 15%, rgb(0 52 61 / 3%), transparent 48%),
+    radial-gradient(ellipse at 88% 85%, rgb(0 52 61 / 2.5%), transparent 45%);
+}
+
+@media (max-width: 639px) {
+  .landing-page,
+  .landing-page header,
+  .landing-page section {
+    max-width: 100vw;
+    width: 100%;
+  }
+  .landing-page header > div {
+    min-width: 0;
+    width: 100%;
+  }
+  .hero-shell {
+    max-width: 100%;
+    width: 100%;
+  }
+  .hero-cta {
+    max-width: min(calc(100vw - 5rem), 19rem);
+    width: min(calc(100vw - 5rem), 19rem);
+  }
+  .hero-shell h1,
+  .hero-shell p,
+  .hero-cta > a {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+  .hero-copy::before {
+    inset: 0;
+    border-radius: 0;
+    background: rgb(255 255 255 / 84%);
+    backdrop-filter: blur(10px) saturate(110%);
+    -webkit-backdrop-filter: blur(10px) saturate(110%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Verre discret pour les panneaux des sections après le Hero. */
+.landing-page #solutions .editorial-card,
+.landing-page #fonctionnement article,
+.landing-page #faq details {
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 88%),
+    rgb(255 255 255 / 72%)
+  );
+  border-color: rgb(255 255 255 / 92%);
+  backdrop-filter: blur(14px) saturate(112%);
+  -webkit-backdrop-filter: blur(14px) saturate(112%);
+  box-shadow:
+    0 12px 30px rgb(0 52 61 / 6%),
+    inset 0 1px 0 rgb(255 255 255 / 85%);
+}
+
+.landing-page #avantages ul,
+.landing-page #intelligence .reveal-left,
+.landing-page #contact .max-w-2xl {
+  border: 1px solid rgb(255 255 255 / 86%);
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 62%);
+  backdrop-filter: blur(16px) saturate(110%);
+  -webkit-backdrop-filter: blur(16px) saturate(110%);
+  box-shadow:
+    0 14px 32px rgb(0 52 61 / 5%),
+    inset 0 1px 0 rgb(255 255 255 / 82%);
+}
+
+.landing-page #avantages ul {
+  padding: 1.25rem;
+}
+
+.landing-page #intelligence .reveal-left {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.landing-page #contact .max-w-2xl {
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.landing-page #impact article {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+}
+
+.landing-page #solutions .editorial-card,
+.landing-page #fonctionnement article,
+.landing-page #faq details,
+.landing-page #impact article {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.landing-page #solutions .editorial-card:hover,
+.landing-page #fonctionnement article:hover,
+.landing-page #faq details[open] {
+  border-color: rgb(0 52 61 / 14%);
+  box-shadow:
+    0 16px 34px rgb(0 52 61 / 9%),
+    inset 0 1px 0 rgb(255 255 255 / 92%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .landing-nav {
+    background: rgb(255 255 255 / 97%);
+  }
+
+  .landing-page .landing-footer {
+    background: #00343D;
+  }
+
+  .hero-copy::before,
+  .landing-page #solutions .editorial-card,
+  .landing-page #fonctionnement article,
+  .landing-page #faq details,
+  .landing-page #avantages ul,
+  .landing-page #intelligence .reveal-left,
+  .landing-page #contact .max-w-2xl {
+    background: rgb(255 255 255 / 96%);
+  }
+
+  .landing-page #impact article {
+    background: rgb(255 255 255 / 12%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .landing-nav,
+  .hero-copy::before,
+  .landing-page #solutions .editorial-card,
+  .landing-page #fonctionnement article,
+  .landing-page #faq details,
+  .landing-page #avantages ul,
+  .landing-page #intelligence .reveal-left,
+  .landing-page #contact .max-w-2xl {
+    background: rgb(255 255 255 / 96%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .landing-page #impact article {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .landing-page .landing-footer {
+    background: #00343D;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 </style>
 

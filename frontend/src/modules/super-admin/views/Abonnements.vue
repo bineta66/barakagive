@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
@@ -54,25 +54,25 @@
           titre="ONG abonnées"
           :valeur="statsAbonnements.total"
           :icone="Building2"
-          couleur="sky"
+          couleur="bleu-nuit"
         />
         <KpiCard
           titre="Abonnements actifs"
           :valeur="statsAbonnements.actifs"
           :icone="CheckCircle"
-          couleur="emerald"
+          couleur="bleu-accent"
         />
         <KpiCard
           titre="Abonnements expirés"
           :valeur="statsAbonnements.expires"
           :icone="CalendarX"
-          couleur="red"
+          couleur="rose-baraka"
         />
         <KpiCard
           titre="Revenus (FCFA)"
           :valeur="formatMontant(statsAbonnements.revenu)"
           :icone="PiggyBank"
-          couleur="amber"
+          couleur="bleu-nuit"
         />
       </div>
 
@@ -235,7 +235,7 @@
                         ab.statut === 'EXPIRED' || ab.statut === 'CANCELLED'
                       "
                       @click="confirmerAction('reactiver', ab)"
-                      class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
+                      class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-bleu-accent bg-bleu-accent/10 hover:bg-bleu-accent/20 rounded-lg transition"
                     >
                       <PlayCircle :size="13" /> Réactiver
                     </button>
@@ -468,15 +468,15 @@
           <div
             class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
             :class="
-              actionEnCours === 'suspendre' ? 'bg-amber-50' : 'bg-emerald-50'
+              actionEnCours === 'suspendre' ? 'bg-rose-baraka/10' : 'bg-bleu-accent/10'
             "
           >
             <PauseCircle
               v-if="actionEnCours === 'suspendre'"
               :size="24"
-              class="text-amber-600"
+              class="text-rose-baraka"
             />
-            <PlayCircle v-else :size="24" class="text-emerald-600" />
+            <PlayCircle v-else :size="24" class="text-bleu-accent" />
           </div>
           <h3 class="text-center font-bold text-slate-900 mb-2">
             {{
@@ -509,8 +509,8 @@
               class="flex-1 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition disabled:opacity-60"
               :class="
                 actionEnCours === 'suspendre'
-                  ? 'bg-amber-600 hover:bg-amber-700'
-                  : 'bg-emerald-600 hover:bg-emerald-700'
+                  ? 'bg-rose-baraka hover:bg-rose-baraka/90'
+                  : 'bg-bleu-accent hover:bg-bleu-accent/90'
               "
             >
               <span
