@@ -1,0 +1,38 @@
+# Production overlay: keep data services on the internal Compose network.
+# Run behind a TLS-terminating reverse proxy and set production values in the
+# ignored .env and backend/.env / ia_service/.env files.
+services:
+  db:
+    ports: !reset []
+
+  redis:
+    ports: !reset []
+
+  backend:
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+    ports: !reset []
+    # Persist Django MEDIA_ROOT across backend container replacement.
+    # Copy existing media from the old container before the first mount.
+    # Back up this Docker-managed volume and preserve it during deployment.
+    volumes: !reset [media_data:/app/media]
+    environment:
+      DEBUG: "False"
+      SECURE_SSL_REDIRECT: "True"
+      SESSION_COOKIE_SECURE: "True"
+      CSRF_COOKIE_SECURE: "True"
+      SECURE_HSTS_SECONDS: "31536000"
+      SECURE_HSTS_INCLUDE_SUBDOMAINS: "True"
+
+  celery:
+    volumes: !reset []
+
+  ia_service:
+    ports: !reset []
+    volumes: !reset []
+
+  n8n:
+    ports: !reset []
+
+  frontend:
+    ports:
+      - "${PUBLIC_HTTP_PORT:-80}:80"

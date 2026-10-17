@@ -1,0 +1,157 @@
+<template>
+  <div class="p-6 space-y-6 bg-white min-h-screen">
+    <!-- En-tête -->
+    <div class="flex justify-between items-center pb-4">
+      <div>
+        <h1 class="text-3xl font-bold text-bleu-nuit">Créer une zone</h1>
+        <p class="text-xs text-gray-500 mt-1">
+          Sélectionnez une région sur la carte, puis cliquez sur le centre de la zone.
+        </p>
+      </div>
+
+      <div class="flex gap-3">
+        <BoutonSecondary to="/chef-projet/zones">
+          <List :size="18" />
+          Liste des zones
+        </BoutonSecondary>
+      </div>
+    </div>
+
+    <AlertMessage v-if="feedback.message" :type="feedback.type" :message="feedback.message" class="mb-4" />
+
+    <!-- Carte + Formulaire -->
+    <div class="h-[calc(100vh-220px)] flex flex-col lg:flex-row gap-6">
+      <div class="flex-1 rounded-xl border border-slate-200/60 overflow-hidden min-h-[400px]">
+        <CarteSenegal
+          :geojson="geoJsonSenegal"
+          :form="form"
+          :zones="zoneStore.zones"
+          mode="creation"
+          @region-selected="onRegionSelected"
+          @map-click="onMapClick"
+          @submit="onSubmit"
+        />
+      </div>
+
+      <div class="w-full lg:w-96 bg-white border border-slate-200 p-6 overflow-y-auto rounded-xl shadow-xs-sm">
+        <h2 class="text-xl font-bold text-bleu-nuit mb-1">Formulaire de zone</h2>
+        <p class="text-xs text-gray-500 mb-6">
+          Remplissez les informations de la zone après avoir cliqué sur la carte.
+        </p>
+
+        <!-- Geocoding indicator -->
+        <div v-if="geocoding" class="flex items-center gap-2 mb-4 text-xs text-bleu-accent font-medium">
+          <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          Détection de la région en cours...
+        </div>
+
+        <FormulaireZone
+          mode="creation"
+          :initial-data="form"
+          :saving="saving || geocoding"
+          @submit="onSubmit"
+        />
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { reactive, ref, onMounted } from "vue"
+import { useRouter } from "vue-router"
+import { List } from "lucide-vue-next"
+import BoutonSecondary from "@/components/ui/BoutonSecondary.vue"
+import AlertMessage from "@/components/ui/AlertMessage.vue"
+import CarteSenegal from "@/modules/chef-projet/components/zones/CarteSenegal.vue"
+import FormulaireZone from "@/modules/chef-projet/components/zones/FormulaireZone.vue"
+import { useZoneStore } from "@/stores/zone.js"
+import geoJsonSenegalRaw from "@/data/senegal-regions.geojson?raw"
+
+const router = useRouter()
+const zoneStore = useZoneStore()
+const geoJsonSenegal = JSON.parse(geoJsonSenegalRaw)
+
+const feedback = reactive({ type: "success", message: "" })
+const saving = ref(false)
+const geocoding = ref(false)
+
+const form = reactive({
+  region: "",
+  departement: "",
+  nom: "",
+  description: "",
+  rayon: 1000,
+  statut: true,
+  latitude: null,
+  longitude: null,
+  submitDone: false,
+})
+
+onMounted(async () => {
+  try {
+    await zoneStore.fetchZones()
+  } catch (e) {}
+})
+
+const onRegionSelected = ({ region, departement }) => {
+  form.region = region
+  form.departement = departement
+}
+
+const onMapClick = async ({ latitude, longitude }) => {
+  form.latitude = latitude
+  form.longitude = longitude
+  // Auto-fill region & département via reverse geocode
+  geocoding.value = true
+  try {
+    const geo = await zoneStore.reverseGeocode(latitude, longitude)
+    if (geo) {
+      form.region = geo.region || form.region
+      form.departement = geo.departement || form.departement
+    }
+  } catch (_) {
+    // silent: region may still be set from GeoJSON layer click
+  } finally {
+    geocoding.value = false
+  }
+}
+
+const onSubmit = async (data) => {
+  if (saving.value) return
+  feedback.message = ""
+
+  if (!data.latitude || !data.longitude) {
+    feedback.type = "error"
+    feedback.message = "Veuillez cliquer sur la carte pour définir le centre de la zone (latitude/longitude)."
+    return
+  }
+
+  saving.value = true
+  try {
+    await zoneStore.createZone({
+      nom: data.nom,
+      region: data.region,
+      departement: data.departement,
+      latitude: Number(parseFloat(data.latitude).toFixed(7)),
+      longitude: Number(parseFloat(data.longitude).toFixed(7)),
+      rayon: Number(data.rayon),
+      statut: true,
+    })
+
+    feedback.type = "success"
+    feedback.message = "Zone créée avec succès !"
+    setTimeout(() => {
+      router.push("/chef-projet/zones")
+    }, 900)
+  } catch (err) {
+    feedback.type = "error"
+    feedback.message = zoneStore.error || "Erreur lors de la création de la zone."
+  } finally {
+    saving.value = false
+  }
+}
+</script>
+

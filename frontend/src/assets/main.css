@@ -1,0 +1,229 @@
+@import './base.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .glass-surface {
+    @apply rounded-2xl border border-white/70 bg-white/70 backdrop-blur-xl transition-all duration-300;
+  }
+
+  .glass-surface-dark {
+    @apply border border-white/[0.12] bg-bleu-nuit/90 backdrop-blur-2xl transition-all duration-300;
+  }
+
+  .glass-control {
+    @apply rounded-xl border border-white/70 bg-white/60 backdrop-blur-lg transition-all duration-200 focus:border-bleu-accent/50 focus:outline-none focus:ring-2 focus:ring-bleu-accent/20;
+  }
+
+  .form-field input:not([type="checkbox"]):not([type="radio"]),
+  .form-field select,
+  .form-field textarea {
+    @apply w-full rounded-xl border border-white/70 bg-white/65 px-3 py-2 text-sm text-slate-800 backdrop-blur-lg transition-all duration-200 placeholder:text-slate-400 focus:border-bleu-accent/50 focus:outline-none focus:ring-2 focus:ring-bleu-accent/20;
+  }
+}
+
+/* Boutons et liens présentés comme des boutons : garder des angles discrets. */
+:where(button, input[type="button"], input[type="submit"], [role="button"], a[class*="rounded-full"], a[class*="rounded-2xl"]) {
+  border-radius: 12px !important;
+}
+
+/* Garder l'effet verre sans réintroduire les ombres. */
+@layer utilities {
+  [class*="shadow"] {
+    box-shadow: none !important;
+  }
+
+  .glass-theme {
+    background-color: #f8fafc;
+  }
+
+  .glass-theme :where([class~="bg-white"][class~="min-h-screen"]) {
+    background-color: #f8fafc !important;
+  }
+
+  .glass-theme :where(
+    [class~="bg-white"][class*="rounded-"],
+    [class~="bg-white/70"][class*="rounded-"],
+    [class~="bg-white/75"][class*="rounded-"],
+    [class~="bg-white/80"][class*="rounded-"],
+    [class~="bg-white/85"][class*="rounded-"],
+    [class~="bg-white/90"][class*="rounded-"],
+    [class~="bg-white/95"][class*="rounded-"],
+    [class*="bg-slate-50"][class*="rounded-"],
+    [class*="bg-gray-50"][class*="rounded-"]
+  ) {
+    background-color: rgb(255 255 255 / 72%) !important;
+    border-color: rgb(255 255 255 / 82%);
+    backdrop-filter: blur(18px);
+  }
+
+  .glass-theme > :where([class~="bg-white"]) {
+    background-color: #f8fafc !important;
+  }
+
+  .glass-theme :where(
+    [class~="bg-bleu-nuit"][class*="rounded-"][class~="p-3"],
+    [class~="bg-bleu-nuit"][class*="rounded-"][class~="p-4"],
+    [class~="bg-bleu-nuit"][class*="rounded-"][class~="p-5"],
+    [class~="bg-bleu-nuit"][class*="rounded-"][class~="p-6"],
+    [class~="bg-bleu-nuit"][class*="rounded-"][class~="p-8"]
+  ) {
+    background-color: rgb(0 49 60 / 86%) !important;
+    border-color: rgb(255 255 255 / 24%);
+    backdrop-filter: blur(18px);
+  }
+
+  .glass-theme input:not([type="checkbox"]):not([type="radio"]),
+  .glass-theme select,
+  .glass-theme textarea {
+    background-color: rgb(255 255 255 / 68%);
+    border: 1px solid rgb(0 49 60 / 28%);
+    backdrop-filter: blur(16px);
+  }
+
+  form input:not([type="checkbox"]):not([type="radio"]),
+  form select,
+  form textarea,
+  .form-field input:not([type="checkbox"]):not([type="radio"]),
+  .form-field select,
+  .form-field textarea {
+    border: 1px solid rgb(0 49 60 / 28%);
+  }
+
+  form :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus,
+  .form-field :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+    border-color: rgb(0 49 60 / 55%);
+    outline: 2px solid rgb(0 49 60 / 10%);
+    outline-offset: 1px;
+  }
+
+  /* Formulaires BarakaGive : fond doux et champs blancs, comme la modale de don. */
+  :where(form, .form-field) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    min-height: 2.5rem !important;
+    border: 1px solid #b9cbd0 !important;
+    border-radius: 0.625rem !important;
+    background-color: #fff !important;
+    padding: 0.55rem 0.8rem !important;
+    color: #00313c !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  }
+
+  :where(form, .form-field) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea)::placeholder {
+    color: #8a9bb0 !important;
+    opacity: 1;
+  }
+
+  :where(form, .form-field) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea):focus {
+    border-color: #648b95 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgb(0 49 60 / 9%) !important;
+  }
+
+  :where(form, .form-field) :is(input, select, textarea).border-red-400,
+  :where(form, .form-field) :is(input, select, textarea)[aria-invalid="true"] {
+    border-color: #f87171 !important;
+  }
+
+  :where(form, .form-field) label {
+    color: #526174;
+  }
+
+  /* Les surfaces de saisie des modales reprennent le gris très clair de la référence. */
+  [class~="fixed"][class~="inset-0"]:has(form) > div:has(form),
+  [class~="fixed"][class~="inset-0"]:has(> form) > form {
+    background-color: #f4f7f7 !important;
+    border-color: #e2e9ea;
+  }
+
+  .glass-theme :is(div, section, form):is([class*="grid"], [class*="flex"]):has(input[type="search"], input[placeholder*="Recherch"], input[placeholder*="recherch"]):has(select) {
+    gap: 0.75rem;
+    padding: 0.625rem;
+    border: 1px solid rgb(0 49 60 / 12%);
+    border-radius: 0.875rem;
+    background-color: rgb(0 49 60 / 5%);
+    backdrop-filter: blur(18px);
+  }
+
+  .glass-theme input[type="search"],
+  .glass-theme input[type="text"],
+  .glass-theme select {
+    min-height: 2.5rem;
+    border: 1px solid rgb(0 49 60 / 12%);
+    border-radius: 0.625rem;
+    background-color: rgb(255 255 255 / 78%);
+    padding: 0.5rem 0.875rem;
+    color: #00313c;
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+
+  .glass-theme input[type="search"]::placeholder,
+  .glass-theme input[type="text"]::placeholder {
+    color: #94a3b8;
+  }
+
+  .glass-theme input[type="search"]:focus,
+  .glass-theme input[type="text"]:focus,
+  .glass-theme select:focus {
+    border-color: rgb(0 49 60 / 45%);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(0 49 60 / 10%);
+  }
+}
+
+/* Garde les vues des tableaux de bord dans la largeur de l'écran et
+   laisse les éléments larges défiler dans leur propre conteneur. */
+@layer utilities {
+  .glass-theme,
+  .glass-theme > *,
+  .glass-theme main,
+  .glass-theme main > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .glass-theme :where(img, video, canvas, svg) {
+    max-width: 100%;
+  }
+
+  .glass-theme :where(input, select, textarea) {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .glass-theme :where(div, section, article):has(> table) {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 639px) {
+    .glass-theme :where(div, section, form):is([class*="grid"], [class*="flex"]):has(input[type="search"], input[placeholder*="Recherch"], input[placeholder*="recherch"]):has(select) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .glass-theme main :where(.flex):has(> button, > a) {
+      flex-wrap: wrap;
+    }
+
+    .glass-theme main :where(button, [role="button"]) {
+      max-width: 100%;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .glass-theme main :where(h1) {
+      overflow-wrap: anywhere;
+    }
+
+    .glass-theme main :where(.overflow-x-auto) {
+      max-width: 100%;
+      overscroll-behavior-x: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
